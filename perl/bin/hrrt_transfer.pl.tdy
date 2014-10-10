@@ -1,0 +1,103 @@
+#! /usr/bin/env perl
+
+use warnings;
+use strict;
+use FindBin;
+use Readonly;
+use Cwd qw(abs_path);
+
+use lib abs_path("$FindBin::Bin/../lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
+
+use Data::Dumper;
+use File::Find;
+use Utility;
+use Opts;
+use HRRT_Utilities;
+use HRRT_Data_old;
+
+# Constants
+Readonly my $DATA_DIR_LOCAL => $ENV{'HOME'} . "/data/hrrt_transfer";
+Readonly my $DATA_DIR_PRODN => '/mnt/scs/SCS_SCANS';
+
+# Globals
+our %all_files = ();
+our %all_scans = ();
+
+# Configuration
+
+# Fields
+Readonly my $DATA_DIR => 'data_dir';
+
+# Platforms
+Readonly my $PLAT_LOCAL => 'plat_local';
+Readonly my $PLAT_PRODN => 'plat_prodn';
+
+Readonly my %CONFIG => (
+    $DATA_DIR => {
+        $PLAT_LOCAL => $DATA_DIR_LOCAL,
+        $PLAT_PRODN => $DATA_DIR_PRODN,
+    },
+);
+
+# Options
+
+Readonly my $OPT_LOCAL => 'l';
+Readonly my $OPT_DATA  => 't';
+
+our %allopts = (
+    $OPT_LOCAL => {
+        $Opts::OPTS_DFLT => 0,
+        $Opts::OPTS_NAME => 'local',
+        $Opts::OPTS_TYPE => $Opts::OPTS_BOOL,
+        $Opts::OPTS_TEXT => 'Run on local (test) system',
+    },
+    $OPT_DATA => {
+        $Opts::OPTS_DFLT => 0,
+        $Opts::OPTS_NAME => 'data',
+        $Opts::OPTS_TYPE => $Opts::OPTS_BOOL,
+        $Opts::OPTS_TEXT => 'Make test data',
+    },
+
+);
+
+our $opts = process_opts( \%allopts );
+if ( $opts->{$Opts::OPT_HELP} ) {
+    usage( \%allopts );
+    exit;
+}
+
+# Main
+my $platform = ( $opts->{$OPT_LOCAL} ) ? $PLAT_LOCAL : $PLAT_PRODN;
+
+# Data directory.
+my $data_dir = $CONFIG{$DATA_DIR}{$platform};
+print "data_dir $data_dir\n";
+
+# If test system ,populate data directory.
+if ( $opts->{$OPT_LOCAL} ) {
+    my %opts = (
+        $HRRT_Data_old::PARAM_DATA_DIR    => $data_dir,
+        $HRRT_Data_old::PARAM_DATE_FORMAT => $HRRT_Utilities::FNAME_TYPE_OLD,
+    );
+    make_test_data_files( \%opts );
+}
+
+# Get file list from data directory.
+find( \&wanted, $data_dir );
+print Dumper( \%all_files );
+
+# Create hash of scan details, by date.
+# Each EM.l64 file is a scan, if above minimum size.
+foreach my $subj_dir ( sort keys %all_files ) {
+    next if ( $subj_dir =~ /Transmission/ );
+    my $subj_files = $all_files{$subj_dir};
+    my @subj_em_files = grep( /_EM.l64$/, @$subj_files );
+    print "EM files in $subj_dir: " . join( ", ", @subj_em_files ) . "\n";
+}
+
+sub wanted {
+    if ( my $det = hrrt_filename_det($_) ) {
+        push( @{ $all_files{$File::Find::dir} }, $_ );
+    }
+}
