@@ -1,0 +1,44 @@
+{
+    "subjects" : [
+	{
+	    "test_case"      : 1,
+	    "description"    : "Standard name, single first and last name",
+	    "history"        : "2040800",
+	    "name_last"      : "TESTONE",
+	    "name_first"     : "FIRSTONE",
+	    "history_std"    : "2040800",
+	    "name_last_std"  : "TESTONE",
+	    "name_first_std" : "FIRSTONE"
+	},
+	{
+	    "test_case"      : 2,
+	    "description"    : "First and last name, but no history",
+	    "history"        : "",
+	    "name_last"      : "TESTTWO",
+	    "name_first"     : "FIRSTTWO",
+	    "history_std"    : "",
+	    "name_last_std"  : "TESTTWO",
+	    "name_first_std" : "FIRSTTWO"
+	},
+	{
+	    "test_case"      : 3,
+	    "description"    : "First name and history, but no last name",
+	    "history"        : "2040810",
+	    "name_last"      : "TESTTHREE",
+	    "name_first"     : "FIRSTTHREE",
+	    "history_std"    : "2040810",
+	    "name_last_std"  : "TESTTHREE",
+	    "name_first_std" : "FIRSTTHREE"
+	},
+	{
+	    "test_case"      : 4,
+	    "description"    : "Last name and history, but no first name",
+	    "history"        : "2040820",
+	    "name_last"      : "TESTFOUR",
+	    "name_first"     : "FIRSTFOUR",
+	    "history_std"    : "2040820",
+	    "name_last_std"  : "TESTFOUR",
+	    "name_first_std" : "FIRSTFOUR"
+	}
+    ]
+}
