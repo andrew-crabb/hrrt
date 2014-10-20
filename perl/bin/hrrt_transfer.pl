@@ -9,6 +9,7 @@ use Readonly;
 use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Basename;
+use File::Copy;
 use File::Find;
 use File::Rsync;
 use Net::SSH2;
@@ -22,18 +23,23 @@ use Opts;
 use HRRT_Utilities;
 use HRRT_Data_old;
 use API_Utilities;
+use FileUtilities;
 
 no strict "refs";
 
 # Constants
 Readonly my $DATA_DIR_LOCAL => $ENV{'HOME'} . "/data/hrrt_transfer";
-Readonly my $DATA_DIR_PRODN => '/mnt/scs/SCS_SCANS';
-Readonly our $EM_MIN_SIZE   => 10000;
+Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/';
+# Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/GIBBS_DONNA/';
+Readonly our $EM_MIN_SIZE   => 100000000;
+Readonly our $BILLION       => 1000000000;
 Readonly our $RSYNC_HOST    => 'hrrt-image.rad.jhmi.edu';
 Readonly our $RSYNC_DIR     => '/data/recon';
 Readonly our $KEY_DESTDIR   => 'destdir';
 Readonly our $SCAN_BLANK    => 'Scan_Blank';
 Readonly our $TRANSMISSION  => 'Transmission';
+Readonly our $FRAME_DEFINITION => 'Frame definition';
+Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
 
 Readonly our %FRAMING => (
   30 => [ '300*6', ],
@@ -46,7 +52,7 @@ Readonly our %FRAMING => (
 
 # Globals
 our %all_files_subj  = ();
-our %all_files_blank = ();
+our %blank_scans_by_date = ();
 our %all_scans       = ();
 our $ssh             = undef;
 our $data_dir        = undef;
@@ -118,41 +124,71 @@ if ( $opts->{$OPT_DATA} ) {
 }
 
 # Get file list from data directory.
-find( \&all_files_subj, $data_dir );
+find({
+  wanted => \&all_files_subj,
+  follow => 1 
+     }, 
+     $data_dir );
 
 # Create hash of scan details, by date.
 my $scans_by_date = make_scans_by_date();
-my $blank_scans   = make_blank_scans_by_date();
-
-# printHash($scans_by_date, "scans by date");
-# printHash($blank_scans, "blank scans");
-
+make_blank_scans_by_date();
 # Select EM and TX scan times.
 my $scans_to_send = select_scan($scans_by_date);
-
-# Select framing.
+# Select and edit framing.
 my $framing = select_framing();
-
 # Should be only one blank scan per day.
-my $blank_scan = select_blank_scan( $blank_scans, $scans_to_send );
-# $scans_to_send->{'BL'} = $blank_scan;
-# printHash($scans_to_send, "scans_to_send");
-
+printHash($scans_to_send, "scans to send");
+my $blank_scan = select_blank_scan($scans_to_send->{'EM'});
+printHash($blank_scan, "Blank scan");
+printHash($scans_to_send, "scans_to_send");
 
 # Send files.
 my $xfer_files = make_xfer_files( $scans_by_date, $scans_to_send);
+printHash($xfer_files, "xfer files");
 
 transfer_files($xfer_files);
 transfer_files($blank_scan);
+edit_framing($xfer_files, $framing);
 
 # ------------------------------------------------------------
 # Subroutines
 # ------------------------------------------------------------
 
+sub edit_framing {
+  my ($xfer_files, $framing) = @_;
+
+  my $dirname = "${RSYNC_DIR}/" . $xfer_files->{$KEY_DESTDIR} . '/';
+  my $hdr_file = $dirname . make_std_name($xfer_files->{'em_hdr'});
+  print "edit_framing ($hdr_file, $framing)\n";
+
+
+  my (@hdr_lines) = fileContents($hdr_file);
+  my @outlines = ();
+  foreach my $inline (@hdr_lines) {
+    $inline =~ s/=.+/= $framing/ if ($inline =~ /$FRAME_DEFINITION/);
+    push(@outlines, $inline);
+  }
+  print join("\n", @outlines) . "\n\n";
+#  move($hdr_file, "${hdr_file}.bak") or die "move($hdr_file, ${hdr_file}.bak: $!\n";
+  unlink($hdr_file);
+  writeFile($hdr_file, \@outlines);
+
+}
+
 sub all_files_subj {
-  unless ( $File::Find::dir =~ /${data_dir}$/ ) {
-    if ( my $det = hrrt_filename_det($_) ) {
-      push( @{ $all_files_subj{$File::Find::dir} }, $det );
+  my $dir_exclude = qq{${data_dir}\$|/log/|/log\$|QC_Daily\$};
+  my $file_exclude = qq{\.bh\$|\.log\$};
+  my $file_include = qq{\.l64\$|\.l64.hdr\$|\.hc\$};
+
+  unless (( $File::Find::dir =~ /$dir_exclude/ ) or -d) {
+    if (/$file_include/) {
+      print "Found: $File::Find::name\n";
+      if ( my $det = hrrt_filename_det($_) ) {
+	push( @{ $all_files_subj{$File::Find::dir} }, $det );
+      } else {
+	print "ERROR: all_files_subj(): can't read file: $_\n";
+      }
     }
   }
 }
@@ -184,13 +220,12 @@ sub transfer_files {
   # Create remote directory.
   my $dirname = $xfer_files->{$KEY_DESTDIR};
   $dirname = "${RSYNC_DIR}/${dirname}";
-  printHash($xfer_files, "transfer_files $dirname");
+#  printHash($xfer_files, "transfer_files $dirname");
 
   my $sftp = $ssh->sftp();
   create_remote_dir( $sftp, $dirname );
 
-  foreach my $filetype ( sort keys %xfer_files ) {
-    next if ( $filetype =~ /$KEY_DESTDIR/ );
+  foreach my $filetype ( @FILE_TYPES ) {
     my $filename = $xfer_files{$filetype};
     if ( my $filesize = -s $filename ) {
       $totsize += $filesize;
@@ -211,7 +246,10 @@ sub transfer_file {
   my ( $name, $path, $suffix ) = fileparse($filename);
   my $std_name = make_std_name($name);
   my $destfile = "${RSYNC_HOST}:${dirname}/${std_name}";
-  print "transfer_file $filename  =>  $destfile\n";
+  print "transfer_file:\n$filename\n$destfile\n";
+  # my %opts = (
+  #   'chmod'   => '644',
+  #     );
   my %rsopts = (
     'times'   => 1,
     'src'     => $filename,
@@ -221,7 +259,7 @@ sub transfer_file {
   );
 
   # printHash(\%rsopts, "copy_file_to_disk") if ($opts->{$Opts::OPT_VERBOSE});
-  my $rsync = new File::Rsync();
+  my $rsync = File::Rsync->new();
   my $ret   = $rsync->exec( \%rsopts );
 
 }
@@ -261,7 +299,6 @@ sub make_xfer_files {
 }
 
 sub make_scans_by_date {
-
   # Each EM.l64 file is a scan, if above minimum size.
   my %scans_by_date = ();
   foreach my $subj_dir ( sort keys %all_files_subj ) {
@@ -284,49 +321,48 @@ sub make_scans_by_date {
 }
 
 sub make_blank_scans_by_date {
-  my %scans_by_date = ();
-
   my $blank_dir = "${data_dir}/${SCAN_BLANK}/${TRANSMISSION}";
-  print "blank_dir $blank_dir\n";
-  my $blank_files = $all_files_subj{$blank_dir};
-  foreach my $blank_file ( @{$blank_files} ) {
-    next unless ( $blank_file->{'name'} =~ /_TX\.s$/ );
-    my $date = $blank_file->{'date'}->{'hrrtdir'};
-    $scans_by_date{$date} = $blank_file;
+  find({
+    wanted => \&blank_scans_by_date,
+    follow => 1 
+       }, 
+       $blank_dir );
+  return \%blank_scans_by_date;
+}
+
+sub blank_scans_by_date {
+  my $file_include = qq{TX\.s\$};
+  if (/$file_include/) {
+    print "Blank Found: $File::Find::name\n";
+    if ( my $det = hrrt_filename_det($_) ) {
+      $blank_scans_by_date{$det->{'date'}->{'hrrtdir'}} = $det;
+    } else {
+      print "ERROR: blank_scans_by_date(): can't read file: $_\n";
+    }
   }
-  return \%scans_by_date;
 }
 
 # Select one blank scan to go with the EM scan given.
 
 sub select_blank_scan {
-  my ( $blank_scans, $scan_times ) = @_;
+  my ($time) = @_;
 
-  my $em_time     = $scan_times->{'EM'};
-  my @blank_times = sort keys %{$blank_scans};
-  ( my $em_day = $em_time ) =~ s/_.+//;
-  @blank_times = grep( /$em_day/, @blank_times );
-
-  #  print "blank for day $em_day: " . join("*", @blank_times) . "\n";
-  my $blank_time = undef;
-
-  #  print "select_blank_scan: em_time $em_time, blank " . join("*", @blank_times) . "\n";
-  if ( scalar(@blank_times) == 1 ) {
-    $blank_time = $blank_times[0];
+  print "select_blank_scan($time)\n";
+  my @all_blank_dates = sort keys(%blank_scans_by_date);
+  print join("\n", @all_blank_dates) . "\n\n\n";
+  (my $scandate = $time) =~ s/_.+//;
+  my @match_blank_times = grep(/$scandate/, @all_blank_dates);
+  my $ret = undef;
+  if (scalar(@match_blank_times) == 1) {
+    $blank_scan = $blank_scans_by_date{$match_blank_times[0]};
+    $ret = {
+      'bl_l64'       => $blank_scan->{'_fullname'},
+      $KEY_DESTDIR => "${SCAN_BLANK}/${TRANSMISSION}",
+	};
   } else {
-    # Select appropriate blank time.
-    $blank_time = prompt(
-      'Select Blank Scan',
-      -menu => \@blank_times,
-      '>'
-    );
+    print "select_blank_scan(): ERROR: Not 1 blank scan for $time\n";
   }
-  print "select_blank_scan() returning $blank_time\n";
-  my %ret = (
-    'bl_s'       => $blank_scans->{$blank_time}->{_fullname},
-    $KEY_DESTDIR => "${SCAN_BLANK}/${TRANSMISSION}",
-    );
-  return \%ret;
+  return $ret;
 }
 
 sub select_framing {
@@ -349,16 +385,15 @@ sub select_scan {
   my %scans_by_date = %$scans_by_date;
   my ( $em_time, $tx_time ) = ( undef, undef );
   foreach my $scan_time ( sort keys %scans_by_date ) {
-    print "scan_time: $scan_time\n";
     my $scan_rec = $scans_by_date->{$scan_time};
-    printHash( $scan_rec, $scan_time );
+#    printHash( $scan_rec, $scan_time );
     my $em_rec = $scans_by_date{$scan_time}{'EM'};
     my %em_rec = %$em_rec;
     my ( $name_last, $name_first, $size ) = @em_rec{qw(name_last name_first size)};
-    print "$name_last $name_first $size\n";
-    $menu_det{"$scan_time $name_last, $name_first"} = $scan_time;
+    my $gb = sprintf("%3.1f", ($size / $BILLION));
+    $menu_det{"$scan_time $name_last, $name_first ($gb)"} = $scan_time;
   }
-  printHash( \%menu_det );
+#  printHash( \%menu_det );
   $em_time = prompt 'Select Emission Scan', -verb,
       -menu => \%menu_det,
       '>';
