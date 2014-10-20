@@ -1,0 +1,77 @@
+{
+    "subjects" : [
+	{
+	    "test_case"      : 1,
+	    "description"    : "Standard name, single first and last name",
+	    "history"        : "2040801",
+	    "name_last"      : "TESTONE",
+	    "name_first"     : "FIRSTONE",
+	    "history_std"    : "2040800",
+	    "name_last_std"  : "TESTONE",
+	    "name_first_std" : "FIRSTONE"
+	},
+	{
+	    "test_case"      : 2,
+	    "description"    : "First and last name, but no history",
+	    "history"        : "",
+	    "name_last"      : "TESTTWO",
+	    "name_first"     : "FIRSTTWO",
+	    "history_std"    : "",
+	    "name_last_std"  : "TESTTWO",
+	    "name_first_std" : "FIRSTTWO"
+	},
+	{
+	    "test_case"      : 3,
+	    "description"    : "First name and history, but no last name",
+	    "history"        : "2040803",
+	    "name_last"      : "",
+	    "name_first"     : "FIRSTTHREE",
+	    "history_std"    : "2040802",
+	    "name_last_std"  : "",
+	    "name_first_std" : "FIRSTTHREE"
+	},
+	{
+	    "test_case"      : 4,
+	    "description"    : "Last name and history, but no first name",
+	    "history"        : "2040804",
+	    "name_last"      : "TESTFOUR",
+	    "name_first"     : "",
+	    "history_std"    : "2040804",
+	    "name_last_std"  : "TESTFOUR",
+	    "name_first_std" : ""
+	},
+		{
+	    "test_case"      : 5,
+	    "description"    : "Hyphenated names",
+	    "history"        : "2040805",
+	    "name_last"      : "TEST-FIVE",
+	    "name_first"     : "FIRST-FIVE",
+	    "history_std"    : "2040805",
+	    "name_last_std"  : "TESTFIVE",
+	    "name_first_std" : "FIRSTFIVE"
+	},
+
+	{
+	    "test_case"      : 7,
+	    "description"    : "Spaces in, before and after names",
+	    "history"        : "2040807",
+	    "name_last"      : " TEST SEVEN ",
+	    "name_first"     : " FIRST SEVEN ",
+	    "history_std"    : "2040807",
+	    "name_last_std"  : "TESTSEVEN",
+	    "name_first_std" : "FIRSTSEVEN"
+	},
+
+	{
+	    "test_case"      : 9,
+	    "description"    : "Bad characters in names",
+	    "history"        : "2040809",
+	    "name_last"      : "TEST/ #NINE!",
+	    "name_first"     : "FIRST/ #NINE!",
+	    "history_std"    : "2040809",
+	    "name_last_std"  : "TESTNINE",
+	    "name_first_std" : "FIRSTNINE"
+	}
+
+    ]
+}
