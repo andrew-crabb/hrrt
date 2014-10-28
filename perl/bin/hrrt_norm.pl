@@ -8,18 +8,22 @@ use warnings;
 use strict;
 no strict 'refs';
 
-use FindBin;
-use lib "$FindBin::Bin/../lib";
-use FileUtilities;
-use Utilities_new;
-use Utility;
-use HRRT_Utilities;
-use Opts;
-
-use Readonly;
+use Carp;
+use Cwd qw(abs_path);
 use File::Basename;
 use File::Copy;
+use FindBin;
+use Readonly;
 use Sys::Hostname;
+
+use lib abs_path("$FindBin::Bin/../lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
+
+use FileUtilities;
+use HRRT_Utilities;
+use Opts;
+use Utilities_new;
+use Utility;
 
 # Program constants
 Readonly my $PROG_LMHISTOGRAM  => "lmhistogram";
