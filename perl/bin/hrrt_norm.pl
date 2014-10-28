@@ -233,6 +233,7 @@ sub log_msg {
 
 sub file_exists {
   my ($filename) = @_;
+  $filename //= '';
 
   my $ret = 1;
   unless (hasLen($filename) and (-f $filename)) {
