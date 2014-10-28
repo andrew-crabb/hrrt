@@ -21,6 +21,7 @@ use lib abs_path("$FindBin::Bin/../../../perl/lib");
 use Utility;
 use Utilities_new;
 use Opts;
+use HRRTRecon;
 use HRRT_Utilities;
 use HRRT_Data_old;
 use API_Utilities;
@@ -105,6 +106,12 @@ if ( $opts->{$Opts::OPT_HELP} ) {
   usage( \%allopts );
   exit;
 }
+
+# Read config file (defaults to ../etc/hrrt_transfer.conf)
+my $config = HRRTRecon::read_conf('');
+print Dumper($config);
+exit;
+
 
 # Main
 my $platform = ( $opts->{$OPT_LOCAL} ) ? $PLAT_LOCAL : $PLAT_PRODN;
