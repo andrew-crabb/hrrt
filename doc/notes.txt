@@ -1,0 +1,8 @@
+HRRT executables should be moved.
+~/BIN/hrrt/recon/etc
+~/BIN/hrrt/recon/bin/platform/
+~/BIN/hrrt/recon/lib/platform/
+
+
+/Users/ahc/DEV/arch/linux_64:
+bin/  cps/  dcm4che/  dcmtk/  hrrt_open_2011/  turku/  xmedcon/

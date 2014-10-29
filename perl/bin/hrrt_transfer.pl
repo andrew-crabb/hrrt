@@ -108,9 +108,9 @@ if ( $opts->{$Opts::OPT_HELP} ) {
 }
 
 # Read config file (defaults to ../etc/hrrt_transfer.conf)
-my $config = HRRTRecon::read_conf('');
-print Dumper($config);
-exit;
+# my $config = HRRTRecon::read_conf('');
+# print Dumper($config);
+# exit;
 
 
 # Main

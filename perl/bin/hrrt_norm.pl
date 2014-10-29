@@ -12,6 +12,8 @@ use Carp;
 use Cwd qw(abs_path);
 use File::Basename;
 use File::Copy;
+use File::Spec;
+use File::Spec::Win32;
 use FindBin;
 use Readonly;
 use Sys::Hostname;
@@ -30,11 +32,13 @@ Readonly my $PROG_LMHISTOGRAM  => "lmhistogram";
 Readonly my $PROG_COMPUTE_NORM => "compute_norm";
 Readonly my $PROG_NORM_PROCESS => "norm_process";
 Readonly my $PROG_CALC_RATIO   => "calc_ratio";
-  # Path constants
-Readonly my $PROG_PATH         => "/c/CPS/bin";
+
+# Path constants
+# Readonly my $PROG_PATH         => "/c/CPS/bin";
+
 # File constants
-Readonly my $LUT_FILE          => '/c/CPS/lib/hrrt_rebinner.lut';
-Readonly my $GM328_FILE        => '/c/CPS/bin/GM328.INI';
+Readonly my $LUT_FILE          => 'hrrt_rebinner.lut';
+Readonly my $GM328_FILE        => 'GM328.INI';
 # Numeric constants
 Readonly my $SPAN3             => 3;
 Readonly my $SPAN9             => 9;
@@ -85,6 +89,15 @@ my %PROGRAMS = (
   }
 );
 
+# Paths
+my $this_path = $FindBin::Bin;
+my $platform = Utility::platform();
+# *** HACK.  MAKE THIS A UTILITY FUNCTION ***
+my $arch = ($platform eq $Utility::PLAT_WIN) ? 'win_64' : 'linux_64';
+our $g_cps_path = abs_path("$this_path/../../../arch/${arch}/cps");
+print "g_cps_path $g_cps_path\n";
+
+
 # Globals
 our $g_em_dir    = undef;
 our $g_em_file   = undef;
@@ -93,7 +106,6 @@ our $g_logfile = "norm_process_" . convertDates(time())->{$DATES_HRRTDIR};
 our $g_platform = Utility::platform();
 
 # Opts
-
 my $OPT_EMFILE     = 'e';
 my $OPT_RBFILE     = 'r';
 
@@ -120,17 +132,19 @@ if ($opts->{$Opts::OPT_HELP}) {
 
 my $em_file = $opts->{$OPT_EMFILE};
 my $rb_file = $LUT_FILE;
-unless (file_exists($em_file) and file_exists ($rb_file)) {
+# unless (file_exists($em_file) and file_exists ($rb_file)) {
+unless (file_exists($em_file)) {
   usage(\%allopts);
   exit;
 }
 
 my ($em_dir, $em_suffix);
 ($g_em_file, $em_dir, $em_suffix) = fileparse($em_file);
-$g_em_dir = convertDirName(File::Spec->rel2abs($em_dir))->{$DIR_DOS};
+# $g_em_dir = convertDirName(File::Spec->rel2abs($em_dir))->{$DIR_DOS};
+$g_em_dir = File::Spec->rel2abs($em_dir);
 ($g_sino_file = $g_em_file) =~ s/\.l64/\.s/;
 
-print "XXX ($g_em_file, $g_em_dir, $em_suffix) $g_em_dir\n";
+print "g_em_file $g_em_file, g_em_dir $g_em_dir\n";
 
 do_histogram();
 do_compute_norm();
@@ -144,7 +158,7 @@ sub do_histogram {
 
   # lmhistogram uses gm328.ini, but does not need the edited erg ratio lines (needed by scatter).
   # So we can use a generic gm328.ini file copied from CPS bin dir.
-  copy($GM328_FILE, "${g_em_dir}/gm328.ini");
+  copy("${g_cps_path}/bin/$GM328_FILE", "${g_em_dir}/gm328.ini");
   my $outfile = "${g_em_dir}/${g_sino_file}";
   
   if ((-s $outfile) and not $opts->{$OPT_FORCE}) {
@@ -170,6 +184,10 @@ sub do_compute_norm {
       print "do_compute_norm: Output file exists and not force: Skipping.  ($outfile)\n";
       return 0;
   }
+    # Note compute_norm has a hard-coded dependency on C:\CPS\bin\dwellc.n
+    # hrrt_open_2011 source code changes this to ${GMINI}/
+    # But I haven't compiled this for Windows yet.
+
   # compute_norm D:\SCS_Scans\Norm_Scan\norm.s -o D:\SCS_Scans\Norm_Scan\norm.n -span 3
   my $cmd = $PROGRAMS{$PROG_COMPUTE_NORM}{$g_platform};
   $cmd .= " ${g_em_dir}/${g_sino_file}";
@@ -206,7 +224,7 @@ sub runit {
 
   my $setvars = "cd $g_em_dir";
   $setvars   .= "; export HOME="       . $ENV{"HOME"};
-  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:$PROG_PATH";
+  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:${g_cps_path}/bin";
   $setvars   .= "; export GMINI="      . $g_em_dir;
   $setvars   .= "; export LOGFILEDIR=" . $g_em_dir;
   $cmd = "$setvars; $cmd";
