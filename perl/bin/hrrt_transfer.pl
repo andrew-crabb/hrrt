@@ -34,6 +34,7 @@ Readonly my $DATA_DIR_LOCAL => $ENV{'HOME'} . "/data/hrrt_transfer";
 Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/';
 # Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/GIBBS_DONNA/';
 Readonly our $EM_MIN_SIZE   => 100000000;
+Readonly our $EM_MIN_LOCAL  => 1000;
 Readonly our $BILLION       => 1000000000;
 Readonly our $RSYNC_HOST    => 'hrrt-image.rad.jhmi.edu';
 Readonly our $RSYNC_DIR     => '/data/recon';
@@ -44,12 +45,12 @@ Readonly our $FRAME_DEFINITION => 'Frame definition';
 Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
 
 Readonly our %FRAMING => (
-  30 => [ '300*6', ],
-  40 => [ '15*4,30*4,60*3,120*2,240*5,300*2', ],
-  60 => [ '15*4,30*4,60*3,120*2,240*5,300*6', ],
-  70 => [ '15*4,30*8,60*9,180*2,300*10', ],
-  80 => [ '30*6,60*7,120*5,300*12', ],
-  90 => [ '15*4,30*4,60*3,120*2,240*5,300*12', ]
+  30 => [ '*', '300*6', ],
+  40 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*2', ],
+  60 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*6', ],
+  70 => [ '*', '15*4,30*8,60*9,180*2,300*10', ],
+  80 => [ '*', '30*6,60*7,120*5,300*12', ],
+  90 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*12', ]
 );
 
 # Globals
@@ -191,7 +192,7 @@ sub all_files_subj {
 
   unless (( $File::Find::dir =~ /$dir_exclude/ ) or -d) {
     if (/$file_include/) {
-      print "Found: $File::Find::name\n";
+      # print "Found: $File::Find::name\n";
       if ( my $det = hrrt_filename_det($_) ) {
 	push( @{ $all_files_subj{$File::Find::dir} }, $det );
       } else {
@@ -309,11 +310,12 @@ sub make_xfer_files {
 sub make_scans_by_date {
   # Each EM.l64 file is a scan, if above minimum size.
   my %scans_by_date = ();
+  my $min_size = ( $opts->{$OPT_LOCAL} ) ? $EM_MIN_LOCAL : $EM_MIN_SIZE;
   foreach my $subj_dir ( sort keys %all_files_subj ) {
     next if ( $subj_dir =~ /Transmission/ );
     foreach my $subj_file ( @{ $all_files_subj{$subj_dir} } ) {
       my $date = $subj_file->{'date'}->{'hrrtdir'};
-      if ( $subj_file->{'size'} > $EM_MIN_SIZE ) {
+      if ( $subj_file->{'size'} > $min_size ) {
         $scans_by_date{$date}{'EM'} = $subj_file;
         my $tx_file_recs = $all_files_subj{"${subj_dir}/Transmission"};
         foreach my $tx_file_rec ( @{$tx_file_recs} ) {
@@ -341,7 +343,7 @@ sub make_blank_scans_by_date {
 sub blank_scans_by_date {
   my $file_include = qq{TX\.s\$};
   if (/$file_include/) {
-    print "Blank Found: $File::Find::name\n";
+    # print "Blank Found: $File::Find::name\n";
     if ( my $det = hrrt_filename_det($_) ) {
       $blank_scans_by_date{$det->{'date'}->{'hrrtdir'}} = $det;
     } else {
@@ -417,7 +419,7 @@ sub select_scan {
   if ( scalar(@tx_times) == 1 ) {
     $tx_time = $tx_scan_recs->{ $tx_times[0] }->{'date'}->{'hrrtdir'};
   } elsif ( scalar(@tx_times) > 1 ) {
-    print Dumper(@tx_times);
+    # print Dumper(@tx_times);
     $tx_time = prompt 'Select Transmission Scan for EM scan $em_time', -verb,
         -menu => \@tx_times,
         '>';
