@@ -12,6 +12,8 @@ use Carp;
 use Cwd qw(abs_path);
 use File::Basename;
 use File::Copy;
+use File::Spec;
+use File::Spec::Win32;
 use FindBin;
 use Readonly;
 use Sys::Hostname;
@@ -138,10 +140,11 @@ unless (file_exists($em_file)) {
 
 my ($em_dir, $em_suffix);
 ($g_em_file, $em_dir, $em_suffix) = fileparse($em_file);
-$g_em_dir = convertDirName(File::Spec->rel2abs($em_dir))->{$DIR_DOS};
+# $g_em_dir = convertDirName(File::Spec->rel2abs($em_dir))->{$DIR_DOS};
+$g_em_dir = File::Spec->rel2abs($em_dir);
 ($g_sino_file = $g_em_file) =~ s/\.l64/\.s/;
 
-print "XXX ($g_em_file, $g_em_dir, $em_suffix) $g_em_dir\n";
+print "g_em_file $g_em_file, g_em_dir $g_em_dir\n";
 
 do_histogram();
 do_compute_norm();
