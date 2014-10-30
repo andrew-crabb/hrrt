@@ -45,6 +45,7 @@ Readonly our $FRAME_DEFINITION => 'Frame definition';
 Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
 
 Readonly our %FRAMING => (
+  3  => [ '*' ],
   30 => [ '*', '300*6', ],
   40 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*2', ],
   60 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*6', ],

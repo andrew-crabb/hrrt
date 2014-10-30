@@ -1,10 +1,10 @@
 % Make sure all recordings are by the wall clock, since computer clock can
 % be off.
 % New phantom placement: Vertical - 230; Horizontal 570; facing backwards
-activity=284.0  %uCi
-residual=0.04 %uCi
-time_activity_to_scan=40.0 %min
-time_activity_to_residual=5.0 %min
+activity=279.0  %uCi
+residual=0.00 %uCi
+time_activity_to_scan=26.05 %min
+time_activity_to_residual=4.0 %min
 
 half_life=109.8 %min for F-18
 volume=6510.0 %cc %Used to be 5060.0
