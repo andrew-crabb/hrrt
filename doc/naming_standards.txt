@@ -1,16 +1,13 @@
-HRRT Naming Standards
-====
+# HRRT Naming Standards
 
-Platforms
-====
+## Platforms
 'windows', 'linux', 'mac'
 
-Architectures
-====
+## Architectures
 '32', '64'
 
-Programs
-====
+## Programs
 histogram
 compute_norm
 norm_process
+calc_ratio

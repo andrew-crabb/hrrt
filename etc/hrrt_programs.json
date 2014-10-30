@@ -1,0 +1,38 @@
+{
+    "histogram" {
+	"windows" {
+	    "32" : "lmhistogram.exe",
+	    "64" : "lmhistogram.exe"
+	},
+	"linux" {
+	    "64" : "lmhistogram"
+	}
+    },
+    "compute_norm" {
+	"windows" {
+	    "32" : "compute_norm.exe",
+	    "64" : "compute_norm.exe"
+	},
+	"linux" {
+	    "64" : "compute_norm"
+	}
+    },
+    "norm_process" {
+	"windows" {
+	    "32" : "norm_process.exe",
+	    "64" : "norm_process.exe"
+	},
+	"linux" {
+	    "64" : "norm_process"
+	}
+    },
+    "calc_ratio" {
+	"windows" {
+	    "32" : "calcRingRoiRatio.exe",
+	    "64" : "calcRingRoiRatio.exe"
+	},
+	"linux" {
+	    "64" : "calcRingRoiRatio"
+	}
+    }
+);
