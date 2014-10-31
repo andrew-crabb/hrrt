@@ -1,0 +1,209 @@
+<?xml version="1.0" standalone="yes" ?>
+<VinciXMLXchange>
+	<Version>Vinci 2.02.0, November 16 2005</Version>
+	<!-- Optional information on this Vinci Project -->
+	<ProjectInfo>
+		<TimeStamp>Feb 24 2009 11:25:24</TimeStamp>
+		<OriginalFilename>/Users/ahc/CPS/bin/CrystalMap.vpx</OriginalFilename>
+		<StartSession>Feb 24 2009 11:25:15</StartSession>
+		<User>HRRT</User>
+		<Host>HRRT-JHU</Host>
+		<PrimaryScreenSize>0 0 1280 996</PrimaryScreenSize>
+		<ProjectDir>/Users/ahc/data/hrrt_test/</ProjectDir>
+		<TotalDataToRead_Bytes>121344</TotalDataToRead_Bytes>
+		<NFilesInsideProjectDir>1</NFilesInsideProjectDir>
+		<NFilesOutsideProjectDir>0</NFilesOutsideProjectDir>
+		<!-- required files, path names relative to ProjectDir -->
+		<File>CrystalMap_Davis.v</File>
+	</ProjectInfo>
+	<!-- Optional Toolbar settings -->
+	<ParameterSection>
+		<Target>::</Target>
+		<ToolBarState>
+			<!-- Alignment can be: none, left, right, top, bottom -->
+			<Alignment>left</Alignment>
+		</ToolBarState>
+	</ParameterSection>
+	<!-- Optinal Settings from "Extras" menu -->
+	<ParameterSection>
+		<Target>::</Target>
+		<Options>
+			<OPTIONS_FILE_DLG_EX>On</OPTIONS_FILE_DLG_EX>
+			<OPTIONS_FILE_DLG_EX_WIDTH>750</OPTIONS_FILE_DLG_EX_WIDTH>
+			<OPTIONS_FILE_DLG_EX_HEIGHT>500</OPTIONS_FILE_DLG_EX_HEIGHT>
+			<MAXLOADHISTORYENTRIES>20</MAXLOADHISTORYENTRIES>
+			<MAXLOADPRESETSENTRIES>20</MAXLOADPRESETSENTRIES>
+			<OPTIONS_NUM_ORTHODISPLAYS>8</OPTIONS_NUM_ORTHODISPLAYS>
+			<HANDLESIZE>7</HANDLESIZE>
+			<HITTESTRANGE>4</HITTESTRANGE>
+			<OPTIONS_ANNOTATION_DEFAULT_FONT>Verdana</OPTIONS_ANNOTATION_DEFAULT_FONT>
+			<OPTIONS_ANNOTATION_DEFAULT_FONTBKMODE>2</OPTIONS_ANNOTATION_DEFAULT_FONTBKMODE>
+			<OPTIONS_ANNOTATION_DEFAULT_FONTBKCOLOR>0</OPTIONS_ANNOTATION_DEFAULT_FONTBKCOLOR>
+			<OPTIONS_SAVE_MOUSEMODE>On</OPTIONS_SAVE_MOUSEMODE>
+			<OPTIONS_REJECT_INTERSECTIONS>On</OPTIONS_REJECT_INTERSECTIONS>
+			<MAXSAVEHISTORYENTRIES>20</MAXSAVEHISTORYENTRIES>
+			<MAXSAVEPRESETSENTRIES>20</MAXSAVEPRESETSENTRIES>
+		</Options>
+	</ParameterSection>
+	<!-- Create Vinci Log -->
+	<ParameterSection>
+		<Target>::</Target>
+		<New>
+			<Unique>
+				<Type>LogView</Type>
+			</Unique>
+			<Create>
+				<SetWindowPos>10 10 700 700</SetWindowPos>
+			</Create>
+			<Action>
+				<SetWindowPos>10 10 700 700</SetWindowPos>
+			</Action>
+		</New>
+	</ParameterSection>
+	<!-- Create project -->
+	<ParameterSection>
+		<Target>::</Target>
+		<New>
+			<Target>
+				<Type>Project</Type>
+				<Path><GetProjectPath/></Path>
+			</Target>
+		</New>
+	</ParameterSection>
+	<!-- generate loadview -->
+	<ParameterSection>
+		<Target>::</Target>
+		<Use>
+			<Current>
+				<Type>Project</Type>
+			</Current>
+			<Action>
+				<New>
+					<Unique>
+						<Type>LoadView</Type>
+					</Unique>
+				</New>
+			</Action>
+		</Use>
+	</ParameterSection>
+	<!-- generate images -->
+	<ParameterSection>
+		<Target>::</Target>
+		<Use>
+			<Current>
+				<Type>Project</Type>
+			</Current>
+			<Action>
+				<New>
+					<Target>
+						<Type>Image</Type>
+						<Name>Image [0]</Name>
+					</Target>
+					<Create>
+						<File>CrystalMap_Davis.v</File>
+						<ImageID>0</ImageID>
+						<TimeStamp>Feb 24 2009 11:25:15</TimeStamp>
+						<PluginTitle>ECAT 7 Image</PluginTitle>
+						<PluginVersion>0.63</PluginVersion>
+						<PluginVersionDate>Apr 13 2005</PluginVersionDate>
+						<PluginSettings>
+							<FrameMode>Single</FrameMode>
+							<StartFrame>1</StartFrame>
+							<EndFrame>8</EndFrame>
+							<BedMode>All</BedMode>
+							<StartBed>0</StartBed>
+							<EndBed>0</EndBed>
+						</PluginSettings>
+						<ImageSettings>
+							<Reslice>
+								<RotAngles>0 0 0</RotAngles>
+								<RotCenter>0 0 0</RotCenter>
+								<Offset>0 0 0</Offset>
+								<SmplDim>256 256 256</SmplDim>
+								<SmplPixelSize>1 1 1</SmplPixelSize>
+								<Pos>128 128 128</Pos>
+							</Reslice>
+							<ColorSettings>
+								<CTableName>Gray</CTableName>
+								<StretchBottom>0</StretchBottom>
+								<StretchTop>23</StretchTop>
+								<Gamma>1.000000</Gamma>
+								<DisplayMin>100.000000</DisplayMin>
+								<DisplayMax>1000.000000</DisplayMax>
+							</ColorSettings>
+							<Validation>
+								<MD5_ECAT7MainHeader_LE>92941CC241D355A962446062A3649643</MD5_ECAT7MainHeader_LE>
+								<MD5_ECAT7ImageHeader_LE>D5A5D32E1A4167F7D80CE5C9D695C70D</MD5_ECAT7ImageHeader_LE>
+								<MD5_ECAT7Image_raw>21D50A6AC8DADCBB8DF5F61F641FB1BA</MD5_ECAT7Image_raw>
+							</Validation>
+							<OtherSettings>
+								<SetLocked>Off</SetLocked>
+							</OtherSettings>
+						</ImageSettings>
+					</Create>
+				</New>
+			</Action>
+		</Use>
+	</ParameterSection>
+	<!-- generate PlanesViews -->
+	<ParameterSection>
+		<Target>::</Target>
+		<Use>
+			<Current>
+				<Type>Project</Type>
+			</Current>
+			<Action>
+				<New>
+					<Target>
+						<Type>PlanesView</Type>
+						<Name>PlanesView</Name>
+					</Target>
+					<Create>
+						<SetWindowPos>88 0 1164 902</SetWindowPos>
+						<ImgSlotArray>
+							<Slot>
+								<PlaneOffset>0</PlaneOffset>
+								<Show>On</Show>
+								<SetPixelSize>2.4375000999999998 2.4375000999999998 2.4375000999999998</SetPixelSize>
+								<SetDimension>72 104 8</SetDimension>
+							</Slot>
+							<Slot/>
+							<Slot/>
+							<Slot/>
+							<Slot/>
+							<Slot/>
+							<Slot/>
+							<Slot/>
+						</ImgSlotArray>
+						<ShowAlternating>On</ShowAlternating>
+						<ShowPlaneNumbers>On</ShowPlaneNumbers>
+						<SetPlaneTextColor>0x00ffffff</SetPlaneTextColor>
+						<ShowPlaneShadows>Off</ShowPlaneShadows>
+						<ShowCrossMarker>Off</ShowCrossMarker>
+						<ShowTopDown>On</ShowTopDown>
+						<SetSampling3D>Original Slices</SetSampling3D>
+						<SetGap>0 0x00000000</SetGap>
+						<SetOrthoPart>TRANSAXIAL</SetOrthoPart>
+						<SetDisplays>4 2</SetDisplays>
+						<SetDimension>72 104 8</SetDimension>
+						<SetPixelSizeScale>1</SetPixelSizeScale>
+						<SetRefByMethod>0</SetRefByMethod>
+						<SetIZoom>3</SetIZoom>
+					</Create>
+					<Action>
+						<SetWindowPos>88 0 1164 902</SetWindowPos>
+					</Action>
+				</New>
+			</Action>
+		</Use>
+	</ParameterSection>
+	<ParameterSection>
+		<Target>::</Target>
+		<Del>
+			<Current>
+				<Type>LoadView</Type>
+			</Current>
+		</Del>
+	</ParameterSection>
+	<!-- optional MD5 signature to verify validity of this file -->
+</VinciXMLXchange>

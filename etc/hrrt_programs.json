@@ -1,38 +1,22 @@
-{
-    "histogram" {
-	"windows" {
-	    "32" : "lmhistogram.exe",
-	    "64" : "lmhistogram.exe"
-	},
-	"linux" {
-	    "64" : "lmhistogram"
-	}
-    },
-    "compute_norm" {
-	"windows" {
-	    "32" : "compute_norm.exe",
-	    "64" : "compute_norm.exe"
-	},
-	"linux" {
-	    "64" : "compute_norm"
-	}
-    },
-    "norm_process" {
-	"windows" {
-	    "32" : "norm_process.exe",
-	    "64" : "norm_process.exe"
-	},
-	"linux" {
-	    "64" : "norm_process"
-	}
-    },
-    "calc_ratio" {
-	"windows" {
-	    "32" : "calcRingRoiRatio.exe",
-	    "64" : "calcRingRoiRatio.exe"
-	},
-	"linux" {
-	    "64" : "calcRingRoiRatio"
-	}
-    }
-);
+ {
+     "histogram" : {
+	 "windows" : "lmhistogram.exe",
+	 "linux"   : "lmhistogram_mp",
+	 "mac"     : "lmhistogram"
+     },
+     "compute_norm" : {
+	 "windows" : "compute_norm.exe",
+	 "linux"   : "compute_norm",
+	 "mac"     : "compute_norm"
+     },
+     "norm_process" : {
+	 "windows" : "norm_process.exe",
+	 "linux"   : "norm_process",
+	 "mac"     : "norm_process"
+     },
+     "calc_ratio" : {
+	 "windows" : "calcRingRoiRatio.exe",
+	 "linux"   : "calcRingRoiRatio",
+	 "mac"     : "calcRingRoiRatio"
+     }
+ }

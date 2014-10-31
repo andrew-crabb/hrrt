@@ -10,6 +10,7 @@ no strict 'refs';
 
 use Carp;
 use Cwd qw(abs_path);
+use Data::Dumper;
 use File::Basename;
 use File::Copy;
 use File::Spec;
@@ -22,6 +23,7 @@ use lib abs_path("$FindBin::Bin/../lib");
 use lib abs_path("$FindBin::Bin/../../../perl/lib");
 
 use FileUtilities;
+use HRRT;
 use HRRT_Utilities;
 use Opts;
 use Utilities_new;
@@ -32,9 +34,6 @@ Readonly my $PROG_LMHISTOGRAM  => "lmhistogram";
 Readonly my $PROG_COMPUTE_NORM => "compute_norm";
 Readonly my $PROG_NORM_PROCESS => "norm_process";
 Readonly my $PROG_CALC_RATIO   => "calc_ratio";
-
-# Path constants
-# Readonly my $PROG_PATH         => "/c/CPS/bin";
 
 # File constants
 Readonly my $LUT_FILE          => 'hrrt_rebinner.lut';
@@ -73,7 +72,7 @@ our %SUBROUTINES = (
 my %PROGRAMS = (
   $PROG_LMHISTOGRAM => {
     $Utility::PLAT_WIN  => "lmhistogram.exe",
-    $Utility::PLAT_LNX  => "lmhistogram",
+    $Utility::PLAT_LNX  => "lmhistogram_mp",
   },
   $PROG_COMPUTE_NORM => {
     $Utility::PLAT_WIN  => "compute_norm.exe",
@@ -89,9 +88,21 @@ my %PROGRAMS = (
   }
 );
 
+# Read config.
+our $hrrt_programs  = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
+our $hrrt_constants = HRRT::read_hrrt_config($HRRT::HRRT_CONSTANTS_JSON);
+print Dumper($hrrt_programs);
+print Dumper($hrrt_constants);
+
 # Paths
 my $this_path = $FindBin::Bin;
 my $platform = Utility::platform();
+
+my $prog_histogram = $hrrt_programs->{$PROG_HISTOGRAM}->{$platform};
+print "hrrt_programs->{$PROG_HISTOGRAM}->{$platform} = $prog_histogram\n";
+
+exit;
+
 # *** HACK.  MAKE THIS A UTILITY FUNCTION ***
 my $arch = ($platform eq $Utility::PLAT_WIN) ? 'win_64' : 'linux_64';
 our $g_cps_path = abs_path("$this_path/../../../arch/${arch}/cps");
