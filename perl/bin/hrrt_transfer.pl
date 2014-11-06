@@ -248,7 +248,7 @@ sub transfer_files {
   foreach my $filetype ( @FILE_TYPES ) {
     if (exists($xfer_files{$filetype})) {
     my $filename = $xfer_files{$filetype};
-    print Dumper($filename);
+    # print Dumper($filename);
     my @stat = stat($filename);
     if (scalar(@stat)) {
       $totsize += $stat[7];
@@ -295,14 +295,10 @@ sub transfer_file {
   # my $destfile = "${RSYNC_HOST}:${dirname}/${std_name}";
   my $destfile = "${dirname}/${std_name}";
   print "transfer_file:\n$filename\n$destfile\n";
-  # my %opts = (
-  #   'chmod'   => '644',
-  #     );
   my %rsopts = (
     'times'   => 1,
     'src'     => $filename,
     'dest'    => $destfile,
-    # 'chmod'   => '644',
     'dry-run' => ( $opts->{$Opts::OPT_DUMMY} ) ? 1 : 0,
     'modify-window' => ( $opts->{$OPT_WINDOW} // 1 ),
   );
@@ -311,7 +307,7 @@ sub transfer_file {
   my $rsync = File::Rsync->new();
   $rsync->defopts( 'verbose' => 1 );
   my $ret   = $rsync->exec( \%rsopts );
-
+  chmod(0644, $destfile);
 }
 
 # Return hash of TX details for this EM.
