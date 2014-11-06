@@ -1,22 +1,27 @@
- {
-     "histogram" : {
-	 "windows" : "lmhistogram.exe",
-	 "linux"   : "lmhistogram_mp",
-	 "mac"     : "lmhistogram"
+{
+     "prog_calc_calib" : {
+	 "linux"   : "mkHRRTCalHdr",
+	 "mac"     : "mkHRRTCalHdr",
+	 "win"     : "mkHRRTCalHdr.exe"
      },
-     "compute_norm" : {
-	 "windows" : "compute_norm.exe",
+     "prog_calc_ratio" : {
+	 "win"     : "calcRingRoiRatio.exe",
+	 "linux"   : "calcRingRoiRatio",
+	 "mac"     : "calcRingRoiRatio"
+     },
+     "prog_compute_norm" : {
+	 "win"     : "compute_norm.exe",
 	 "linux"   : "compute_norm",
 	 "mac"     : "compute_norm"
      },
-     "norm_process" : {
-	 "windows" : "norm_process.exe",
+     "prog_histogram" : {
+	 "win"     : "lmhistogram.exe",
+	 "linux"   : "lmhistogram_mp",
+	 "mac"     : "lmhistogram"
+     },
+     "prog_norm_process" : {
+	 "win"     : "norm_process.exe",
 	 "linux"   : "norm_process",
 	 "mac"     : "norm_process"
-     },
-     "calc_ratio" : {
-	 "windows" : "calcRingRoiRatio.exe",
-	 "linux"   : "calcRingRoiRatio",
-	 "mac"     : "calcRingRoiRatio"
      }
  }

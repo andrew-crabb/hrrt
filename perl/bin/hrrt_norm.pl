@@ -13,8 +13,8 @@ use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
+use File::Path;
 use File::Spec;
-use File::Spec::Win32;
 use FindBin;
 use Readonly;
 use Sys::Hostname;
@@ -29,15 +29,6 @@ use Opts;
 use Utilities_new;
 use Utility;
 
-# Program constants
-Readonly my $PROG_LMHISTOGRAM  => "lmhistogram";
-Readonly my $PROG_COMPUTE_NORM => "compute_norm";
-Readonly my $PROG_NORM_PROCESS => "norm_process";
-Readonly my $PROG_CALC_RATIO   => "calc_ratio";
-
-# File constants
-Readonly my $LUT_FILE          => 'hrrt_rebinner.lut';
-Readonly my $GM328_FILE        => 'GM328.INI';
 # Numeric constants
 Readonly my $SPAN3             => 3;
 Readonly my $SPAN9             => 9;
@@ -69,45 +60,11 @@ our %SUBROUTINES = (
   3  => 'do_norm_process',
 );
 
-my %PROGRAMS = (
-  $PROG_LMHISTOGRAM => {
-    $Utility::PLAT_WIN  => "lmhistogram.exe",
-    $Utility::PLAT_LNX  => "lmhistogram_mp",
-  },
-  $PROG_COMPUTE_NORM => {
-    $Utility::PLAT_WIN  => "compute_norm.exe",
-    $Utility::PLAT_LNX  => "compute_norm",
-  },
-  $PROG_NORM_PROCESS => {
-    $Utility::PLAT_WIN  => "norm_process_x64.exe",
-    $Utility::PLAT_LNX  => "norm_process",
-  },
-  $PROG_CALC_RATIO =>  {
-    $Utility::PLAT_WIN  => "calcRingRoiRatio.exe",
-    $Utility::PLAT_LNX  => "calcRingRoiRatio",
-  }
-);
-
 # Read config.
-our $hrrt_programs  = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
-our $hrrt_constants = HRRT::read_hrrt_config($HRRT::HRRT_CONSTANTS_JSON);
-print Dumper($hrrt_programs);
-print Dumper($hrrt_constants);
-
-# Paths
-my $this_path = $FindBin::Bin;
-my $platform = Utility::platform();
-
-my $prog_histogram = $hrrt_programs->{$PROG_HISTOGRAM}->{$platform};
-print "hrrt_programs->{$PROG_HISTOGRAM}->{$platform} = $prog_histogram\n";
-
-exit;
-
-# *** HACK.  MAKE THIS A UTILITY FUNCTION ***
-my $arch = ($platform eq $Utility::PLAT_WIN) ? 'win_64' : 'linux_64';
-our $g_cps_path = abs_path("$this_path/../../../arch/${arch}/cps");
-print "g_cps_path $g_cps_path\n";
-
+our $hrrt_progs = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
+our $hrrt_files = HRRT::read_hrrt_config($HRRT::HRRT_FILES_JSON);
+print Dumper($hrrt_progs);
+print Dumper($hrrt_files);
 
 # Globals
 our $g_em_dir    = undef;
@@ -115,6 +72,7 @@ our $g_em_file   = undef;
 our $g_sino_file = undef;
 our $g_logfile = "norm_process_" . convertDates(time())->{$DATES_HRRTDIR};
 our $g_platform = Utility::platform();
+our $g_bin_dir = hrrt_path() . '/bin/' . $g_platform;
 
 # Opts
 my $OPT_EMFILE     = 'e';
@@ -126,13 +84,6 @@ our %allopts = (
     $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
     $Opts::OPTS_TEXT => 'Emission (l64) file',
   },
-  # $OPT_RBFILE => {
-  #   $Opts::OPTS_NAME => 'rebin',
-  #   $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
-  #   $Opts::OPTS_TEXT => 'Rebinner (lut) file',
-  #   $Opts::OPTS_DFLT => $LUT_FILE,
-  #   $Opts::OPTS_OPTN => 1,
-  # },
 );
 
 our $opts = process_opts(\%allopts);
@@ -142,34 +93,38 @@ if ($opts->{$Opts::OPT_HELP}) {
 }
 
 my $em_file = $opts->{$OPT_EMFILE};
-my $rb_file = $LUT_FILE;
-# unless (file_exists($em_file) and file_exists ($rb_file)) {
-unless (file_exists($em_file)) {
+unless ($em_file and file_exists($em_file)) {
   usage(\%allopts);
   exit;
 }
 
 my ($em_dir, $em_suffix);
 ($g_em_file, $em_dir, $em_suffix) = fileparse($em_file);
-# $g_em_dir = convertDirName(File::Spec->rel2abs($em_dir))->{$DIR_DOS};
 $g_em_dir = File::Spec->rel2abs($em_dir);
-($g_sino_file = $g_em_file) =~ s/\.l64/\.s/;
+# Ugly hack for Windows systems.  No Perl module seems to do this.
+$g_em_dir = convertDirName($g_em_dir)->{$DIR_DOS} if ($g_platform eq $PLAT_WIN);
 
-print "g_em_file $g_em_file, g_em_dir $g_em_dir\n";
+($g_sino_file = $g_em_file) =~ s/\.l64/\.s/;
+print "g_em_file $g_em_file, g_em_dir $g_em_dir, g_bin_dir $g_bin_dir\n";
 
 do_histogram();
+
 do_compute_norm();
 do_norm_process();
+exit;
 # do_calc_ratio();
 exit;
 
 sub do_histogram {
   # lmhistogram %1 -o D:\SCS_Scans\Norm_Scan\norm.s -span 3 -notimetag
-  # Note: lmhistogram needs paths like e:/recon/NORM/NORM_SCAN_EM.s, not /e/recon/NORM/NORM_SCAN_EM.s
+  # Note: lmhistogram needs e:/recon/NORM/NORM_SCAN_EM.s, not /e/recon/NORM/NORM_SCAN_EM.s
 
-  # lmhistogram uses gm328.ini, but does not need the edited erg ratio lines (needed by scatter).
+  # lmhistogram uses gm328.ini, but not the edited erg ratio lines (needed by scatter).
   # So we can use a generic gm328.ini file copied from CPS bin dir.
-  copy("${g_cps_path}/bin/$GM328_FILE", "${g_em_dir}/gm328.ini");
+  my $gm_src_file = hrrt_path() . '/etc/' . $hrrt_files->{$FILE_GM328};
+  my $gm_dst_file = $g_em_dir   . '/'     . $hrrt_files->{$FILE_GM328};
+  copy($gm_src_file, $gm_dst_file);
+
   my $outfile = "${g_em_dir}/${g_sino_file}";
   
   if ((-s $outfile) and not $opts->{$OPT_FORCE}) {
@@ -177,12 +132,16 @@ sub do_histogram {
       return 0;
   }
   
-  my $cmd = $PROGRAMS{$PROG_LMHISTOGRAM}{$g_platform};
+  my $cmd = $g_bin_dir . '/' . $hrrt_progs->{$PROG_HISTOGRAM}->{$g_platform};
   $cmd .= " ${g_em_dir}/${g_em_file}";
   $cmd .= " -o $outfile";
   $cmd .= " -span 3";
   $cmd .= " -notimetag";
   $cmd .= " -l ${g_em_dir}/lmhistogram.log";
+  if ($g_platform eq $PLAT_LNX) {
+    my $lut_file = hrrt_path() . '/etc/' . $hrrt_files->{$FILE_LUT};
+    $cmd .= " -r " . $lut_file;
+  }
 
   my $ret = runit($cmd, "do_rebin");
   return $ret;
@@ -195,12 +154,23 @@ sub do_compute_norm {
       print "do_compute_norm: Output file exists and not force: Skipping.  ($outfile)\n";
       return 0;
   }
-    # Note compute_norm has a hard-coded dependency on C:\CPS\bin\dwellc.n
-    # hrrt_open_2011 source code changes this to ${GMINI}/
-    # But I haven't compiled this for Windows yet.
+  # Horrible hack to accommodate compute_norm.
+  # Note compute_norm windows has a hard-coded dependency on C:\CPS\bin\dwellc.n
+  # hrrt_open_2011 source code changes this to ${GMINI}/
+  # But I haven't compiled this for Windows yet.
+
+  my $dwellc_dst_dir = $g_em_dir;
+  if ($g_platform eq $PLAT_WIN) {
+    $dwellc_dst_dir = $hrrt_files->{$PATH_WIN_CPSBIN};
+    File::Path::make_path($dwellc_dst_dir);
+  }
+    
+  my $dwellc_src_file = hrrt_path()     . '/etc/' . $hrrt_files->{$FILE_DWELLC};
+  my $dwellc_dst_file = $dwellc_dst_dir . '/'     . $hrrt_files->{$FILE_DWELLC};
+  copy($dwellc_src_file, $dwellc_dst_file);
 
   # compute_norm D:\SCS_Scans\Norm_Scan\norm.s -o D:\SCS_Scans\Norm_Scan\norm.n -span 3
-  my $cmd = $PROGRAMS{$PROG_COMPUTE_NORM}{$g_platform};
+  my $cmd = $g_bin_dir . '/' . $hrrt_progs->{$PROG_COMPUTE_NORM}->{$g_platform};
   $cmd .= " ${g_em_dir}/${g_sino_file}";
   $cmd .= " -o $outfile";
   $cmd .= " -span 3";
@@ -212,7 +182,6 @@ sub do_compute_norm {
 sub do_norm_process {
   # norm_process %1 -s 3,67 -o D:\SCS_Scans\Norm_Scan\norm_CBN_span3.n
   # norm_process %1 -s 9,67 -o D:\SCS_Scans\Norm_Scan\norm_CBN_span9.n
-  my $cmd = undef;
   my $ret = 0;
   foreach my $spanno ($SPAN3, $SPAN9) {
     my $outfile = "${g_em_dir}/norm_CBN_span${spanno}.n";
@@ -220,10 +189,14 @@ sub do_norm_process {
       print "do_norm_process span $spanno: Output file exists and not force: Skipping.  ($outfile)\n";
       return;
     }
-    $cmd = $PROGRAMS{$PROG_NORM_PROCESS}{$g_platform};
+    my $cmd = $g_bin_dir . '/' . $hrrt_progs->{$PROG_NORM_PROCESS}->{$g_platform};
     $cmd .= " ${g_em_dir}/${g_em_file}";
     $cmd .= " -s ${spanno},67";
     $cmd .= " -o $outfile";
+  if ($g_platform eq $PLAT_LNX) {
+    my $lut_file = hrrt_path() . '/etc/' . $hrrt_files->{$FILE_LUT};
+    $cmd .= " -r " . $lut_file;
+  }
     $ret += runit($cmd, "do_norm_process span $spanno");
   }
 
@@ -235,7 +208,7 @@ sub runit {
 
   my $setvars = "cd $g_em_dir";
   $setvars   .= "; export HOME="       . $ENV{"HOME"};
-  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:${g_cps_path}/bin";
+  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:${g_bin_dir}";
   $setvars   .= "; export GMINI="      . $g_em_dir;
   $setvars   .= "; export LOGFILEDIR=" . $g_em_dir;
   $cmd = "$setvars; $cmd";

@@ -3,77 +3,92 @@
 # calibration_process.pl
 # Perform HRRT calibration processing, after norm_process.pl creates new norm.
 
+# Calculate calibration factor
+# Calibration factor file:
+# date     dose_uci dose_time residual_uci residual_time emission_time
+# 20140915 206.0    112500    0.23         113200        115200
+
 use warnings;
 use strict;
 no strict 'refs';
 
-use FindBin;
-use lib "$FindBin::Bin/../lib";
-use FileUtilities;
-use Utilities_new;
-use Utility;
-use HRRT_Utilities;
-use HRRTRecon;
-use Opts;
-
 use Config::Std;
+use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
 use File::Util;
+use FindBin;
 use IO::Prompter;
 use Readonly;
 use Sys::Hostname;
 
+use lib abs_path("$FindBin::Bin/../lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
+
+use FileUtilities;
+use Utilities_new;
+use Utility;
+use HRRT;
+use HRRT_Utilities;
+use HRRTRecon;
+use Opts;
+
 # String constants
 
 Readonly my $RATIO_STR        => qq{avg plane};
-Readonly my $HALFLIFE_F18     => 109.8;	    # minutes
-Readonly my $PHANTOM_VOLUME   => 6510.0;    # cc
-Readonly my $BQ_PER_UCI       => 37000;
 
 # Key constants
 
-Readonly my $PROG_SCRIPT_PATH => 'script_path';
-Readonly my $PROG_BIN_PATH    => 'bin_path';
-Readonly my $PROG_CALC_RATIO  => 'calc_ratio';
-Readonly my $PROG_CALC_CALIB  => 'calc_calib';
+# Readonly my $PROG_SCRIPT_PATH => 'script_path';
+# Readonly my $PROG_BIN_PATH    => 'bin_path';
+# Readonly my $PROG_CALC_RATIO  => 'calc_ratio';
+# Readonly my $PROG_CALC_CALIB  => 'calc_calib';
 
-my %PROGRAMS = (
-  $PROG_SCRIPT_PATH => {
-    $Utility::PLAT_WIN => '/home/ahc/BIN/perl/bin',
-    $Utility::PLAT_LNX => '/home/ahc/BIN/perl/bin',
-    $Utility::PLAT_MAC => '/Users/ahc/BIN/perl/bin',
-  },
-  $PROG_BIN_PATH => {
-    $Utility::PLAT_WIN => '/home/ahc/BIN/arch/win_64/cps/bin',
-    $Utility::PLAT_LNX => '/home/ahc/BIN/arch/linux_64/cps/bin',
-    $Utility::PLAT_MAC => '/Users/ahc/BIN/arch/mac_64/cps/bin',
-  },
-  $PROG_CALC_RATIO => {
-    $Utility::PLAT_LNX => 'calcRingRoiRatio',
-    $Utility::PLAT_MAC => 'calcRingRoiRatio',
-    $Utility::PLAT_WIN => 'calcRingRoiRatio.exe',
-  },
-  $PROG_CALC_CALIB => {
-    $Utility::PLAT_LNX => 'mkHRRTCalHdr',
-    $Utility::PLAT_MAC => 'mkHRRTCalHdr',
-    $Utility::PLAT_WIN => 'mkHRRTCalHdr.exe',
-  },
-    );
+# my %PROGRAMS = (
+#   $PROG_SCRIPT_PATH => {
+#     $Utility::PLAT_WIN => '/home/ahc/BIN/perl/bin',
+#     $Utility::PLAT_LNX => '/home/ahc/BIN/perl/bin',
+#     $Utility::PLAT_MAC => '/Users/ahc/BIN/perl/bin',
+#   },
+#   $PROG_BIN_PATH => {
+#     $Utility::PLAT_WIN => '/home/ahc/BIN/arch/win_64/cps/bin',
+#     $Utility::PLAT_LNX => '/home/ahc/BIN/arch/linux_64/cps/bin',
+#     $Utility::PLAT_MAC => '/Users/ahc/BIN/arch/mac_64/cps/bin',
+#   },
+#   $PROG_CALC_RATIO => {
+#     $Utility::PLAT_LNX => 'calcRingRoiRatio',
+#     $Utility::PLAT_MAC => 'calcRingRoiRatio',
+#     $Utility::PLAT_WIN => 'calcRingRoiRatio.exe',
+#   },
+#   $PROG_CALC_CALIB => {
+#     $Utility::PLAT_LNX => 'mkHRRTCalHdr',
+#     $Utility::PLAT_MAC => 'mkHRRTCalHdr',
+#     $Utility::PLAT_WIN => 'mkHRRTCalHdr.exe',
+#   },
+#     );
+
+# Read config.
+our $hrrt_progs  = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
+our $hrrt_consts = HRRT::read_hrrt_config($HRRT::HRRT_CONSTANTS_JSON);
+our $hrrt_files  = HRRT::read_hrrt_config($HRRT::HRRT_FILES_JSON);
+print Dumper($hrrt_progs);
+print Dumper($hrrt_consts);
+print Dumper($hrrt_files);
 
 # Globals
 
 our $g_calib_dir   = undef;
 our $g_em_l64_file = undef;
 our $g_platform = Utility::platform();
-our $g_script_dir = $PROGRAMS{$PROG_SCRIPT_PATH}{$g_platform};
+our $g_bin_dir = hrrt_path() . '/bin/' . $g_platform;
 our $g_logfile = "hrrt_calibration_" . convertDates(time())->{$DATES_HRRTDIR};
 
 # Opts
 
 my $OPT_CALIBDIR     = 'c';
 my $OPT_CONFFILE     = 'g';
+my $OPT_VALUES_FILE  = 'l';
 
 our %allopts = (
   $OPT_CALIBDIR => {
@@ -85,7 +100,15 @@ our %allopts = (
     $Opts::OPTS_NAME => 'config_file',
     $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
     $Opts::OPTS_TEXT => 'Config file',
-    $Opts::OPTS_DFLT => "$FindBin::Bin/../etc/hrrt_recon.conf",
+    $Opts::OPTS_DFLT => abs_path("$FindBin::Bin/../../../perl/etc/hrrt_recon.conf"),
+    $Opts::OPTS_OPTN => 1,
+  },
+  $OPT_VALUES_FILE => {
+    $Opts::OPTS_DFLT => '',
+    $Opts::OPTS_NAME => 'valuesfile',
+    $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
+    $Opts::OPTS_TEXT => 'Calibration values file',
+    $Opts::OPTS_DFLT => abs_path("$FindBin::Bin/../../calibration/calibration_values.txt"),
     $Opts::OPTS_OPTN => 1,
   },
     );
@@ -109,9 +132,7 @@ do_name_files();
 
 my $concentration_Bq_cc = do_activity_concentration();
 print "concentration_Bq_cc = $concentration_Bq_cc\n";
-
-do_calibration_factor($concentration_Bq_cc);
-exit;
+# Must have calib_phantom_EM.i 
 
 # Reconstruct the calibration l64 file.
 my $recon = make_recon_obj();
@@ -119,6 +140,10 @@ my $recon = make_recon_obj();
 $recon->print_study_summary();
 # First recon uses Erg Ratio from last calibration (calibration_factors.txt file)
 do_recon($recon, 0);
+
+
+do_calibration_factor($concentration_Bq_cc);
+exit;
 
 # Want roi_ratio to be close to 1.0
 # ER change of 2 gives roi_ratio change of 0.015
@@ -243,7 +268,8 @@ sub do_recon {
 sub do_calc_ratio {
   (my $em_i_file = $g_em_l64_file) =~ s/\.l64/\.i/;
   
-  my $cmd  = $PROGRAMS{$PROG_CALC_RATIO}{$g_platform};
+  # my $cmd  = $PROGRAMS{$PROG_CALC_RATIO}{$g_platform};
+  my $cmd = $hrrt_progs->{$PROG_CALC_RATIO}->{$g_platform};
   $cmd .= ' ' . $em_i_file;
   $cmd .= ' 75 175';
   
@@ -264,7 +290,9 @@ sub do_calibration_factor {
   my ($concentration_Bq_cc) = @_;
   (my $em_i_file = $g_em_l64_file) =~ s/\.l64/\.i/;
 
-  my $cmd  = $PROGRAMS{$PROG_CALC_CALIB}{$g_platform};
+  # my $cmd  = $PROGRAMS{$PROG_CALC_CALIB}{$g_platform};
+  my $cmd  = $hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform};
+  print "$cmd  = hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform}\n";
   $cmd .= " -a $concentration_Bq_cc";
   $cmd .= " -e 6.67e-6";
   $cmd .= " -p 66";
@@ -277,10 +305,9 @@ sub runit {
   my ($cmd, $capture_output) = @_;
   $capture_output //= 0;
   
-  my $bin_dir = $PROGRAMS{$PROG_BIN_PATH}{$g_platform};
   my $setvars = "cd $g_calib_dir";
   $setvars   .= "; export HOME="       . $ENV{"HOME"};
-  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:$g_script_dir:$bin_dir";
+  $setvars   .= "; export PATH="       . "/usr/bin:/usr/sbin:/bin:$g_bin_dir";
   $setvars   .= "; export GMINI="      . $g_calib_dir;
   $setvars   .= "; export LOGFILEDIR=" . $g_calib_dir;
   $cmd = "$setvars; $cmd";
@@ -345,6 +372,73 @@ sub print_conf {
 # concentration_Bq_cc=(activity_t0-residual_t0)*37E3/volume
 
 sub do_activity_concentration {
+  my $calib_values = read_values_file($opts->{$OPT_VALUES_FILE});
+  # print Dumper($calib_values);
+  my $calib_date = select_calibration_date($calib_values);
+  my $conc_bq_cc = calculate_concentration($calib_values->{$calib_date});
+  print "Concentration (Bq/cc): $conc_bq_cc\n";
+  return $conc_bq_cc
+}
+
+sub read_values_file {
+  my ($values_file) = @_;
+
+  Readonly my $FLOAT => q|(\d+\.*\d*)|;
+  Readonly my $LINE_PATTERN => 
+      q|^\s*(\d{8})|    .	# date
+      q|\s+(\d+\.*\d*)| .	# dose_uci
+      q|\s+(\d{6})|     .	# dose_time
+      q|\s+(\d+\.*\d*)| .	# residual_uci
+      q|\s+(\d{6})|     .	# residual_time
+      q|\s+(\d{6})|;	# emission_time
+
+  print "activity values file $values_file\n";
+  my %values = ();
+  my @lines = read_file($values_file);
+  foreach my $line (@lines) {
+    next if ($line =~ m{^#});
+    # print $line;
+    if ($line =~ m{$LINE_PATTERN}) {
+      # print "$1\t$2\t$3\t$4\t$5\t$6\n";
+      $values{$1} = ([$1, $2, $3, $4, $5, $6]);
+    }
+  }
+  return \%values;
+}
+
+sub calculate_concentration {
+  my ($argref) = @_;
+
+  my $halflife_f18_secs   = $hrrt_consts->{$CONST_HALFLIFE_F18} * 60;
+  my $phantom_volume = $hrrt_consts->{$CONST_PHANTOM_VOLUME};
+  my $bq_per_uci     = $hrrt_consts->{$CONST_BQ_PER_UCI};
+
+  my ($date, $dose_uci, $dose_time, $resid_uci, $resid_time, $scan_time) = @$argref;
+  my $secs_dose_to_scan  = hrmnsc_to_sec($scan_time)  - hrmnsc_to_sec($dose_time);
+  my $secs_dose_to_resid = hrmnsc_to_sec($resid_time) - hrmnsc_to_sec($dose_time);
+  my $dose_t0  = $dose_uci  * 2 ** (-$secs_dose_to_scan / $halflife_f18_secs);
+  my $resid_t0 = $resid_uci * 2 ** (-($secs_dose_to_scan - $secs_dose_to_resid) / $halflife_f18_secs);
+  my $conc_bq_cc = ($dose_t0 - $resid_t0) * $bq_per_uci / $phantom_volume;
+  my $concentration = sprintf("%6.2f", $conc_bq_cc);
+  return $concentration;
+}
+
+sub select_calibration_date {
+  my ($calib_values) = @_;
+
+  my %calib_values = %$calib_values;
+  my @dates = sort keys %calib_values;
+  my $calibdate = prompt(
+    'Select Calibration Date:',
+    -verb,
+    -menu => \@dates,
+    '>'
+      );
+  print "select_calibration_date(): returning $calibdate\n";
+  return $calibdate;
+}
+
+sub do_activity_concentration_old {
   my $dose_val   = prompt -number, 'Dose Amount (uCi): ';
   my $resid_val  = prompt -number, 'Residual Amount (uCi): ';
   my $dose_time  = prompt -number, 'Dose Time HHMM: ';
@@ -356,11 +450,14 @@ sub do_activity_concentration {
   my $mins_to_scan  = hrmn_to_min($scan_time)  - hrmn_to_min($dose_time);
 
   print "mins_to_resid $mins_to_resid, mins_to_scan $mins_to_scan\n";
-  my $scan_halflives = $mins_to_scan / $HALFLIFE_F18;
-  my $resid_halflives = ($mins_to_scan - $mins_to_resid) / $HALFLIFE_F18;
+  my $halflife_f18   = $hrrt_consts->{$CONST_HALFLIFE_F18};
+  my $phantom_volume = $hrrt_consts->{$CONST_PHANTOM_VOLUME};
+  my $bq_per_uci     = $hrrt_consts->{$CONST_BQ_PER_UCI};
+  my $scan_halflives = $mins_to_scan / $halflife_f18;
+  my $resid_halflives = ($mins_to_scan - $mins_to_resid) / $halflife_f18;
   my $dose_t0  = $dose_val  * 2 ** (-$scan_halflives);
   my $resid_t0 = $resid_val * 2 ** (-$resid_halflives);
-  my $concentration_Bq_cc = ($dose_t0 - $resid_t0) * $BQ_PER_UCI / $PHANTOM_VOLUME;
+  my $concentration_Bq_cc = ($dose_t0 - $resid_t0) * $bq_per_uci / $phantom_volume;
   return $concentration_Bq_cc;
 }
 
@@ -374,4 +471,14 @@ sub hrmn_to_min {
     $min = substr($hrmn, 0, 2) * 60 + substr($hrmn, 2, 2);
   }
   return $min;
+}
+
+sub hrmnsc_to_sec {
+  my ($timestr) = @_;
+
+  my $hr = substr($timestr, 0, 2);
+  my $mn = substr($timestr, 2, 2);
+  my $sc = substr($timestr, 4, 2);
+  my $secs = $hr * 3600 + $mn * 60 + $sc;
+  return $secs;
 }
