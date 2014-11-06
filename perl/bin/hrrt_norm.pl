@@ -73,7 +73,7 @@ our %SUBROUTINES = (
 my %PROGRAMS = (
   $PROG_LMHISTOGRAM => {
     $Utility::PLAT_WIN  => "lmhistogram.exe",
-    $Utility::PLAT_LNX  => "lmhistogram",
+    $Utility::PLAT_LNX  => "lmhistogram_mp",
   },
   $PROG_COMPUTE_NORM => {
     $Utility::PLAT_WIN  => "compute_norm.exe",
