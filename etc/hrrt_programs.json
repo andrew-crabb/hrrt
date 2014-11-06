@@ -1,0 +1,27 @@
+{
+     "prog_calc_calib" : {
+	 "linux"   : "mkHRRTCalHdr",
+	 "mac"     : "mkHRRTCalHdr",
+	 "win"     : "mkHRRTCalHdr.exe"
+     },
+     "prog_calc_ratio" : {
+	 "win"     : "calcRingRoiRatio.exe",
+	 "linux"   : "calcRingRoiRatio",
+	 "mac"     : "calcRingRoiRatio"
+     },
+     "prog_compute_norm" : {
+	 "win"     : "compute_norm.exe",
+	 "linux"   : "compute_norm",
+	 "mac"     : "compute_norm"
+     },
+     "prog_histogram" : {
+	 "win"     : "lmhistogram.exe",
+	 "linux"   : "lmhistogram_mp",
+	 "mac"     : "lmhistogram"
+     },
+     "prog_norm_process" : {
+	 "win"     : "norm_process.exe",
+	 "linux"   : "norm_process",
+	 "mac"     : "norm_process"
+     }
+ }

@@ -23,6 +23,7 @@ use Utilities_new;
 use Opts;
 use HRRTRecon;
 use HRRT_Utilities;
+use HRRT;
 use HRRT_Data_old;
 use API_Utilities;
 use FileUtilities;
@@ -44,15 +45,15 @@ Readonly our $TRANSMISSION  => 'Transmission';
 Readonly our $FRAME_DEFINITION => 'Frame definition';
 Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
 
-Readonly our %FRAMING => (
-  3  => [ '*' ],
-  30 => [ '*', '300*6', ],
-  40 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*2', ],
-  60 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*6', ],
-  70 => [ '*', '15*4,30*8,60*9,180*2,300*10', ],
-  80 => [ '*', '30*6,60*7,120*5,300*12', ],
-  90 => [ '*', '15*4,30*4,60*3,120*2,240*5,300*12', ]
-);
+# Readonly our %FRAMING => (
+#   3  => [ '*' ],
+#   30 => [ '*', '6 frame : 300*6', ],
+#   40 => [ '*', '20 frame : 15*4,30*4,60*3,120*2,240*5,300*2', ],
+#   60 => [ '*', '24 frame : 15*4,30*4,60*3,120*2,240*5,300*6', ],
+#   70 => [ '*', '33 frame : 15*4,30*8,60*9,180*2,300*10', ],
+#   80 => [ '*', '30 frame : 30*6,60*7,120*5,300*12', ],
+#   90 => [ '*', '30 frame : 15*4,30*4,60*3,120*2,240*5,300*12', ]
+# );
 
 # Globals
 our %all_files_subj  = ();
@@ -62,6 +63,8 @@ our $ssh             = undef;
 our $data_dir        = undef;
 
 # Configuration
+our $hrrt_framing = HRRT::read_hrrt_config($HRRT::HRRT_FRAMING_JSON);
+# print Dumper($hrrt_framing);
 
 # Fields
 Readonly my $DATA_DIR => 'data_dir';
@@ -109,12 +112,6 @@ if ( $opts->{$Opts::OPT_HELP} ) {
   exit;
 }
 
-# Read config file (defaults to ../etc/hrrt_transfer.conf)
-# my $config = HRRTRecon::read_conf('');
-# print Dumper($config);
-# exit;
-
-
 # Main
 my $platform = ( $opts->{$OPT_LOCAL} ) ? $PLAT_LOCAL : $PLAT_PRODN;
 $ssh = make_ssh_connection();
@@ -133,6 +130,8 @@ if ( $opts->{$OPT_DATA} ) {
   make_test_data_files( \%opts );
 }
 
+my $framing_array = make_framing_array($hrrt_framing);
+
 # Get file list from data directory.
 find({
   wanted => \&all_files_subj,
@@ -146,7 +145,7 @@ make_blank_scans_by_date();
 # Select EM and TX scan times.
 my $scans_to_send = select_scan($scans_by_date);
 # Select and edit framing.
-my $framing = select_framing();
+my $framing = select_framing($framing_array);
 # Should be only one blank scan per day.
 printHash($scans_to_send, "scans to send");
 my $blank_scan = select_blank_scan($scans_to_send->{'EM'});
@@ -164,6 +163,37 @@ edit_framing($xfer_files, $framing);
 # ------------------------------------------------------------
 # Subroutines
 # ------------------------------------------------------------
+
+sub make_framing_array {
+  my ($framing_from_config) = @_;
+  my %frames = %$framing_from_config;
+  my %framing = ();
+  foreach my $durat (sort {$a <=> $b} keys %frames) {
+    my $framing_def = $frames{$durat};
+    my %framing_def = %$framing_def;
+    push(@{$framing{$durat}}, "Static   : *");
+    foreach my $key (sort keys %framing_def) {
+      my $frm = $framing_def{$key}{'framing'};
+      my $des = $framing_def{$key}{'description'};
+      # print "frm $frm, des $des\n";
+      my $nframes = count_frames_in_string($frm);
+      push(@{$framing{$durat}}, sprintf("%-2d frame : $frm", $nframes));
+    }
+  }
+  # print Dumper(\%framing);
+  return \%framing;
+}
+
+sub count_frames_in_string {
+  my ($str) = @_;
+  my @groups = split(/,/, $str);
+  my $nframes = 0;
+  foreach my $group (@groups) {
+    my ($len, $count) = split(/\*/, $group);
+    $nframes += $count;
+  }
+  return $nframes;
+}
 
 sub edit_framing {
   my ($xfer_files, $framing) = @_;
@@ -264,6 +294,7 @@ sub transfer_file {
     'times'   => 1,
     'src'     => $filename,
     'dest'    => $destfile,
+    'chmod'   => '644',
     'dry-run' => ( $opts->{$Opts::OPT_DUMMY} ) ? 1 : 0,
     'modify-window' => ( $opts->{$OPT_WINDOW} // 1 ),
   );
@@ -315,14 +346,19 @@ sub make_scans_by_date {
   foreach my $subj_dir ( sort keys %all_files_subj ) {
     next if ( $subj_dir =~ /Transmission/ );
     foreach my $subj_file ( @{ $all_files_subj{$subj_dir} } ) {
-      my $date = $subj_file->{'date'}->{'hrrtdir'};
+      my $datetime = $subj_file->{'date'}->{$DATES_HRRTDIR};
+      my $em_date = $subj_file->{'date'}->{$DATES_YYMMDD};
       if ( $subj_file->{'size'} > $min_size ) {
-        $scans_by_date{$date}{'EM'} = $subj_file;
+        $scans_by_date{$datetime}{'EM'} = $subj_file;
         my $tx_file_recs = $all_files_subj{"${subj_dir}/Transmission"};
         foreach my $tx_file_rec ( @{$tx_file_recs} ) {
           if ( $tx_file_rec->{'name'} =~ /l64$/ ) {
-            my $tx_date = $tx_file_rec->{'date'}->{'hrrtdir'};
-            $scans_by_date{$date}{'TX'}{$tx_date} = $tx_file_rec;
+            my $tx_datetime = $tx_file_rec->{'date'}->{$DATES_HRRTDIR};
+	    my $tx_date = $tx_file_rec->{'date'}->{$DATES_YYMMDD};
+	    if ($em_date =~ $tx_date) {
+	      $scans_by_date{$datetime}{'TX'}{$tx_datetime} = $tx_file_rec;
+	      # print "datetime $datetime, em $em_date, tx $tx_date, scans_by_date{$datetime}{'TX'}{$tx_datetime}\n";
+	    }
           }
         }
       }
@@ -377,12 +413,16 @@ sub select_blank_scan {
 }
 
 sub select_framing {
+  my ($hrrt_framing) = @_;
+
   my $framing = prompt(
     'Select Duration',
     -verb,
-    -menu => \%FRAMING,
+    # -menu => \%FRAMING,
+    -menu => $hrrt_framing,
     '>'
   );
+  $framing =~ s/^.*\ //;
   return $framing;
 }
 
