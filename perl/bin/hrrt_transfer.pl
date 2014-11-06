@@ -12,7 +12,7 @@ use File::Find;
 use File::Rsync;
 use FindBin;
 use IO::Prompter;
-use Net::SSH2;
+# use Net::SSH2;
 use Readonly;
 
 use lib abs_path("$FindBin::Bin/../lib");
@@ -35,9 +35,9 @@ Readonly my $DATA_DIR_LOCAL => $ENV{'HOME'} . "/data/hrrt_transfer";
 Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/';
 # Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/GIBBS_DONNA/';
 Readonly our $EM_MIN_SIZE   => 100000000;
-Readonly our $EM_MIN_LOCAL  => 1000;
+Readonly our $EM_MIN_LOCAL  => 1000000;
 Readonly our $BILLION       => 1000000000;
-Readonly our $RSYNC_HOST    => 'hrrt-image.rad.jhmi.edu';
+# Readonly our $RSYNC_HOST    => 'hrrt-image.rad.jhmi.edu';
 Readonly our $RSYNC_DIR     => '/data/recon';
 Readonly our $KEY_DESTDIR   => 'destdir';
 Readonly our $SCAN_BLANK    => 'Scan_Blank';
@@ -114,8 +114,8 @@ if ( $opts->{$Opts::OPT_HELP} ) {
 
 # Main
 my $platform = ( $opts->{$OPT_LOCAL} ) ? $PLAT_LOCAL : $PLAT_PRODN;
-$ssh = make_ssh_connection();
-croak "Can't connect SSH to $RSYNC_HOST" unless $ssh;
+# $ssh = make_ssh_connection();
+# croak "Can't connect SSH to $RSYNC_HOST" unless $ssh;
 
 # Data directory.
 $data_dir = $CONFIG{$DATA_DIR}{$platform};
@@ -154,10 +154,9 @@ printHash($scans_to_send, "scans_to_send");
 
 # Send files.
 my $xfer_files = make_xfer_files( $scans_by_date, $scans_to_send);
-printHash($xfer_files, "xfer files");
 
-transfer_files($xfer_files);
-transfer_files($blank_scan);
+transfer_files($xfer_files, 'Scan files');
+transfer_files($blank_scan, 'Blank files');
 edit_framing($xfer_files, $framing);
 
 # ------------------------------------------------------------
@@ -202,7 +201,6 @@ sub edit_framing {
   my $hdr_file = $dirname . make_std_name($xfer_files->{'em_hdr'});
   print "edit_framing ($hdr_file, $framing)\n";
 
-
   my (@hdr_lines) = fileContents($hdr_file);
   my @outlines = ();
   foreach my $inline (@hdr_lines) {
@@ -233,26 +231,8 @@ sub all_files_subj {
   }
 }
 
-sub create_remote_dir {
-  my ( $sftp, $dirname ) = @_;
-
-  # Delete existing files.
-  if ( $opts->{$Opts::OPT_FORCE} ) {
-    if ( my $dh = $sftp->opendir($dirname) ) {
-      while ( my $item = $dh->read ) {
-        my $remote_file = $item->{'name'};
-        next if ( $remote_file =~ /^\./ );
-        $remote_file = "${dirname}/${remote_file}";
-        print "unlink($remote_file\n)" if ( $opts->{$Opts::OPT_VERBOSE} );
-        $sftp->unlink($remote_file) or print "create_remote_dir(): can't unlink $remote_file\n";
-      }
-    }
-  }
-  $sftp->mkdir($dirname);
-}
-
 sub transfer_files {
-  my ($xfer_files) = @_;
+  my ($xfer_files, $comment) = @_;
 
   my %xfer_files = %$xfer_files;
   my $totsize    = 0;
@@ -260,32 +240,60 @@ sub transfer_files {
   # Create remote directory.
   my $dirname = $xfer_files->{$KEY_DESTDIR};
   $dirname = "${RSYNC_DIR}/${dirname}";
-#  printHash($xfer_files, "transfer_files $dirname");
+  printHash($xfer_files, "transfer_files ($comment): $dirname");
 
-  my $sftp = $ssh->sftp();
-  create_remote_dir( $sftp, $dirname );
+  # my $sftp = $ssh->sftp();
+  create_dest_dir($dirname );
 
   foreach my $filetype ( @FILE_TYPES ) {
+    if (exists($xfer_files{$filetype})) {
     my $filename = $xfer_files{$filetype};
-    if ( my $filesize = -s $filename ) {
-      $totsize += $filesize;
-    } else {
-      print "ERROR: File not found: $filename\n";
+    print Dumper($filename);
+    my @stat = stat($filename);
+    if (scalar(@stat)) {
+      $totsize += $stat[7];
     }
+  }
   }
   foreach my $filetype ( sort keys %xfer_files ) {
     next if ( $filetype =~ /$KEY_DESTDIR/ );
     transfer_file( $xfer_files{$filetype}, $dirname );
   }
 
-  print "$totsize\n";
+  my $gb = sprintf("%5.4f", ($totsize / $BILLION));
+  print "$gb GB to transfer\n";
+}
+
+sub create_dest_dir {
+  my ( $dirname ) = @_;
+
+  # This is too risky.  If the subdir is blank, deletes everything it finds in /data/recon.
+  # Also, deletes all files in Scan_Blank/Transmission.
+
+  # # Delete existing files.
+  # if ( $opts->{$Opts::OPT_FORCE} ) {
+  #   find({
+  #     wanted => \&delete_found_files,
+  #     follow => 1 
+  # 	 }, 
+  # 	 $dirname );
+  # }
+  mkdir($dirname, 0755);
+}
+
+sub delete_found_files {
+  my $name = $File::Find::name;
+  if ( -f $name ) {
+    print "Deleting: $name\n"; 
+  }
 }
 
 sub transfer_file {
   my ( $filename, $dirname ) = @_;
   my ( $name, $path, $suffix ) = fileparse($filename);
   my $std_name = make_std_name($name);
-  my $destfile = "${RSYNC_HOST}:${dirname}/${std_name}";
+  # my $destfile = "${RSYNC_HOST}:${dirname}/${std_name}";
+  my $destfile = "${dirname}/${std_name}";
   print "transfer_file:\n$filename\n$destfile\n";
   # my %opts = (
   #   'chmod'   => '644',
@@ -294,13 +302,14 @@ sub transfer_file {
     'times'   => 1,
     'src'     => $filename,
     'dest'    => $destfile,
-    'chmod'   => '644',
+    # 'chmod'   => '644',
     'dry-run' => ( $opts->{$Opts::OPT_DUMMY} ) ? 1 : 0,
     'modify-window' => ( $opts->{$OPT_WINDOW} // 1 ),
   );
 
   # printHash(\%rsopts, "copy_file_to_disk") if ($opts->{$Opts::OPT_VERBOSE});
   my $rsync = File::Rsync->new();
+  $rsync->defopts( 'verbose' => 1 );
   my $ret   = $rsync->exec( \%rsopts );
 
 }
@@ -316,9 +325,12 @@ sub make_xfer_files {
   my %xfer_files = ();
 
   our $all_rec = $scans_by_date->{ $scan_times->{'EM'} };
-  our $em_rec  = $all_rec->{'EM'};
-
+  our $em_rec = $all_rec->{'EM'};
   our $tx_rec = $all_rec->{'TX'}->{ $scan_times->{'TX'} };
+  # printHash($all_rec, "make_xfer_files all_rec");
+  # printHash($em_rec, "make_xfer_files em_rec");
+  # printHash($tx_rec, "make_xfer_files tx_rec");
+
   foreach my $type (qw{em tx}) {
     my $rec_name = "${type}_rec";
     my $rec      = $$rec_name;
@@ -335,6 +347,7 @@ sub make_xfer_files {
   my $dirname = "$em_rec->{'name_last'}_$em_rec->{'name_first'}_";
   $dirname .= $em_rec->{'date'}->{'hrrtdir'};
   $xfer_files{$KEY_DESTDIR} = "\U$dirname";
+  # printHash(\%xfer_files, "make_xfer_files()");
 
   return \%xfer_files;
 }
@@ -345,9 +358,13 @@ sub make_scans_by_date {
   my $min_size = ( $opts->{$OPT_LOCAL} ) ? $EM_MIN_LOCAL : $EM_MIN_SIZE;
   foreach my $subj_dir ( sort keys %all_files_subj ) {
     next if ( $subj_dir =~ /Transmission/ );
+    my @all_files_for_dir = @{ $all_files_subj{$subj_dir} };
+    # print "Files in $subj_dir:\n";
+    # print join("\n", @all_files_for_dir) . "\n";
+
     foreach my $subj_file ( @{ $all_files_subj{$subj_dir} } ) {
       my $datetime = $subj_file->{'date'}->{$DATES_HRRTDIR};
-      my $em_date = $subj_file->{'date'}->{$DATES_YYMMDD};
+      my $em_date  = $subj_file->{'date'}->{$DATES_YYMMDD};
       if ( $subj_file->{'size'} > $min_size ) {
         $scans_by_date{$datetime}{'EM'} = $subj_file;
         my $tx_file_recs = $all_files_subj{"${subj_dir}/Transmission"};
@@ -374,13 +391,15 @@ sub make_blank_scans_by_date {
     follow => 1 
        }, 
        $blank_dir );
+  # print Dumper(\%blank_scans_by_date);
+  # exit;
   return \%blank_scans_by_date;
 }
 
 sub blank_scans_by_date {
   my $file_include = qq{TX\.s\$};
   if (/$file_include/) {
-    # print "Blank Found: $File::Find::name\n";
+     print "Blank Found: $File::Find::name\n";
     if ( my $det = hrrt_filename_det($_) ) {
       $blank_scans_by_date{$det->{'date'}->{'hrrtdir'}} = $det;
     } else {
@@ -396,19 +415,34 @@ sub select_blank_scan {
 
   print "select_blank_scan($time)\n";
   my @all_blank_dates = sort keys(%blank_scans_by_date);
-  print join("\n", @all_blank_dates) . "\n\n\n";
   (my $scandate = $time) =~ s/_.+//;
   my @match_blank_times = grep(/$scandate/, @all_blank_dates);
   my $ret = undef;
+  my $blank_scan = undef;
+
   if (scalar(@match_blank_times) == 1) {
     $blank_scan = $blank_scans_by_date{$match_blank_times[0]};
+  } else {
+    my $blank_time = prompt(
+      'Select blank scan for $time', 
+      -verb,
+      -menu => \@match_blank_times,
+      '>'
+	);
+    $blank_scan = $blank_scans_by_date{$blank_time};
+  }
+
+  if ($blank_scan) {
     $ret = {
       'bl_l64'       => $blank_scan->{'_fullname'},
       $KEY_DESTDIR => "${SCAN_BLANK}/${TRANSMISSION}",
 	};
   } else {
     print "select_blank_scan(): ERROR: Not 1 blank scan for $time\n";
+    print join("\n", @all_blank_dates) . "\n";
+    exit;
   }
+  printHash($ret, "select_blank_scan($time)");
   return $ret;
 }
 
@@ -473,15 +507,15 @@ sub select_scan {
   return \%ret;
 }
 
-sub make_ssh_connection {
-  my $ssh2 = Net::SSH2->new();
+# sub make_ssh_connection {
+#   my $ssh2 = Net::SSH2->new();
 
-  my $ssh_chan = undef;
-  if ( $ssh2->connect($RSYNC_HOST) ) {
-    if ( $ssh2->auth_publickey( $ENV{'USER'}, $ENV{'HOME'} . "/.ssh/id_rsa.pub", $ENV{'HOME'} . "/.ssh/id_rsa", ) ) {
+#   my $ssh_chan = undef;
+#   if ( $ssh2->connect($RSYNC_HOST) ) {
+#     if ( $ssh2->auth_publickey( $ENV{'USER'}, $ENV{'HOME'} . "/.ssh/id_rsa.pub", $ENV{'HOME'} . "/.ssh/id_rsa", ) ) {
 
-      # Success.
-    }
-  }
-  return $ssh2;
-}
+#       # Success.
+#     }
+#   }
+#   return $ssh2;
+# }

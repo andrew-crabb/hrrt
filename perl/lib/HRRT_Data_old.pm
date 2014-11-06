@@ -135,7 +135,7 @@ my %em_hdr_defaults = (
   'study_time'        => '10:09:08',
   'pet_data_type'     => 'emission',
   'image_duration'    => '5400',
-  'frame_definition'  => '15*4,30*4,60*3,120*2,240*5,300*12',
+  'frame_definition'  => '*',
   'patient_name'      => 'TESTONE, FIRST',
   'patient_dob'       => '3/30/1955',
   'patient_id'        => '2004008',
@@ -209,11 +209,11 @@ our $test_file_root = $ENV{'HOME'} . "/data/test";
 
 my %file_properties = (
   'em_hc' => [ $EM_STEM, 'hc'     , ''            , 10000   ],
-  'em_lm' => [ $EM_STEM, 'l64'    , ''            , 1000000 ],
+  'em_lm' => [ $EM_STEM, 'l64'    , ''            , 10000000 ],
   'em_hd' => [ $EM_STEM, 'l64.hdr', ''            , ''      ],
   'tx_si' => [ $TX_STEM, 's'      , $TRANSMISSION, 10000   ],
   'tx_sh' => [ $TX_STEM, 's.hdr'  , $TRANSMISSION, ''      ],
-  'tx_lm' => [ $TX_STEM, 'l64'    , $TRANSMISSION, 1000000 ],
+  'tx_lm' => [ $TX_STEM, 'l64'    , $TRANSMISSION, 10000000 ],
   'tx_hd' => [ $TX_STEM, 'l64.hdr', $TRANSMISSION, ''      ],
 );
 
@@ -237,6 +237,7 @@ sub make_test_data_files {
   my $data_stem = $opts->{$PARAM_DATA_DIR} // $test_file_root;
   my $em_time = time();
   my $subj_num = 0;
+  my @em_days = ();
 
   foreach my $subj_rec (@test_subj_det) {
     my %subj_rec = %$subj_rec;
@@ -258,14 +259,20 @@ sub make_test_data_files {
       # Case 2 gets additional EM and TX scans.
       make_files_for_time($data_dir, $subj_rec, $opts, $em_time - 2 * $HOUR, $em_time - 3 * $HOUR);
     }
+
+  # Make blank scan dir for this day, unless it exists.
+    my $em_day = convertDates($em_time)->{$DATES_YYMMDD};
+    unless (grep(/$em_day/, @em_days)) {
+      push(@em_days, $em_day);
+      my $blank_dir = "${data_stem}/${SCAN_BLANK}";
+      make_files_for_time($blank_dir, \%blank_scan_det, $opts, undef, $em_time - $HOUR);
+    }
+
     # Test scans are 8 hours apart.
     $em_time -= 28800;
     $subj_num++;
   }
 
-  # Make blank scan dir
-  my $blank_dir = "${data_stem}/${SCAN_BLANK}";
-  make_files_for_time($blank_dir, \%blank_scan_det, $opts, undef, $em_time - $HOUR);
 }
 
 sub make_files_for_time {
