@@ -31,6 +31,7 @@ use Sys::Hostname;
 use FindBin;
 
 use lib $FindBin::Bin;
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
 use FileUtilities;
 use Utility;
 use Utilities_new;
@@ -767,7 +768,7 @@ our %process_details = (
 # --------------------------------------------------------------------------------
 
 our %procsumm = (
-  $P_REB => [('rebin'         , 'B', 3)],
+  $P_REB => [('rebin'         , 'B', 1)],
   $P_TRX => [('transmission'  , 'T', 1)],
   $P_ATN => [('attenuation'   , 'A', 1)],
   $P_SCA => [('scatter'       , 'S', 1)],

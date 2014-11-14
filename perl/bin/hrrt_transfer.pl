@@ -12,7 +12,6 @@ use File::Find;
 use File::Rsync;
 use FindBin;
 use IO::Prompter;
-# use Net::SSH2;
 use Readonly;
 
 use lib abs_path("$FindBin::Bin/../lib");
