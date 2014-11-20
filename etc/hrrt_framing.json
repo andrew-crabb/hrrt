@@ -1,4 +1,10 @@
 {
+    "3": {
+	"01": {
+	    "description" : "3 minute 1 frame",
+	    "framing"     : "180*1"
+	}
+    },
     "30": {
 	"06": {
 	    "description" : "30 minute 6 frame",
