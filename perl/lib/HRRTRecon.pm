@@ -856,7 +856,7 @@ sub test_prereq {
   my ($this) = @_;
 
   my $template_file  = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
-  my $rebin_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+  my $rebin_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   my $gnuplot_file   = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
 
   (-s $template_file)  or return $this->log_msg("No GM328 template file '$template_file'", 1);
@@ -1673,7 +1673,7 @@ sub do_rebin {
 
   my ($progpath, $progname, $lmhistogram) = $this->program_name($PROG_LMHISTOGRAM);
   my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}.log";
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   croak("No rebinner_lut_file $rebinner_lut_file") unless (-s $rebinner_lut_file);
 
   # Histogram TX file if necessary
@@ -2006,7 +2006,7 @@ sub do_scatter {
 	$normkey = ($span_to_use == $SPAN3) ? $K_NORM_3 : $K_NORM_9;
       }
 
-      my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+      my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
       my $e7_sino_prog      = $prog_e7_sino;
       my $cmd               = $e7_sino_prog;
       $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
@@ -2120,7 +2120,7 @@ sub do_sensitivity {
   my ($this) = @_;
 
   $this->printLine("do_sensitivity begin");
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   my $span = $this->{$O_SPAN};
   my %fn_args = (
@@ -2174,7 +2174,7 @@ sub do_reconstruction {
 
   my $ret = 0;
   my $logfile = $this->{$_LOG_DIR} . "/osem3d_" . convertDates(time())->{$DATES_HRRTDIR} . ".log";
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   if ($this->{$_USER_M_SW}) {
     unless ($this->check_file_ok($K_NORMFAC_256, '', "${line}\ndo_reconstrcution sensitivity")) {
@@ -2581,7 +2581,7 @@ sub do_motion_as_script {
       $cmd .= " -X 256";
       # $cmd .= " -K " . $this->fileName($K_NORMFAC_256);		# See explanation below.
       $cmd .= " -K normfac.i";
-      $cmd .= " -r " . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+      $cmd .= " -r " . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
       $ret = $this->runit($cmd, "do_motion step 6: osem3d");
       return $this->printLine("do_motion(): ERROR in PROG_OSEM3D", $ret) if ($ret);
@@ -2680,7 +2680,7 @@ sub do_motion {
 
   # Output file is $K_IMAGE_ATX_VR.  But renamed to $K_IMAGE_V, so test for $K_IMAGE_ATX_V.
   my $prog_name = undef;
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_LIB} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   unless ($this->check_file_ok($K_IMAGE_ATX_V, '', "do_motion 2: $K_IMAGE_ATX_V")) {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
