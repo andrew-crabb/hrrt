@@ -852,6 +852,20 @@ sub new {
   return($this);
 }
 
+sub setopt {
+  my ($this, $opt_name, $opt_val) = @_;
+
+  my $ret = undef;
+  if (exists $this->{$opt_name}) {
+    if (defined($opt_val)) {
+      $this->{$opt_name} = $opt_val;
+    }
+    $ret = $this->{$opt_name};
+  }
+  
+  return $ret;
+}
+
 sub test_prereq {
   my ($this) = @_;
 

@@ -145,7 +145,6 @@ do_recon($recon, 0);
 
 
 do_calibration_factor($concentration_Bq_cc);
-exit;
 
 # Want roi_ratio to be close to 1.0
 # ER change of 2 gives roi_ratio change of 0.015
@@ -155,12 +154,14 @@ my $calib_ratio = $calib_factors->{$CALIB_RATIO};
 my $roi_ratio = do_calc_ratio();
 my $new_ratio = $calib_ratio - int(($roi_ratio - 1.0) * 75);
 print "calib_ratio $calib_ratio, roi_ratio $roi_ratio, new_ratio $new_ratio\n";
+$recon->log_msg("calib_ratio $calib_ratio, roi_ratio $roi_ratio, new_ratio $new_ratio");
 
 # Repeat recon with newly-calculated Erg Ratio
 $recon = make_recon_obj({$O_ERGRATIO => $new_ratio});
 do_recon($recon, 1);
 $roi_ratio = do_calc_ratio();
 print "calib_ratio $calib_ratio, roi_ratio $roi_ratio, new_ratio now $new_ratio\n";
+$recon->log_msg("calib_ratio $calib_ratio, roi_ratio $roi_ratio, new_ratio now $new_ratio");
 
 exit;
 
@@ -209,7 +210,14 @@ sub do_recon {
   $is_repeat //= 0;
   
   our ($do_rebin, $do_transmission, $do_attenuation, $do_scatter, $do_reconstruction, $do_postrecon) = (1, 1, 1, 1, 1, 1);
-  ($do_rebin, $do_transmission) = (0, 0) if ($is_repeat);
+  if ($is_repeat) {
+    ($do_rebin, $do_transmission) = (0, 0);
+    my $ff = $recon->setopt($O_FORCE);
+    $recon->setopt($O_FORCE, 1);
+    $opts->{$OPT_FORCE} = 1;
+    my $gg = $recon->setopt($O_FORCE);
+    print "do_recon(): o_force was $ff, now $gg\n";
+  }
 
   my $count = 0;
   my $processes_to_run = $recon->get_processes_to_run();
@@ -292,15 +300,18 @@ sub do_calibration_factor {
   my ($concentration_Bq_cc) = @_;
   (my $em_i_file = $g_em_l64_file) =~ s/\.l64/\.i/;
 
-  # my $cmd  = $PROGRAMS{$PROG_CALC_CALIB}{$g_platform};
-  my $cmd  = $hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform};
-  print "$cmd  = hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform}\n";
-  $cmd .= " -a $concentration_Bq_cc";
-  $cmd .= " -e 6.67e-6";
-  $cmd .= " -p 66";
-  $cmd .= " -m 1 75 175";
-  $cmd .= " $em_i_file";
-  runit($cmd, 1);
+  if ((-s $em_i_file) and not $opts->{$OPT_FORCE}) {
+    $recon->log_msg("do_calibration_factor skipped - Already done (-f to force)");
+  } else {
+    my $cmd  = $hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform};
+    print "$cmd  = hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform}\n";
+    $cmd .= " -a $concentration_Bq_cc";
+    $cmd .= " -e 6.67e-6";
+    $cmd .= " -p 66";
+    $cmd .= " -m 1 75 175";
+    $cmd .= " $em_i_file";
+    runit($cmd, 1);
+  }
 }
 
 sub runit {
