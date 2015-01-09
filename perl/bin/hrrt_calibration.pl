@@ -84,6 +84,8 @@ our $g_platform = Utility::platform();
 our $g_bin_dir = hrrt_path() . '/bin/' . $g_platform;
 our $g_logfile = "hrrt_calibration_" . convertDates(time())->{$DATES_HRRTDIR};
 
+print "g_platform is $g_platform\n";
+
 # Opts
 
 my $OPT_CALIBDIR     = 'c';
@@ -100,7 +102,7 @@ our %allopts = (
     $Opts::OPTS_NAME => 'config_file',
     $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
     $Opts::OPTS_TEXT => 'Config file',
-    $Opts::OPTS_DFLT => abs_path("$FindBin::Bin/../../../perl/etc/hrrt_recon.conf"),
+    $Opts::OPTS_DFLT => abs_path("$FindBin::Bin/../etc/hrrt_recon_${g_platform}.conf"),
     $Opts::OPTS_OPTN => 1,
   },
   $OPT_VALUES_FILE => {

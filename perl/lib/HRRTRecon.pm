@@ -1674,7 +1674,7 @@ sub do_rebin {
   my ($progpath, $progname, $lmhistogram) = $this->program_name($PROG_LMHISTOGRAM);
   my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}.log";
   my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-  croak("No rebinner_lut_file $rebinner_lut_file") unless (-s $rebinner_lut_file);
+  croak("HRRTRecon::do_rebin(): No rebinner_lut_file $rebinner_lut_file") unless (-s $rebinner_lut_file);
 
   # Histogram TX file if necessary
   my $msg = "Histogram subject TX";
