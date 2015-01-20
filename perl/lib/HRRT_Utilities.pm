@@ -373,7 +373,7 @@ sub analyzeHRRTfile {
 
   my $datestr = $rest;
   unless (hasLen($datestr)) {
-#     print("ERROR: analyzeHRRTfile($infile): No date string.\n");
+    print("ERROR: analyzeHRRTfile($infile): No date string.\n");
     return undef;
   }
   $datestr =~ s/_.*//;
@@ -398,8 +398,8 @@ sub analyzeHRRTfile {
     'expand'  => 0,
     'expkey'  => 'datetime',
       );
-  # print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n" if ($verbose);
-  # printHash($ret, \%hopts) if ($verbose);
+   print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n" if ($verbose);
+   printHash($ret, \%hopts) if ($verbose);
   # print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n";
   # printHash($ret, \%hopts);
   return $ret;
