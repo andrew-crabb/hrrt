@@ -27,12 +27,12 @@ use lib abs_path("$FindBin::Bin/../lib");
 use lib abs_path("$FindBin::Bin/../../../perl/lib");
 
 use FileUtilities;
+use HRRT;
+use HRRTRecon;
+use HRRT_Utilities;
+use Opts;
 use Utilities_new;
 use Utility;
-use HRRT;
-use HRRT_Utilities;
-use HRRTRecon;
-use Opts;
 
 # String constants
 
