@@ -44,16 +44,6 @@ Readonly our $TRANSMISSION  => 'Transmission';
 Readonly our $FRAME_DEFINITION => 'Frame definition';
 Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
 
-# Readonly our %FRAMING => (
-#   3  => [ '*' ],
-#   30 => [ '*', '6 frame : 300*6', ],
-#   40 => [ '*', '20 frame : 15*4,30*4,60*3,120*2,240*5,300*2', ],
-#   60 => [ '*', '24 frame : 15*4,30*4,60*3,120*2,240*5,300*6', ],
-#   70 => [ '*', '33 frame : 15*4,30*8,60*9,180*2,300*10', ],
-#   80 => [ '*', '30 frame : 30*6,60*7,120*5,300*12', ],
-#   90 => [ '*', '30 frame : 15*4,30*4,60*3,120*2,240*5,300*12', ]
-# );
-
 # Globals
 our %all_files_subj  = ();
 our %blank_scans_by_date = ();
@@ -63,7 +53,7 @@ our $data_dir        = undef;
 
 # Configuration
 our $hrrt_framing = HRRT::read_hrrt_config($HRRT::HRRT_FRAMING_JSON);
-# print Dumper($hrrt_framing);
+print Dumper($hrrt_framing);
 
 # Fields
 Readonly my $DATA_DIR => 'data_dir';
