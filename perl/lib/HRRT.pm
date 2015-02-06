@@ -18,7 +18,7 @@ our @ISA = qw(Exporter);
 our @EX = ();
 @EX = (@EX, qw($PROG_CALC_RATIO $PROG_COMPUTE_NORM $PROG_HISTOGRAM $PROG_NORM_PROCESS));
 @EX = (@EX, qw($PROG_CALC_CALIB));
-@EX = (@EX, qw($FILE_LUT $FILE_GM328 $FILE_DWELLC $PATH_WIN_CPSBIN));
+@EX = (@EX, qw($FILE_LUT $FILE_GM328 $FILE_DWELLC $FILE_GEOM_COR $PATH_WIN_CPSBIN));
 @EX = (@EX, qw($CONST_HALFLIFE_F18 $CONST_PHANTOM_VOLUME $CONST_BQ_PER_UCI));
 @EX = (@EX, qw(read_hrrt_config hrrt_path));
 our @EXPORT = @EX;
@@ -41,6 +41,7 @@ Readonly::Scalar our $HRRT_FILES_JSON     => 'hrrt_files.json';
 Readonly::Scalar our $FILE_DWELLC   	  => 'file_dwellc';
 Readonly::Scalar our $FILE_GM328    	  => 'file_gm328';
 Readonly::Scalar our $FILE_LUT      	  => 'file_lut';
+Readonly::Scalar our $FILE_GEOM_COR    	  => 'file_geom_cor';
 Readonly::Scalar our $PATH_WIN_CPSBIN     => 'path_win_cpsbin';
 
 # hrrt_consts.json

@@ -148,7 +148,7 @@ sub do_histogram {
 }
 
 sub do_compute_norm {
-    my $outfile = "${g_em_dir}/norm.n";
+  my $outfile = "${g_em_dir}/norm.n";
   
   if ((-s $outfile) and not $opts->{$OPT_FORCE}) {
       print "do_compute_norm: Output file exists and not force: Skipping.  ($outfile)\n";
@@ -159,15 +159,19 @@ sub do_compute_norm {
   # hrrt_open_2011 source code changes this to ${GMINI}/
   # But I haven't compiled this for Windows yet.
 
-  my $dwellc_dst_dir = $g_em_dir;
+  my $recon_dst_dir = $g_em_dir;
   if ($g_platform eq $PLAT_WIN) {
-    $dwellc_dst_dir = $hrrt_files->{$PATH_WIN_CPSBIN};
-    File::Path::make_path($dwellc_dst_dir);
+    $recon_dst_dir = $hrrt_files->{$PATH_WIN_CPSBIN};
+    File::Path::make_path($recon_dst_dir);
   }
-    
-  my $dwellc_src_file = hrrt_path()     . '/etc/' . $hrrt_files->{$FILE_DWELLC};
-  my $dwellc_dst_file = $dwellc_dst_dir . '/'     . $hrrt_files->{$FILE_DWELLC};
-  copy($dwellc_src_file, $dwellc_dst_file);
+
+  # Handle silent dependencies built in to HRRT executables.
+  foreach my $keyname ($FILE_DWELLC, $FILE_GEOM_COR) {
+    my $srcpath = hrrt_path() . '/etc';
+    if (copy_etc_file($keyname, $srcpath, $recon_dst_dir)) {
+      return 1;
+    }
+  }
 
   # compute_norm D:\SCS_Scans\Norm_Scan\norm.s -o D:\SCS_Scans\Norm_Scan\norm.n -span 3
   my $cmd = $g_bin_dir . '/' . $hrrt_progs->{$PROG_COMPUTE_NORM}->{$g_platform};
@@ -177,6 +181,24 @@ sub do_compute_norm {
 
   my $ret = runit($cmd, "do_compute_norm");
   return $ret;
+}
+
+# Copy file with given key from 'hrrt/etc' to recon directory.
+
+sub copy_etc_file {
+  my ($keyname, $srcdir, $dstdir) = @_;
+
+  my $filename = $hrrt_files->{$keyname};
+  my $srcfile = $srcdir . '/' . $filename;
+  if ( ! -s $srcfile ) {
+    print "ERROR: Missing silent dependency file $srcfile\n";
+    return 1;
+  }
+  my $dstfile = $dstdir  . '/' . $filename;
+  unless (copy($srcfile, $dstfile)) {
+    print "ERROR: copy($srcfile, $dstfile)\n";
+    return 1;
+  }
 }
 
 sub do_norm_process {

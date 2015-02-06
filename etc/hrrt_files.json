@@ -1,6 +1,7 @@
- {
+{
      "file_lut"        : "hrrt_rebinner.lut",
      "file_gm328"      : "gm328.ini",
      "file_dwellc"     : "dwellc.n",
+     "file_geom_cor"   : "geom_cor.dat",
      "path_win_cpsbin" : "/c/cps/bin"
 }
