@@ -1,6 +1,6 @@
  {
      "file_lut"        : "hrrt_rebinner.lut",
-     "file_gm328"      : "GM328.INI",
+     "file_gm328"      : "gm328.ini",
      "file_dwellc"     : "dwellc.n",
      "path_win_cpsbin" : "/c/cps/bin"
 }

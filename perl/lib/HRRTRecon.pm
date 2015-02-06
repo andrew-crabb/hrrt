@@ -1089,11 +1089,9 @@ sub check_file_ok {
   my $fstat = $this->check_file($stem, $params);
    printHash($fstat, "XXX $stem $F_OK");
   if ($fstat and $fstat->{$F_OK} and not $this->{$O_FORCE}) {
-    # print "XXXXXXXXXXXXXX OK\n";
     $this->log_msg("$msg - Skipping - already done (-f to force)");
     $is_ok = 1;
   } else {
-    # print "XXXXXXXXXXXXXX not OK\n";
     $this->log_msg("$msg");
   }
 
@@ -1280,7 +1278,6 @@ sub check_file {
   my ($stemkey, $isframe, $suff, $size) = @$ptr;
 
   my $filename = ($this->fileName($keyname, {$K_FRAMENO => $frameno}))[1]->{$DIR_CYGWIN_NEW};
-  # print "XXX HRRTRecon::check_file($keystem): keyname $keyname, filename $filename\n";
   if ($use_subdir) {
     my @bits = split(/\//, $filename);
     my $nbits = scalar(@bits);

@@ -1,4 +1,4 @@
-#! /usr/bin/env/perl
+#! /usr/bin/env perl
 
 # hrrt_assemble_study.pl
 # Gather together from archive disk files for a given study.
@@ -11,7 +11,7 @@ use Data::Dumper;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 
-use HRRTDB;  # deprecated.
+# use HRRTDB;  # deprecated.
 use HRRT_DB;
 use HRRT_Utilities;
 use MySQL;
