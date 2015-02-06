@@ -188,6 +188,8 @@ sub do_compute_norm {
 sub copy_etc_file {
   my ($keyname, $srcdir, $dstdir) = @_;
 
+  print "XXX copy_etc_file($keyname, $srcdir, $dstdir)\n";
+
   my $filename = $hrrt_files->{$keyname};
   my $srcfile = $srcdir . '/' . $filename;
   if ( ! -s $srcfile ) {
@@ -195,10 +197,12 @@ sub copy_etc_file {
     return 1;
   }
   my $dstfile = $dstdir  . '/' . $filename;
+  print "XXX copy_etc_file(srcfile $srcfile, dstfile $dstfile)\n";
   unless (copy($srcfile, $dstfile)) {
     print "ERROR: copy($srcfile, $dstfile)\n";
     return 1;
   }
+  return 0;
 }
 
 sub do_norm_process {
