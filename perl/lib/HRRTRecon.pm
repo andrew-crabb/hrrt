@@ -1693,7 +1693,7 @@ sub do_rebin {
   # Changed this 10/7/14 ahc
   # check_file_ok(K_TX_SUBJ) would fail when -f set, causing check for K_TX_LM
 #  unless ($this->check_file_ok($K_TX_SUBJ, '', $msg)) {
-  unless (-s $this->fileName($K_TX_SUBJ)) {
+  unless (-s $this->fileName($K_TX_SUBJ) and not $this->{$O_FORCE}) {
     my $tx_listmode_file = $this->fileName($K_TX_LM);
     unless (-s $tx_listmode_file) {
       # print $this->fileName($K_TX_SUBJ) . "\n";
