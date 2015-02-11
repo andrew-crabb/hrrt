@@ -310,6 +310,7 @@ sub make_xfer_files {
   our ( $scans_by_date, $scan_times ) = @_;
   my %xfer_files = ();
 
+  printHash($scan_times, "make_xfer_files scan_times") if ($opts->{$Opts::OPT_VERBOSE});
   our $all_rec = $scans_by_date->{ $scan_times->{'EM'} };
   our $em_rec = $all_rec->{'EM'};
   our $tx_rec = $all_rec->{'TX'}->{ $scan_times->{'TX'} };
@@ -334,7 +335,8 @@ sub make_xfer_files {
   $dirname .= $em_rec->{'date'}->{'hrrtdir'};
   # Append TX time if requested.
   if ($scan_times->{$USE_TX_SUFFIX}) {
-    $dirname .= '_TX_' . $scan_times->{'TX'};
+    my ($tx_date, $tx_time) = split(/_/, $scan_times->{'TX'});
+    $dirname .= '_TX_' . $tx_time;
   }
   $xfer_files{$KEY_DESTDIR} = "\U$dirname";
   # printHash(\%xfer_files, "make_xfer_files()");
