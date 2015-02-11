@@ -138,7 +138,7 @@ my %CODE_SW_GROUP = (
   $SW_CPS     => "c",	       # CPS software span-3
   $SW_USER    => "u",	       # User software 2010 span-9
   $SW_USER_M  => "m",	       # User software 2011 span-9 with motion
-);
+    );
 
 # Header field keys.
 Readonly::Scalar our $HDR_FRAME_DEFINITION            => 'Frame definition';
@@ -206,7 +206,7 @@ our %SUBROUTINES = (
   13 => 'do_transfer',
   14 => 'do_transmission',
   15 => 'rebin_analyze_headers',
-);
+    );
 
 # ----------------------------------------
 # Study description fields and codes.
@@ -363,7 +363,7 @@ my %PROGRAMS = (
     $SW_USER   => "",
     $SW_USER_M => "make_air",
   },
-);
+    );
 
 # String constants: Configuration files.
 my $CALIBFACTORS = "calibration_factors.txt";
@@ -680,7 +680,7 @@ our %recon = (
   #	$K_TX_FRAME_A     => [($_TXSTEM_   ,1, "_tx_i.a"          , $TXATTEN_3_SIZE)],
   $K_TX_FRAME_S     => [($_TXSTEM_   ,1, "_tx_i.s"          , $TXATTEN_9_SIZE)],
 
-);
+    );
 
 # --------------------------------------------------------------------------------
 # Define pre- and post-requisites for each step under different conditions.
@@ -761,7 +761,7 @@ our %process_details = (
     $PROCESS_LIST    => \@processes_m,
     $PROCESS_BIN_DIR => $BIN_2011,
   },
-);
+    );
 
 # --------------------------------------------------------------------------------
 # Define process names and hash of pre- and post-requisites for each.
@@ -775,7 +775,7 @@ our %procsumm = (
   $P_REC => [('reconstruction', 'R', 1)],
   $P_MOT => [('motion'        , 'M', 1)],
   $P_POS => [('postrecon'     , 'P', 1)],
-);
+    );
 
 sub new {
   my ($that, $arg_ref) = @_;
@@ -821,7 +821,7 @@ sub new {
     $_SUBJ_      => '',	# CRABB_ANDREW_0123_PET_071116_112830
     $_VHIST      => '',	# May not be used.
     $_FRAMEDET   => '',
-  );
+      );
 
   my %self = (
     'DEBUG'         => 0,
@@ -838,7 +838,7 @@ sub new {
     $O_ONUNIX       => ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0,
     $_LOG_DIR    => '',		# recon/subject/recon_yymmdd_hhmmss
     $_LOG_FILE    => '', # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
-  );
+      );
   # arg_ref is ptr to hash of extra arguments.
   %self = (%self, %$arg_ref);
   my $this =  \%self;
@@ -935,7 +935,7 @@ sub create_processes {
       $PROC_PREOK   => 0,
       $PROC_POSTOK  => 0,
       $PROC_INIT    => $processinit,
-    );
+	);
     $processes{$process} = \%popt;
     printHash(\%popt, "HRRTRecon::new: processes{$process}") if ($verbose);
   }
@@ -1087,7 +1087,7 @@ sub check_file_ok {
   $msg = '' unless (hasLen($msg));
   my $is_ok = 0;
   my $fstat = $this->check_file($stem, $params);
-   printHash($fstat, "XXX $stem $F_OK");
+  printHash($fstat, "XXX $stem $F_OK");
   if ($fstat and $fstat->{$F_OK} and not $this->{$O_FORCE}) {
     $this->log_msg("$msg - Skipping - already done (-f to force)");
     $is_ok = 1;
@@ -1237,7 +1237,7 @@ sub initialize_log_file {
       $VHIST::VERBOSE    => 1,
       $VHIST_DIR         => $vhist_dir,
       $VHIST_RECON_START => $this->{$_RECON_START},
-    );
+	);
     if (my $vhist = VHIST->new(\%vhist_opts, $this)) {
       $this->{$_VHIST} = ($vhist->initialize_vhist($this)) ? undef : $vhist;
     }
@@ -1437,7 +1437,7 @@ sub calibrationFactors {
     $CALIB_DATE     => $calib_date,
     $CALIB_RATIO    => $calib_ratio,
     $CALIB_FACT     => $calib_factor,
-  );
+      );
   printHash(\%ret, "calibrationFactors($hdate, $calib_factors_file)") if ($this->{$O_VERBOSE});
   return (length($calib_date)) ?  \%ret : undef;
 }
@@ -1452,7 +1452,7 @@ sub identify_norm_file {
     $PFILE_DIR   => $normdir,
     $PFILE_KEY   => $K_NORM,
     $PFILE_SPAN  => $span,
-  );
+      );
   my $normfile = $this->identifyParamFile(\%paramargs);
   unless (-s "${normdir}/${normfile}.n") {
     return $this->log_msg("No norm file ${normdir}/${normfile}.n\n", 1);
@@ -1604,7 +1604,7 @@ sub print_study_summary {
     "Dir_Size"  => $dirsizestr,
     "Modified"  => $dirmod,
     %procsumm
-  );
+      );
 
   if ($short) {
     if ($short == 2) {
@@ -1645,22 +1645,22 @@ sub print_study_summary {
   return \%summary;
 }
 
-  sub printLine {
-    my ($this, $msg, $retval) = @_;
-    $retval = 0 unless (hasLen($retval) and $retval);
+sub printLine {
+  my ($this, $msg, $retval) = @_;
+  $retval = 0 unless (hasLen($retval) and $retval);
 
-    my $equals = "============================================================";
-    my $outstr = "";
-    if (hasLen($msg)) {
-      my $eqlen = (54 - length($msg)) / 2;
-      my $subeq = substr($equals, 0, $eqlen);
-      $outstr = "$subeq   $msg   $subeq";
-    } else {
-      $outstr = $equals;
-    }
-    $this->log_msg("$outstr\n");
-    return $retval;
+  my $equals = "============================================================";
+  my $outstr = "";
+  if (hasLen($msg)) {
+    my $eqlen = (54 - length($msg)) / 2;
+    my $subeq = substr($equals, 0, $eqlen);
+    $outstr = "$subeq   $msg   $subeq";
+  } else {
+    $outstr = $equals;
   }
+  $this->log_msg("$outstr\n");
+  return $retval;
+}
 
 # Return fully qualified program name depending on platform and software group.
 sub program_name {
@@ -1720,7 +1720,7 @@ sub do_rebin {
     my %cf_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-    );
+	);
     my $msg = "Histogram frame $i";
     $em_sino_missing += 1 unless $this->check_file_ok($FRAME_S_PREFIX, \%cf_args, $msg);
   }
@@ -1751,7 +1751,7 @@ sub do_rebin {
     my %cf_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-    );
+	);
     # Delete unneeded ra_s files created by lmhistogram.
     my $ra_s_file = $this->fileName($FRAME_RA_S_PREFIX, \%cf_args);
     $this->safe_unlink($ra_s_file, ($i == 0));
@@ -1921,7 +1921,7 @@ sub do_attenuation {
   my $span = $this->{$O_SPAN};
   my ($already_done, $spans_to_make) = $this->check_attenuation_done();
   my @spans_to_make = @$spans_to_make;
-	
+  
   unless ($already_done) {
     if (scalar(@spans_to_make) > 1) {
       print "*** do_attenuation: e7_fwd making multi spans: " . join(" ", @spans_to_make) . "\n";
@@ -1977,7 +1977,7 @@ sub check_attenuation_done {
 
 sub do_scatter {
   my ($this) = @_;
-	
+  
   $this->printLine("do_scatter begin");
   my $nhdr      = $this->{$_HDRDET}->{$NFRAMES};
   my $qc_path   = $this->fileName($K_DIR_RECON) . "/QC";
@@ -2003,7 +2003,7 @@ sub do_scatter {
     my %cf_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-    );
+	);
 
     my $msg = "Scatter processing - e7_sino - Frame $i";
     unless ($this->check_file_ok($FRAME_SC_PREFIX, \%cf_args, $msg)) {
@@ -2030,7 +2030,6 @@ sub do_scatter {
       $cmd .= " --skip 2";
       $cmd .= " --mrd 67";
       $cmd .= " --span $span_to_use";
-      #       $cmd .= " --mem 0.4";
       $cmd .= " -l 33," . $this->{$_LOG_DIR};
       $cmd .= " -q $qc_subdir";
       $cmd .= " --ssf 0.25,2";
@@ -2051,7 +2050,7 @@ sub do_scatter {
 	  return $this->log_msg("No calib_factors", 1);
 	}
       }
-			
+      
       # e7_sino_u -a $TX.a -u $TX.i -w 128 -e $EMF.tr.s -n $norm  --lber $ErgRatio --force --os $EMF"_sc.s" --os2d --gf --model 328 --skip 2 --mrd 67 --span 9 -l 73,log -q QC --ssf 0.25,2 --athr 1.03,4
       if ($this->runit($cmd, "do_scatter($i)")) {
 	$this->log_msg("ERROR: $e7_sino_prog command failed: *** NOT *** Exiting\n");
@@ -2071,7 +2070,7 @@ sub do_scatter {
 	$cmd .= " -O " . $this->fileName($FRAME_RA_SMO_PREFIX, \%cf_args);
 	$cmd .= " -t $frametime";
 	$cmd .= " -s $this->{$O_SPAN},67";
-				
+	
 	$this->runit($cmd, "do_delays($i)");
 	$this->log_msg("do_delays($i) completed");
       }
@@ -2107,8 +2106,8 @@ sub create_gm328_file {
   #   $ergratio = $param_ergratio;
   #   $this->log_msg("HRRTRecon::create_gm328_file(): Using cmd line Ergratio = $ergratio\n", 0);
   # } else {
-    my $logmsg = "$gm_328_file ergratio = $ergratio (calibration date $calibdate)";
-    $this->log_msg("HRRTRecon::create_gm328_file(): $logmsg\n", 1);
+  my $logmsg = "$gm_328_file ergratio = $ergratio (calibration date $calibdate)";
+  $this->log_msg("HRRTRecon::create_gm328_file(): $logmsg\n", 1);
   # }
 
   # Read correct erg ratio value from calibration factors file,
@@ -2116,12 +2115,12 @@ sub create_gm328_file {
   my %edits = (
     $ERGRATIO0 => $ergratio,
     $ERGRATIO1 => $ergratio,
-  );
+      );
   my %editargs = (
     'infile'  => $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}",
     'outfile' => $gm_328_file,
     'edits'   => \%edits,
-  );
+      );
   printHash(\%editargs, "create_gm328_file") if ($this->{$O_VERBOSE});
   ($this->editConfigFile(\%editargs)) and return $this->log_msg("editConfigFile($gm_328_file) failed");
   return 0;
@@ -2137,7 +2136,7 @@ sub do_sensitivity {
   my %fn_args = (
     $K_FRAMENO   => 0,
     $K_SPANTOUSE => $span,
-  );
+      );
 
   # Parameter -K (sensitivity image) has undocumented behaviour:
   # If the sens image is not present, it is created.  But an output file (-o param) is not generated.  No error condition is shown.
@@ -2201,7 +2200,7 @@ sub do_reconstruction {
     my %fn_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-    );
+	);
     my $niter = ($this->{$_USER_SW}) ? $ITER_USERSW : $ITER_OLDSW;
     my $msg = "${line}\nReconstruction (dim: 256) - Frame $i";
 
@@ -2215,7 +2214,7 @@ sub do_reconstruction {
       my $ch_file     = $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
       my $output_file = $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i});
       my $d_file      = ($this->{$_USER_M_SW}) ? $ch_file : $ra_smo_file;
-			
+      
       my $cmd = $prog_osem3d;
       $cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
       $cmd .= " -d " . $d_file;
@@ -2270,8 +2269,8 @@ sub do_reconstruction {
 
 	$ret += $this->runit($cmd, "do_reconstruction($i) part 2");
 
-				# je_hrrt_osem3d without -K makes 'normfac.i' in current dir.  Silent errors if it already exists.  Horrible.
-				# Rename 'normfac.i' to 'normfac_128_frameN.i'
+	# je_hrrt_osem3d without -K makes 'normfac.i' in current dir.  Silent errors if it already exists.  Horrible.
+	# Rename 'normfac.i' to 'normfac_128_frameN.i'
 	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i});
 	my $recon_dir = $this->fileName($K_DIR_RECON);
 	my $normfac_src = "${recon_dir}/${NORMFAC_I}";
@@ -2303,7 +2302,7 @@ sub do_reconstruction {
       copy($v_noresl_file, $v_file);
     }
   }
-	
+  
   return $this->printLine("do_recon returning $ret", $ret);
 }
 
@@ -2314,7 +2313,7 @@ sub do_conversion {
     $CODE_SW    => $CODE_SW_GROUP{$this->{$O_SW_GROUP}},
     $CODE_SPAN  => $this->{$O_SPAN},
     $CODE_FRAME => $this->{$_HDRDET}->{$NFRAMES},
-  );
+      );
   my $ret = 0;
   if ($this->{$_USER_M_SW}) {
     # Image file name differs for static case of motion software (no motion step run)
@@ -2502,7 +2501,7 @@ sub do_motion_as_script {
 	$ret = $this->runit($cmd, "do_motion step 2a: invert_air");
 	return $this->printLine("do_motion(): ERROR in PROG_INVERT_AIR", $ret) if ($ret);
       }
-	
+      
       # Step 2b: Reslice .i file
       $msg = "do_motion frame $i step 2b: $K_TX_FRAME_I";
       print "$msg\n";
@@ -2546,7 +2545,7 @@ sub do_motion_as_script {
       my $cmd = $this->program_name($PROG_E7_SINO);
       $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_FRAMENO => $i});
       $cmd .= " -u "   . $mu_reslice_file,
-	$cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
+      $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
       $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}});
       $cmd .= " -w $MU_WIDTH";
       $cmd .= " -a " . $acf_output_file;
@@ -2572,7 +2571,7 @@ sub do_motion_as_script {
     $cmd .= "$recondir/scatter_qc_00.plt";
     $ret = $this->runit($cmd, "do_motion step 5: gnuplot");
     rename("$recondir/scatter_qc_00.ps", $this->fileName($K_MOTION_QC_F_PS));
-	
+    
     # Step 6: OSEM
     $msg = "do_motion frame $i step 6: $K_FRAME_ATX_I";
     print "$msg\n";
@@ -2623,7 +2622,7 @@ sub do_motion_as_script {
       my $iplus1 = $i + 1;
       my $rplus1 = $this->{$_FNAMES}{$_MOT_REF_FR_} + 1;
       if ($i == $this->{$_FNAMES}{$_MOT_REF_FR_}) {
-				# Reference frame
+	# Reference frame
 	my $cmd = $this->program_name($PROG_MATCOPY);
 	$cmd .= " -i " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
 	$cmd .= " -o " . $this->fileName($K_IMAGE_ATX_RSL) . ",${iplus1},1,1";
@@ -2631,7 +2630,7 @@ sub do_motion_as_script {
 	$ret = $this->runit($cmd, "do_motion step 8: matcopy");
 	return $this->printLine("do_motion(): ERROR in matcopy", $ret) if ($ret);
       } else {
-				# Not reference frame
+	# Not reference frame
 	my $cmd = $this->program_name($PROG_MAKE_AIR);
 	$cmd .= " -s " . $this->fileName($K_IMAGE_ATX_V)   . ",${rplus1},1,1";
 	$cmd .= " -r " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
@@ -2731,7 +2730,7 @@ sub do_motion {
   my %opts = (
     $CODE_SW   => $CODE_SW_GROUP{$this->{$O_SW_GROUP}},
     $CODE_SPAN => $this->{$O_SPAN},
-  );
+      );
   $this->edit_ecat($std_image_file                 , {%opts, $CODE_NOTE => "mc"}    );
   # $this->edit_ecat($this->fileName($K_IMAGE_ATX_V) , {%opts, $CODE_NOTE => "atx"}   );
   # $this->edit_ecat($this->fileName($K_IMAGE_ATX_V2), {%opts, $CODE_NOTE => "atx2mm"});
@@ -2751,7 +2750,7 @@ sub run_conversion {
 
   $this->printLine("run_conversion(): i_file_key = $i_file_key, v_file_key = $v_file_key, K_IMAGE_V = $K_IMAGE_V");
   printHash($ecat_opts, "run_conversion") if (defined($ecat_opts) and $this->{$O_VERBOSE});
-	
+  
   if ($this->edit_calibration_file()) {
     return $this->printLine("run_conversion returning ERROR from edit_calibration_file", 1);
   }
@@ -2805,13 +2804,13 @@ sub edit_calibration_file {
 
   my %edits = (
     'calibration factor :=' => " $calib_factor",
-  );
+      );
   my %editargs = (
     # 'infile'  => $calib_factors->{$CALIB_TEMPL_F},
     'infile'  => $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_CALIB}",
     'outfile' => $this->{$_LOG_DIR} . "/${CALIBFACTOR}",
     'edits'   => \%edits,
-  );
+      );
   if ($this->editConfigFile(\%editargs)) {
     printHash(\%editargs, "ERROR: editConfigFile");
     return $this->printLine("edit_calibration_file(): returning error editConfigFile", 1);
@@ -3015,8 +3014,8 @@ sub do_transfer {
 	my $sysstr    = "cd $qc_subdir; $GNUPLOT $QC_PLT";
 	my $ret       = system($sysstr);
 	my $qcsrc     = "${qc_subdir}/${QC_PS}";
-				
-				# QC destintation directory.
+	
+	# QC destintation directory.
 	my $qcdst = "${qc_dest_dir}/scatter_qc_${frame}.ps";
 	$this->log_msg("Move $nframes frames: move($qcsrc, $qcdst)\n") if ($i == 0);
 	move($qcsrc, $qcdst) unless ($this->{$O_DUMMY});
@@ -3044,7 +3043,7 @@ sub do_crystalmap {
 
   my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}_test.log";
   $this->safe_unlink($logfile);
-	
+  
   # my $uses_user_sw = ($this->{$O_SW_GROUP} =~ /$SW_USER|$SW_USER_M/) ? 1 : 0;
 
   my $lmhistogram_prog = $this->program_name($PROG_LMHISTOGRAM);
@@ -3059,7 +3058,7 @@ sub do_crystalmap {
 
   my $ret = $this->runit($cmd, "do_crystalmap rebin");
   print "ERROR: $lmhistogram_prog returned $ret\n" if ($ret);
-	
+  
   # CrystalMap.exe does not handle missing time tags.
   # Check the lmhistogram log file for missing time tags.
   #   my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
@@ -3199,7 +3198,7 @@ sub insert_recon_record {
     $this->log_msg("ERROR: insert_recon_record(): db handle null: exiting");
     return 1;
   }
-	
+  
   my $listmode_file = $this->fileName($K_LISTMODE);
   my $hdr_file = "${listmode_file}.hdr";
   my $lmident = undef;
@@ -3210,7 +3209,7 @@ sub insert_recon_record {
     $this->log_msg("ERROR: HRRTRecon::insert_recon_record(): No file ident in DB for $listmode_file");
     return(1);
   }
-	
+  
   # Build hash of details for recon record.
   my $dates = convertDates((timeNow())[0]);
 
@@ -3220,7 +3219,7 @@ sub insert_recon_record {
     'ident_lm'  => $lmident,
     'node'      => $ENV{'HOST'},
     'recontime' => $dates->{$DATETIME_SQL},
-  );
+      );
 
   printHash(\%recondet, "This is recondet");
   my $condstr = conditionString(\%recondet, ',');
@@ -3285,11 +3284,11 @@ sub print_conf {
   printHash($conf, "HRRTRecon::print_conf($conf_file)");
 }
 
-  # Check all required values are filled in.
+# Check all required values are filled in.
 
-  sub check_conf {
-    return 0;
-  }
+sub check_conf {
+  return 0;
+}
 
 sub file_must_exist {
   my ($this, $filename) = @_;

@@ -43,6 +43,7 @@ Readonly our $SCAN_BLANK    => 'Scan_Blank';
 Readonly our $TRANSMISSION  => 'Transmission';
 Readonly our $FRAME_DEFINITION => 'Frame definition';
 Readonly our @FILE_TYPES    => qw{em_hdr em_l64 em_hc tx_hdr tx_l64};
+Readonly our $USE_TX_SUFFIX => 'use_tx_suffix';
 
 # Globals
 our %all_files_subj  = ();
@@ -53,7 +54,7 @@ our $data_dir        = undef;
 
 # Configuration
 our $hrrt_framing = HRRT::read_hrrt_config($HRRT::HRRT_FRAMING_JSON);
-print Dumper($hrrt_framing);
+# print Dumper($hrrt_framing);
 
 # Fields
 Readonly my $DATA_DIR => 'data_dir';
@@ -331,6 +332,10 @@ sub make_xfer_files {
   # Create destination directory name.
   my $dirname = "$em_rec->{'name_last'}_$em_rec->{'name_first'}_";
   $dirname .= $em_rec->{'date'}->{'hrrtdir'};
+  # Append TX time if requested.
+  if ($scan_times->{$USE_TX_SUFFIX}) {
+    $dirname .= '_TX_' . $scan_times->{'TX'};
+  }
   $xfer_files{$KEY_DESTDIR} = "\U$dirname";
   # printHash(\%xfer_files, "make_xfer_files()");
 
@@ -384,7 +389,7 @@ sub make_blank_scans_by_date {
 sub blank_scans_by_date {
   my $file_include = qq{TX\.s\$};
   if (/$file_include/) {
-     print "Blank Found: $File::Find::name\n";
+     # print "Blank Found: $File::Find::name\n";
     if ( my $det = hrrt_filename_det($_) ) {
       $blank_scans_by_date{$det->{'date'}->{'hrrtdir'}} = $det;
     } else {
@@ -483,8 +488,10 @@ sub select_scan {
     $tx_time = prompt 'Select Transmission Scan for EM scan $em_time', -verb,
         -menu => \@tx_times,
         '>';
+    my $tx_use_suffix = prompt('Append TX time to dest dir?', -yes);
+    $ret{$USE_TX_SUFFIX} = ($tx_use_suffix) ? 1 : 0;
   } else {
-
+    croak("No TX record");
     # Error? No TX record.
   }
   print "tx_time $tx_time\n";
