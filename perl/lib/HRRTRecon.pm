@@ -786,7 +786,7 @@ sub new {
 
   # Base (~/DEV/hrrt, ~/BIN/hrrt) comes from $0 (~/DEV/hrrt/perl/bin/foo.pl)
   my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
-  $root_path = abs_path("${root_path}/../..");
+  $root_path = abs_path("${root_path}/../../");
 
   my $conf_file = $arg_ref->{$O_CONF_FILE};
   my $config = read_conf($conf_file);
