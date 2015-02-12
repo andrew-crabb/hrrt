@@ -22,6 +22,7 @@ our @EXPORT = qw($O_DO_LOG $O_LOGFILE $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SP
 use Config::Std;
 use Cwd;
 use Cwd qw(abs_path);
+use File::Basename;
 use File::Spec;
 use File::Spec::Unix;
 use File::Copy;
@@ -479,7 +480,8 @@ our $_MOT_REF_FR_   = '_MOT_REF_FR_';
 
 #   Members of this (all start with _)
 #   Initialized in new()
-our $_CNF        = 'config';
+our $_ROOT          = 'root';
+our $_CNF           = 'config';
 our $_FNAMES        = 'fnames';
 our $_DATES         = 'dates';
 our $_RECON         = 'recon';
@@ -782,6 +784,10 @@ sub new {
   my $class = ref($that) || $that;
   my $sw_group = $arg_ref->{$O_SW_GROUP};
 
+  # Base (~/DEV/hrrt, ~/BIN/hrrt) comes from $0 (~/DEV/hrrt/perl/bin/foo.pl)
+  my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
+  $root_path = abs_path("${root_path}/../..");
+
   my $conf_file = $arg_ref->{$O_CONF_FILE};
   my $config = read_conf($conf_file);
   check_conf($config);
@@ -825,19 +831,20 @@ sub new {
 
   my %self = (
     'DEBUG'         => 0,
-    $_CNF	  => $config,		    # Read from config file.
+    $_ROOT          => $root_path,    # ~/DEV/hrrt, ~/BIN/hrrt
+    $_CNF	          => $config,		    # Read from config file.
     $_RECON         => \%recon,		    #
-    $_FNAMES	  => \%fnames,		    #
+    $_FNAMES	      => \%fnames,		    #
     $_PROCESSES     => $processes, # Details of processes to run.
     $_PROCESS_LIST  => $process_list, # List of processes to run.
     $_PROCESS_SUMM  => \%procsumm,    # Process summary
     $_USER_SW       => ($sw_group =~ /$SW_USER|$SW_USER_M/) ? 1 : 0,
     $_USER_M_SW     => ($sw_group eq $SW_USER_M) ? 1 : 0,
-    $_RECON_START    => $recon_start_time_str,
+    $_RECON_START   => $recon_start_time_str,
     $_DBI_HANDLE    => undef,
     $O_ONUNIX       => ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0,
-    $_LOG_DIR    => '',		# recon/subject/recon_yymmdd_hhmmss
-    $_LOG_FILE    => '', # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
+    $_LOG_DIR       => '',		# recon/subject/recon_yymmdd_hhmmss
+    $_LOG_FILE      => '', # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
       );
   # arg_ref is ptr to hash of extra arguments.
   %self = (%self, %$arg_ref);
@@ -869,9 +876,9 @@ sub setopt {
 sub test_prereq {
   my ($this) = @_;
 
-  my $template_file  = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
-  my $rebin_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-  my $gnuplot_file   = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
+  my $template_file  = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
+  my $rebin_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+  my $gnuplot_file   = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
 
   (-s $template_file)  or return $this->log_msg("No GM328 template file '$template_file'", 1);
   (-s $rebin_lut_file) or return $this->log_msg("No rebin_lut file '$rebin_lut_file'"    , 1);
@@ -1666,7 +1673,7 @@ sub printLine {
 sub program_name {
   my ($this, $program) = @_;
 
-  my $progpath = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
+  my $progpath = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
   my $progname = $PROGRAMS{$program}{$this->{$O_SW_GROUP}};
   my $fullprogram = "${progpath}/${progname}";
   return wantarray() ? ($progpath, $progname, $fullprogram) : $fullprogram;
@@ -1684,7 +1691,7 @@ sub do_rebin {
 
   my ($progpath, $progname, $lmhistogram) = $this->program_name($PROG_LMHISTOGRAM);
   my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}.log";
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   croak("HRRTRecon::do_rebin(): No rebinner_lut_file $rebinner_lut_file") unless (-s $rebinner_lut_file);
 
   # Histogram TX file if necessary
@@ -2017,7 +2024,7 @@ sub do_scatter {
 	$normkey = ($span_to_use == $SPAN3) ? $K_NORM_3 : $K_NORM_9;
       }
 
-      my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+      my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
       my $e7_sino_prog      = $prog_e7_sino;
       my $cmd               = $e7_sino_prog;
       $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
@@ -2117,7 +2124,7 @@ sub create_gm328_file {
     $ERGRATIO1 => $ergratio,
       );
   my %editargs = (
-    'infile'  => $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}",
+    'infile'  => $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}",
     'outfile' => $gm_328_file,
     'edits'   => \%edits,
       );
@@ -2130,7 +2137,7 @@ sub do_sensitivity {
   my ($this) = @_;
 
   $this->printLine("do_sensitivity begin");
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   my $span = $this->{$O_SPAN};
   my %fn_args = (
@@ -2184,7 +2191,7 @@ sub do_reconstruction {
 
   my $ret = 0;
   my $logfile = $this->{$_LOG_DIR} . "/osem3d_" . convertDates(time())->{$DATES_HRRTDIR} . ".log";
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   if ($this->{$_USER_M_SW}) {
     unless ($this->check_file_ok($K_NORMFAC_256, '', "${line}\ndo_reconstrcution sensitivity")) {
@@ -2591,7 +2598,7 @@ sub do_motion_as_script {
       $cmd .= " -X 256";
       # $cmd .= " -K " . $this->fileName($K_NORMFAC_256);		# See explanation below.
       $cmd .= " -K normfac.i";
-      $cmd .= " -r " . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+      $cmd .= " -r " . $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
       $ret = $this->runit($cmd, "do_motion step 6: osem3d");
       return $this->printLine("do_motion(): ERROR in PROG_OSEM3D", $ret) if ($ret);
@@ -2661,7 +2668,7 @@ sub do_motion {
   my ($this) = @_;
   my $ret = 0;
 
-  my $bindir = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
+  my $bindir = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
   unless ($this->check_file_ok($K_MOTION_QC, '', "do_motion 1: $K_MOTION_QC")) {
     #  motion_qc $v_file_name_128 -v -O -R 0 #-a 1.03,4 #-r $ref_frame
     my $cmd = $this->program_name($PROG_MOTION_QC);
@@ -2690,7 +2697,7 @@ sub do_motion {
 
   # Output file is $K_IMAGE_ATX_VR.  But renamed to $K_IMAGE_V, so test for $K_IMAGE_ATX_V.
   my $prog_name = undef;
-  my $rebinner_lut_file = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   unless ($this->check_file_ok($K_IMAGE_ATX_V, '', "do_motion 2: $K_IMAGE_ATX_V")) {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
@@ -2807,7 +2814,7 @@ sub edit_calibration_file {
       );
   my %editargs = (
     # 'infile'  => $calib_factors->{$CALIB_TEMPL_F},
-    'infile'  => $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_CALIB}",
+    'infile'  => $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_CALIB}",
     'outfile' => $this->{$_LOG_DIR} . "/${CALIBFACTOR}",
     'edits'   => \%edits,
       );
@@ -3140,7 +3147,7 @@ sub runit {
 
   $this->create_gm328_file() and return $this->log_msg("Error creating gm328 file", 1);
 
-  my $bin_dir = $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
+  my $bin_dir = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
   my $prog_path = ($this->{$O_ONUNIX}) ? $prog_path_lin : $prog_path_cyg;
   $prog_path = "${bin_dir}:$prog_path";
 
@@ -3275,6 +3282,7 @@ sub read_conf {
   # conf_file_name defaults to ../etc/$0.conf ie here hrrt_recon.conf 
   my $conf_file = ($infile or conf_file_name());
   my %config = ();
+  # Config::Std
   read_config($conf_file, %config);
   return \%config;
 }
