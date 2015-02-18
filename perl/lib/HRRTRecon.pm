@@ -498,6 +498,8 @@ our $_DEBUG         = 'debug';
 our $_USER_SW       = 'uses_user_sw';
 our $_USER_M_SW     = 'uses_user_m_sw';
 our $_VHIST         = 'vhist';
+our $_TX_TIME        = 'tx_time';
+our $_USE_TX_TIME    = 'use_tx_time';
 # Initialized in initialize_log_file
 our $_DBI_HANDLE    = 'dbi_handle';
 #   Initialized in analyze_recon_dir()
@@ -536,7 +538,6 @@ our $CALIB_FACT     = 'calib_fact';
 our $K_DIR_RECON      = 'dir_recon';
 our $K_DIR_DEST       = 'dir_dest';
 our $K_LISTMODE       = 'listmode';
-our $K_TX_TIME        = 'tx_time';
 our $K_LIST_HC        = 'em_headcount';
 our $K_LIST_HDR       = 'list_hdr';
 our $K_TX_BLANK       = 'tx_blank';
@@ -1174,6 +1175,12 @@ sub fill_in_names {
   # Directory names.
   # ------------------------------------------------------------
   my $destdir = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_SOURCE} . '/' . $bits[$#bits];
+  # Store TX time if it is encoded in the recon dir.
+  if ($indir =~ /_TX_(\d{6})/) {
+    $this->{$_TX_TIME} = $1;
+    $this->{$_USE_TX_TIME} = 1;
+    print "XXX tx_time $this->{$_TX_TIME}\n";
+  }
 
   # ------------------------------------------------------------
   # Subject details.
@@ -1186,7 +1193,7 @@ sub fill_in_names {
   $this->{$_FNAMES}->{$_NORM3_}    = $norm3file; # norm_070505_070830_3.n
   $this->{$_FNAMES}->{$_NORM9_}    = $norm9file; # norm_070505_070830_9.n
   $this->{$_FNAMES}->{$_NORMDIR_}  = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_NORM}; # /e/recon/norm
-  $this->{$_FNAMES}->{$_BLANKDIR_}  = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_BLANK}; # /e/recon/norm
+  $this->{$_FNAMES}->{$_BLANKDIR_} = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_BLANK}; # /e/recon/norm
   $this->{$_FNAMES}->{$_NORM_}     = $normfile;	# norm_070505_070830_{span}.n
   $this->{$_FNAMES}->{$_RECONDIR_} = $indir; # /e/recon/04909_MONKEY_070911_104154
   $this->{$_FNAMES}->{$_SUBJ_}     = $em_stem;
@@ -1328,7 +1335,6 @@ sub fileName {
   my $frameno     = hashEl($argref, $K_FRAMENO);
   my $span_to_use = hashEl($argref, $K_SPANTOUSE);
   my $nosuff      = hashEl($argref, $K_NOSUFF);
-  my $tx_time     = hashEl($argref, $K_TX_TIME);
   my $recon_key   = $keyname;
   $frameno        = '' unless (hasLen($frameno));
 
@@ -1372,9 +1378,9 @@ sub fileName {
     if ($this->{$O_FRAME_CNT}) {
       $filename .= "_${nframes}fr";
     }
-    # Add _TX_txtime if specified.
-    if (hasLen($tx_time)) {
-      $filename .= "_TX_${tx_time}";
+    # Add _TX_txtime to .v files, if specified.
+    if ($this->{$_USE_TX_TIME}) {
+      $filename .= '_TX_' . $this->{$_TX_TIME};
     }
   }
 
@@ -2925,22 +2931,13 @@ sub do_transfer {
   my $frame_dir = "${span_dir}/frames";
   mkDir($frame_dir);
 
-  # Get TX time if it is encoded in the recon dir.
-  my $tx_time = undef;
-  if ($recon_dir =~ /_TX_(\d{6})/) {
-    $tx_time = $1;
-    print "XXX tx_time $tx_time\n";
-  }
-
   # ------------------------------------------------------------
   # Create array @sendfiles of files to copy to dest directory.
   # ------------------------------------------------------------
   my @sendkeys = ($K_IMAGE_V, $K_TX_I, $K_TX_H33, $K_CRYSTAL_V);
   my @sendfiles = ();
   foreach my $sendkey (@sendkeys) {
-    # Append _TX_txtime to image filename if tx time is defined.
-    my $opts = (hasLen($tx_time)) ? {$K_TX_TIME => $tx_time} : undef;
-    my $sendfile = ($this->fileName($sendkey, $opts))[0];
+    my $sendfile = ($this->fileName($sendkey))[0];
     push(@sendfiles, $sendfile);
   }
 
@@ -3014,7 +3011,7 @@ sub do_transfer {
       my ($dosimgfile, $hkey)  = $this->fileName($imgkey);
       my $cygimgfile = $hkey->{$DIR_CYGWIN_NEW};
       foreach my $destsys (@destsyss) {
-	my $str = "scp $cygimgfile $destsys";
+	my $str = "rsync -tv $cygimgfile $destsys";
 	$this->log_msg($str);
 	unless ($this->{$O_DUMMY} or $this->{$O_NOHOST}) {
 	  `$str`;
