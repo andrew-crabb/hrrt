@@ -536,6 +536,7 @@ our $CALIB_FACT     = 'calib_fact';
 our $K_DIR_RECON      = 'dir_recon';
 our $K_DIR_DEST       = 'dir_dest';
 our $K_LISTMODE       = 'listmode';
+our $K_TX_TIME        = 'tx_time';
 our $K_LIST_HC        = 'em_headcount';
 our $K_LIST_HDR       = 'list_hdr';
 our $K_TX_BLANK       = 'tx_blank';
@@ -1327,6 +1328,7 @@ sub fileName {
   my $frameno     = hashEl($argref, $K_FRAMENO);
   my $span_to_use = hashEl($argref, $K_SPANTOUSE);
   my $nosuff      = hashEl($argref, $K_NOSUFF);
+  my $tx_time     = hashEl($argref, $K_TX_TIME);
   my $recon_key   = $keyname;
   $frameno        = '' unless (hasLen($frameno));
 
@@ -1369,6 +1371,10 @@ sub fileName {
     # Add frame count '_9fr' if specified.
     if ($this->{$O_FRAME_CNT}) {
       $filename .= "_${nframes}fr";
+    }
+    # Add _TX_txtime if specified.
+    if (hasLen($tx_time)) {
+      $filename .= "_TX_${tx_time}";
     }
   }
 
@@ -2919,14 +2925,23 @@ sub do_transfer {
   my $frame_dir = "${span_dir}/frames";
   mkDir($frame_dir);
 
+  # Get TX time if it is encoded in the recon dir.
+  my $tx_time = undef;
+  if ($recon_dir =~ /_TX_(\d{6})/) {
+    $tx_time = $1;
+    print "XXX tx_time $tx_time\n";
+  }
+
   # ------------------------------------------------------------
   # Create array @sendfiles of files to copy to dest directory.
   # ------------------------------------------------------------
   my @sendkeys = ($K_IMAGE_V, $K_TX_I, $K_TX_H33, $K_CRYSTAL_V);
-  # push(@sendkeys, $K_IMAGE_NORESL_V) if ($this->{$_USER_M_SW});
   my @sendfiles = ();
   foreach my $sendkey (@sendkeys) {
-    push(@sendfiles, ($this->fileName($sendkey))[0]);
+    # Append _TX_txtime to image filename if tx time is defined.
+    my $opts = (hasLen($tx_time)) ? {$K_TX_TIME => $tx_time} : undef;
+    my $sendfile = ($this->fileName($sendkey, $opts))[0];
+    push(@sendfiles, $sendfile);
   }
 
   # Include EM.i file if static (ie, phantom).
@@ -2934,6 +2949,10 @@ sub do_transfer {
     my $em_ifile = $this->fileName($K_FRAME_I);
     push(@sendfiles, $em_ifile);
   }
+
+  # Include the TX.s file
+  my $tx_s_file = $this->fileName($K_TX_SUBJ);
+  push(@sendfiles, $tx_s_file);
 
   for (my $i = 0; $i < $nframes; $i++) {
     my $frame_hc_file = $this->fileName($K_FRAME_LM_HC, {$K_FRAMENO => $i});
