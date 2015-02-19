@@ -5,13 +5,15 @@
 
 use warnings;
 use strict;
-use Getopt::Std;
+# use Getopt::Std;
 use Data::Dumper;
 
 use Cwd;
 use FindBin;
-use lib Cwd::abs_path($FindBin::Bin . '/../lib');
-use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
+# use lib Cwd::abs_path($FindBin::Bin . '/../lib');
+# use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
+use lib $FindBin::Bin . '/../lib';
+use lib $FindBin::Bin . '/../../../perl/lib';
 
 # use HRRTDB;  # deprecated.
 use HRRT_DB;

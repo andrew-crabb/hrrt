@@ -7,7 +7,7 @@ package HRRT_DB;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_subject_records get_subject_record make_recon_dir_name make_subject_name);
+our @EXPORT = qw(get_em_scans_for_subject get_subject_records get_subject_record make_recon_dir_name make_subject_name);
 
 # Database table and field names.
 @EXPORT = (@EXPORT, qw($DATAFILE_TABLE $DATAFILE_ID $DATAFILE_SCANTIME $DATAFILE_NAME $DATAFILE_PATH $DATAFILE_HOST $DATAFILE_SIZE $DATAFILE_MODIFIED $DATAFILE_CHECKSUM));
@@ -79,7 +79,11 @@ Readonly::Scalar our $SUBJECT_NAME_FIRST => 'subject.name_first';
 Readonly::Scalar our $SUBJECT_HISTORY    => 'subject.history';
 
   # For compatibility with old DB field names in HRRTDB.
-  Readonly::Scalar our $SUBJECT_IDENT         => 'subject.ident';
+Readonly::Scalar our $SUBJECT_IDENT         => 'subject.ident';
+Readonly::Scalar our $SCAN_IDENT_SUBJECT     = 'scan.ident_subject';
+Readonly::Scalar our $SUBJECT_IDENT          = 'subject.ident';
+Readonly::Scalar our $SCAN_IDENT             = 'scan.ident';
+Readonly::Scalar our $IMAGEFILE_IDENT_SCAN   = 'imagefile.ident_scan';
 
 # Self class variable names.
 
@@ -96,6 +100,27 @@ sub new {
 # ============================================================
 # Functions below here still use the old database.
 # ============================================================
+
+sub get_em_scans_for_subject {
+  my ($dbh, $opts, $subject_record) = @_;
+
+  my $str = "select distinct";
+  $str   .= " $SCAN_DATETIME as `$SCAN_DATETIME`";
+  $str   .= ", $IMAGEFILE_SIZE AS `$IMAGEFILE_SIZE`";
+  $str   .= " from $SCAN_TABLE";
+  $str   .= " join $IMAGEFILE_TABLE";
+  # $str   .= " on $SCAN_ID = $IMAGEFILE_IDENT_SCAN";
+  $str   .= " on $SCAN_IDENT = $IMAGEFILE_IDENT_SCAN";
+  $str   .= " where $SCAN_IDENT_SUBJECT = '$subject_record->{$SUBJECT_IDENT}'";
+  $str   .= " and $IMAGEFILE_SIZE > 100000000";
+  $str   .= " and $IMAGEFILE_NAME like '%_EM.l64'";
+  my $sh = DBIquery($dbh, $str, $opts->{$Opts::OPT_VERBOSE}, 0);
+  my @recs = ();
+  while (my $rec = $sh->fetchrow_hashref) {
+    push(@recs, $rec);
+  }
+  return \@recs;
+}
 
 # Return records matching given name.
 # Returns: ptr to array of hashes for each record returned.
