@@ -8,14 +8,17 @@ use strict;
 use Getopt::Std;
 use Data::Dumper;
 
+use Cwd;
 use FindBin;
-use lib "$FindBin::Bin/../lib";
+use lib Cwd::abs_path($FindBin::Bin . '/../lib');
+use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
 
 # use HRRTDB;  # deprecated.
 use HRRT_DB;
 use HRRT_Utilities;
 use MySQL;
 use Utilities_new;
+use Opts;
 
 my $OPT_SUBJECT  = 's';
 my $OPT_WILDCARD = 'w';
@@ -71,7 +74,7 @@ while ($go) {
     my $i = 0;
     foreach my $rec (@$scans_for_subject) {
       # printHash($rec);
-      my ($scan_datetime, $imagefile_size) = @{$rec}{($SCAN_SCANTIME, $IMAGEFILE_SIZE)};
+      my ($scan_datetime, $imagefile_size) = @{$rec}{($SCAN_DATETIME, $IMAGEFILE_SIZE)};
       my $gb = int($imagefile_size / 1000000000);
       push(@selvals, [($i, $scan_datetime, $gb)]);
       $i++;
