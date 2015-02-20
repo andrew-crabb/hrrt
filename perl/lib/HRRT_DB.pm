@@ -1,13 +1,19 @@
-#! /usr/local/bin/perl -w
+#! /usr/bin/env perl
 
 # HRRT_DB.pm
 # Utilities to support the 'filesys' database.
+
+use strict;
+use warnings;
+use autodie;
+use Readonly;
+use FindBin;
 
 package HRRT_DB;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_em_scans_for_subject get_subject_records get_subject_record make_recon_dir_name make_subject_name);
+our @EXPORT = qw/ get_subject_records get_subject_record make_recon_dir_name make_subject_name get_subject_scans  /;
 
 # Database table and field names.
 @EXPORT = (@EXPORT, qw($DATAFILE_TABLE $DATAFILE_ID $DATAFILE_SCANTIME $DATAFILE_NAME $DATAFILE_PATH $DATAFILE_HOST $DATAFILE_SIZE $DATAFILE_MODIFIED $DATAFILE_CHECKSUM));
@@ -18,9 +24,6 @@ our @EXPORT = qw(get_em_scans_for_subject get_subject_records get_subject_record
 @EXPORT = (@EXPORT, qw($SUBJECT_TABLE $SUBJECT_ID $SUBJECT_NAME_LAST $SUBJECT_NAME_FIRST $SUBJECT_HISTORY));
 
 
-use strict;
-use Readonly;
-use FindBin;
 
 use lib $FindBin::Bin;
 use Utilities_new;
@@ -80,10 +83,9 @@ Readonly::Scalar our $SUBJECT_HISTORY    => 'subject.history';
 
   # For compatibility with old DB field names in HRRTDB.
 Readonly::Scalar our $SUBJECT_IDENT         => 'subject.ident';
-Readonly::Scalar our $SCAN_IDENT_SUBJECT     = 'scan.ident_subject';
-Readonly::Scalar our $SUBJECT_IDENT          = 'subject.ident';
-Readonly::Scalar our $SCAN_IDENT             = 'scan.ident';
-Readonly::Scalar our $IMAGEFILE_IDENT_SCAN   = 'imagefile.ident_scan';
+Readonly::Scalar our $SCAN_IDENT_SUBJECT    => 'scan.ident_subject';
+Readonly::Scalar our $SCAN_IDENT            => 'scan.ident';
+Readonly::Scalar our $IMAGEFILE_IDENT_SCAN  => 'imagefile.ident_scan';
 
 # Self class variable names.
 
@@ -101,8 +103,8 @@ sub new {
 # Functions below here still use the old database.
 # ============================================================
 
-sub get_em_scans_for_subject {
-  my ($dbh, $opts, $subject_record) = @_;
+sub get_subject_scans {
+    my ($dbh, $opts, $subject_record) = @_;
 
   my $str = "select distinct";
   $str   .= " $SCAN_DATETIME as `$SCAN_DATETIME`";

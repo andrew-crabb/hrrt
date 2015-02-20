@@ -5,6 +5,7 @@
 
 use warnings;
 use strict;
+use autodie;
 # use Getopt::Std;
 use Data::Dumper;
 
@@ -71,7 +72,7 @@ while ($go) {
   my $scan_datetime = undef;
   if (defined($subj_rec)) {
     print make_subject_name($subj_rec, 1) . ":\n";
-    my $scans_for_subject = get_em_scans_for_subject($dbh, $opts, $subj_rec);
+    my $scans_for_subject = get_subject_scans($dbh, $opts, $subj_rec);
     my @selvals = ();
     my $i = 0;
     foreach my $rec (@$scans_for_subject) {
