@@ -75,6 +75,7 @@ our $HRRT_TX_S   = 'hrrt_tx_s';
 our $HRRT_EM_HC  = 'hrrt_em_hc';
 our $HRRT_EM_L64 = 'hrrt_em_l64';
 our $HRRT_EM_HDR = 'hrrt_em_hdr';
+our $HRRT_TX_HDR = 'hrrt_tx_hdr';
 our $HRRT_BLANK  = 'hrrt_blank';
 
 # HRRT file fields.
@@ -87,19 +88,22 @@ our $HRRT_DTIM = '#hrrt_dtim#';
 # HRRT file details.
 our %HRRT_FILES = (
   $HRRT_TX_S => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX.s",
+    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX\.(s|l64|l64\.7z)",
+  },
+  $HRRT_TX_HDR => {
+    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX\.l64.hdr",
   },
   $HRRT_EM_HC => {
     $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.hc",
   },
   $HRRT_EM_L64 => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64",
+    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64(\.7z)*\$",
   },
   $HRRT_EM_HDR => {
     $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64.hdr",
   },
   $HRRT_BLANK => {
-    $HRRT_PATT => "SCAN_BLANK.*${HRRT_DATE}.*_TX.s",
+    $HRRT_PATT => "SCAN_BLANK.*${HRRT_DATE}.*_TX\.s",
   },
 );
 

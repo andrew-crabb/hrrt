@@ -11,10 +11,8 @@ use Data::Dumper;
 
 use Cwd;
 use FindBin;
-# use lib Cwd::abs_path($FindBin::Bin . '/../lib');
-# use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
-use lib $FindBin::Bin . '/../lib';
-use lib $FindBin::Bin . '/../../../perl/lib';
+use lib Cwd::abs_path($FindBin::Bin . '/../lib');
+use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
 
 # use HRRTDB;  # deprecated.
 use HRRT_DB;
@@ -25,7 +23,7 @@ use Opts;
 
 my $OPT_SUBJECT  = 's';
 my $OPT_WILDCARD = 'w';
-my $OPT_PI_NAME = 'p';
+my $OPT_PI_NAME  = 'p';
 
 my %allopts = (
   $OPT_SUBJECT => {
