@@ -8,6 +8,7 @@ use warnings;
 no strict 'refs';
 
 use Cwd qw(abs_path);
+use Data::Dumper;
 use File::Basename;
 use File::Copy;
 use File::Find;
@@ -20,7 +21,7 @@ use Readonly;
 use Test::More;
 
 use lib abs_path("$FindBin::Bin/../lib");
-use lib abs_path("$FindBin::Bin/../../perl/lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
 
 use API_Utilities;
 use FileUtilities;
@@ -32,6 +33,7 @@ Readonly::Scalar our $OMIT_FILES_PATTERN => q{bh$|log$};
 our $g_max_name_len = 0;
 
 my $OPT_SKIPTIME   = 'm';
+my $OPT_NAME       = 'n';
 my $OPT_SELFTEST   = 't';
 my $OPT_EXPUNGE    = 'x';
 my $OPT_WINDOW     = 'w';
@@ -42,10 +44,10 @@ my %allopts = (
     $Opts::OPTS_TYPE => $Opts::OPTS_BOOL,
     $Opts::OPTS_TEXT => 'Skip time (weekday) test.',
   },
-  $OPT_SELFTEST => {
-    $Opts::OPTS_NAME => 'selftest',
-    $Opts::OPTS_TYPE => $Opts::OPTS_BOOL,
-    $Opts::OPTS_TEXT => 'Run self test and exit.',
+  $OPT_NAME => {
+    $Opts::OPTS_NAME => 'name',
+    $Opts::OPTS_TYPE => $Opts::OPTS_STRING,
+    $Opts::OPTS_TEXT => 'Process only files matching name.',
   },
   $OPT_EXPUNGE => {
     $Opts::OPTS_NAME => 'expunge',
@@ -78,8 +80,13 @@ print scalar(@allfiles) . " files\n";
 @allfiles = grep(!/$OMIT_FILES_PATTERN/, @allfiles);
 print scalar(@allfiles) . " files\n";
 
+if ($opts->{$OPT_NAME}) {
+  @allfiles = grep(/$opts->{$OPT_NAME}/, @allfiles);
+  print scalar(@allfiles) . " files after filtering for " . $opts->{$OPT_NAME} . "\n";
+}
+
 my $disks = list_backup_disks();
-printHash($disks, "disks") if $opts->{$Opts::OPT_VERBOSE};
+print Dumper($disks);
 
 # Do the header files first, to ensure database is filled in.
 my @hdrfiles  = grep( /\.hdr$/, @allfiles);
@@ -116,10 +123,9 @@ exit;
 sub copy_file_to_disk {
   my ($infile, $filedet, $disks) = @_;
   my %disks = %$disks;
-
   my ($filename, $filepath, $filesuff) = fileparse($infile);
-
-  my $filetime = $filedet->{$HRRT_Utilities::DATE}->{$DATES_SECS};
+  my $fileyear  = $filedet->{$HRRT_Utilities::DATE}->{$DATES_YYYY};
+  my $filemonth = $filedet->{$HRRT_Utilities::DATE}->{$DATES_MM};
   my %args = (
     $API_Utilities::IS_HEADER => ($infile =~ /\.hdr$/) ? 1 : 0,
     $API_Utilities::VERBOSE   => $opts->{$Opts::OPT_VERBOSE},
@@ -127,20 +133,18 @@ sub copy_file_to_disk {
   my $newname = make_std_name($infile, \%args);
 
   foreach my $disk (sort keys %disks) {
-    my $dir = $disks{$disk};
-    my $dirstart = $dir->{'start'};
-    my $dirstop = $dir->{'stop'};
-    if (($filetime >= $dirstart) and ($filetime <= $dirstop)) {
-      copy_file_to_this_disk($infile, $newname, $disk);
+    if (exists($disks->{$disk}{$fileyear}{$filemonth})) {
+      # print "xxx . copy_file_to_disk('$disk' '$fileyear' '$filemonth' $infile)\n";
+      copy_file_to_this_disk($infile, $newname, $disk, $fileyear, $filemonth);
     }
   }
 }
 
 sub copy_file_to_this_disk {
-  my ($infile, $newname, $disk) = @_;
+  my ($infile, $newname, $disk, $fileyear, $filemonth) = @_;
 
   # Check we have space.
-  my $dest = "${disk}/${newname}";
+  my $dest = "$disk/$fileyear/$filemonth/$newname";
   unless (file_will_fit($infile, $disk)) {
     print "ERROR: copy_file_to_this_disk($infile, $disk): Insufficient destination space\n";
     return;
@@ -155,14 +159,15 @@ sub copy_file_to_this_disk {
   );
 
   # printHash(\%rsopts, "copy_file_to_disk") if ($opts->{$Opts::OPT_VERBOSE});
-  my $rsync = new File::Rsync();
-  my $ret = $rsync->exec(\%rsopts);
 
   my ($r_err, $r_out) = ('', '');
   my $dummystr = '';
+  my $ret = undef;
   if ($opts->{$Opts::OPT_DUMMY}) {
     $dummystr = 'Dummy: ';
   } else {
+    my $rsync = new File::Rsync();
+    $ret = $rsync->exec(\%rsopts);
     chmod(0644, $dest);
     $r_err = ($rsync->err() // '');
     $r_out = ($rsync->out() // '');

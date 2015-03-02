@@ -1,4 +1,7 @@
-#! /usr/local/bin/perl -w
+#! /usr/bin/env perl
+
+use strict;
+use warnings;
 
 package HRRT_Utilities;
 require Exporter;
@@ -9,6 +12,8 @@ our @EXPORT =       qw(hrrt_filename_det hrrt_std_name analyzeHRRTheader list_ba
 @EXPORT = (@EXPORT, qw($NAME_LAST $NAME_FIRST $HIST_NO $DATE));
 
 use Carp;
+use Cwd qw(abs_path);
+use Data::Dumper;
 use Date::Format;
 use File::Basename;
 use File::Copy;
@@ -19,12 +24,13 @@ use threads;
 use threads::shared;
 
 use lib $FindBin::Bin;
+use lib abs_path("$FindBin::Bin/../../perl/lib");
+
 use FileUtilities;
 use Utilities_new;
 use HRRT_DB;
 use API_Utilities;
 
-use strict;
 no strict 'refs';
 
 # ------------------------------------------------------------
@@ -177,7 +183,8 @@ our %FNAME_TYPES = (
 # ------------------------------------------------------------
 
 my $HRRT_DIR_MOUNT = '/mnt';
-my $HRRT_DIR_PATT  = '(\d{2})_(\d{2})-(\d{2})_(\d{2})-([A-Z])';
+my $HRRT_YEAR_PATT  = '(20\d{2})';
+my $HRRT_MONTH_PATT  = '(\d{2})';
 
 # ------------------------------------------------------------
 # Global variables.
@@ -585,8 +592,8 @@ sub is_hrrt_file {
   return $ret;
 }
 
-# Return a list of backup disks currently mounted.
-# Format: path => [date_min, date_max, ordinal]
+# Return ptr to hash of backup disks currently mounted.
+# Format: ptr->{disk}{year}{month}
 
 sub list_backup_disks {
   my %disk_data = ();
@@ -595,37 +602,17 @@ sub list_backup_disks {
   my @filesystems = grep(/$HRRT_DIR_MOUNT/, $fs->filesystems());
   foreach my $filesystem (@filesystems) {
     my @cont = dirContents($filesystem);
-    my @backup_dirs = grep(/$HRRT_DIR_PATT/, @cont);
-    if (scalar(@backup_dirs) == 1) {
-      $disk_data{$filesystem} = $backup_dirs[0];
+    my @year_dirs = grep(/$HRRT_YEAR_PATT/, @cont);
+    foreach my $year_dir (@year_dirs) {
+      my @ycont = dirContents("${filesystem}/${year_dir}");
+      my @month_dirs = grep(/$HRRT_MONTH_PATT/, @ycont);
+      foreach my $month_dir (@month_dirs) {
+	$disk_data{$filesystem}{$year_dir}{$month_dir} = ();
+      }
     }
   }
 
-  my %disks = ();
-  foreach my $filesystem (sort keys %disk_data) {
-    my $dirname = $disk_data{$filesystem};
-    $dirname =~ /$HRRT_DIR_PATT/;
-    my ($yr_0, $mo_0, $yr_1, $mo_1, $ord) = ($1, $2, $3, $4, $5);
-    my @times0 = (0, 0, 0, 1, ($mo_0 - 1), $yr_0, 0, 0, 0);
-    my $secs0 = strftime("%s", @times0);
-    # Add a month for the end date.
-    if ($mo_1 == 12) {
-      # Oh, December.  Whatever are we going to do with you.
-      $mo_1 = 1;
-      $yr_1 += 1;
-    } else {
-      $mo_1 += 1;
-    }
-    my @times1 = (0, 0, 0, 1, ($mo_1 - 1), $yr_1, 0, 0, 0);
-    my $secs1 = strftime("%s", @times1);
-    my %disk = (
-      'start' => $secs0,
-      'stop'  => $secs1,
-      'ord'   => $ord,
-    );
-    $disks{"${filesystem}/${dirname}"} = \%disk;
-  }
-  return \%disks;
+  return \%disk_data;
 }
 
 # Return ptr to hash of files matching this date on this disk.

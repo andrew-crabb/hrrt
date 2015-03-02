@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Cwd qw(abs_path);
+use Data::Dumper;
 use File::Basename;
 use File::Find;
 use File::Rsync;
@@ -12,7 +13,7 @@ use FindBin;
 use Getopt::Std;
 
 use lib abs_path("$FindBin::Bin/../lib");
-use lib abs_path("$FindBin::Bin/../../perl/lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
 
 use Utilities_new;
 use HRRT_Utilities;
@@ -55,6 +56,10 @@ my $all_ts = start_log("Overall");
 our $find_files_count = 0;
 our $find_files_size = 0;
 
+# Find backup disks.
+my $disks = list_backup_disks();
+print Dumper($disks);
+
 # ------------------------------------------------------------
 # Step 1. Mirror new files on HRRT onto backup disks.
 # ------------------------------------------------------------
@@ -62,9 +67,9 @@ our $find_files_size = 0;
 unless ($no_mirror) {
   run_and_log($HRRT_MIRROR, "hrrt_mirror");
 }
+exit;
 
-# Find backup disks.
-my $disks = list_backup_disks();
+
 my %disks = %$disks;
 my @backup_disks = sort keys %disks;
 my @all_disks = ($HRRT, @backup_disks);

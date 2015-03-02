@@ -411,12 +411,16 @@ sub select_blank_scan {
   my @match_blank_times = grep(/$scandate/, @all_blank_dates);
   my $ret = undef;
   my $blank_scan = undef;
+  my $nblank = scalar(@match_blank_times);
 
-  if (scalar(@match_blank_times) == 1) {
+  if ($nblank == 1) {
     $blank_scan = $blank_scans_by_date{$match_blank_times[0]};
+  } elsif ($nblank == 0) {
+    print "ERROR: No blank scan matching scandate $scandate\n";
+    exit 1;
   } else {
     my $blank_time = prompt(
-      'Select blank scan for $time', 
+      "Select blank scan for $time", 
       -verb,
       -menu => \@match_blank_times,
       '>'
@@ -432,7 +436,7 @@ sub select_blank_scan {
   } else {
     print "select_blank_scan(): ERROR: Not 1 blank scan for $time\n";
     print join("\n", @all_blank_dates) . "\n";
-    exit;
+    exit 1;
   }
   printHash($ret, "select_blank_scan($time)");
   return $ret;
