@@ -2913,12 +2913,12 @@ sub do_transfer {
   if ($this->{$O_USESUBDIR}) {
     $span_dir .= "/span$this->{$O_SPAN}";
     $span_dir .= ($this->{$_USER_SW}) ? ($this->{$_USER_M_SW}) ? "_m" : "_u" : "_c";
-    $span_dir .= "_${nframes}fr";
+    $span_dir .= '_' . $nframes . 'fr';
     # ahc 9/25/14.  Append erg ratio to subdir name, for calibration phantom.
     if ($recon_dir =~ /$CALIBRATION/i) {
       my $calib_factors = $this->calibrationFactors();
       my $calib_ratio = $calib_factors->{$CALIB_RATIO};
-      $span_dir .= "_er${calib_ratio}";
+      $span_dir .= '_er' . $calib_ratio;
     }
   }
 
@@ -2928,43 +2928,44 @@ sub do_transfer {
   } else {
     my $dpath = mkDir($span_dir) or die "Can't create $span_dir";
   }
-  my $frame_dir = "${span_dir}/frames";
+  my $frame_dir = $span_dir . '/frames';
   mkDir($frame_dir);
+#    my $dest_dir = ($srcfile =~ /frame/) ? $frame_dir : $span_dir;
 
   # ------------------------------------------------------------
-  # Create array @sendfiles of files to copy to dest directory.
+  # Create hash %sendfiles of files => dest directory.
   # ------------------------------------------------------------
   my @sendkeys = ($K_IMAGE_V, $K_TX_I, $K_TX_H33, $K_CRYSTAL_V);
-  my @sendfiles = ();
+  my %sendfiles = ();
   foreach my $sendkey (@sendkeys) {
     my $sendfile = ($this->fileName($sendkey))[0];
-    push(@sendfiles, $sendfile);
+    $sendfiles{$sendfile} = $span_dir;
   }
 
   # Include EM.i file if static (ie, phantom).
   if ($nframes == 1) {
     my $em_ifile = $this->fileName($K_FRAME_I);
-    push(@sendfiles, $em_ifile);
+    $sendfiles{$em_ifile} = $span_dir;
   }
 
-  # Include the TX.s file
+  # Include the TX.s file in top-level dest dir
   my $tx_s_file = $this->fileName($K_TX_SUBJ);
-  push(@sendfiles, $tx_s_file);
+  $sendfiles{$tx_s_file} = $this->fileName($K_DIR_DEST);
 
   for (my $i = 0; $i < $nframes; $i++) {
     my $frame_hc_file = $this->fileName($K_FRAME_LM_HC, {$K_FRAMENO => $i});
     my $frame_i_file  = $this->fileName($K_FRAME_I    , {$K_FRAMENO => $i});
-    push(@sendfiles, $frame_hc_file);
-    push(@sendfiles, "${frame_i_file}.hdr");
+    $sendfiles{$frame_dir} = $frame_hc_file;
+    $sendfiles{$frame_dir} = $frame_i_file . '.hdr';
   }
 
   # Include the log file.
-  push(@sendfiles, $this->{$_LOG_FILE});
+  $sendfiles{$this->{$_LOG_FILE}} = $span_dir;
 
   my %files_sent = ();
   my @log_file_str = ();
-  foreach my $srcfile (@sendfiles) {
-    my $dest_dir = ($srcfile =~ /frame/) ? $frame_dir : $span_dir;
+  foreach my $srcfile (keys %sendfiles) {
+    my $dest_dir = $sendfiles{$srcfile};
     (my $destfile = $srcfile) =~ s/$recon_dir/$dest_dir/;
 
     if ($srcfile =~ /_frame\d+(.+)/) {
@@ -2983,7 +2984,7 @@ sub do_transfer {
       push(@log_file_str, $logstr);
     }
     unless ($this->{$O_DUMMY}) {
-      move($destfile, "${destfile}.orig") if (-f $destfile);
+      move($destfile, $destfile . '.orig') if (-f $destfile);
       copy($srcfile, $destfile);
     }
   }
