@@ -2955,12 +2955,13 @@ sub do_transfer {
   for (my $i = 0; $i < $nframes; $i++) {
     my $frame_hc_file = $this->fileName($K_FRAME_LM_HC, {$K_FRAMENO => $i});
     my $frame_i_file  = $this->fileName($K_FRAME_I    , {$K_FRAMENO => $i});
-    $sendfiles{$frame_dir} = $frame_hc_file;
-    $sendfiles{$frame_dir} = $frame_i_file . '.hdr';
+    $sendfiles{$frame_hc_file} = $frame_dir;
+    $sendfiles{$frame_i_file . '.hdr'} = $frame_dir;
   }
 
   # Include the log file.
   $sendfiles{$this->{$_LOG_FILE}} = $span_dir;
+
 
   my %files_sent = ();
   my @log_file_str = ();
