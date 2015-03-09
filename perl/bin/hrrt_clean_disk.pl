@@ -9,7 +9,7 @@ use FindBin;
 use Getopt::Std;
 
 use lib abs_path("$FindBin::Bin/../lib");
-use lib abs_path("$FindBin::Bin/../../hrrt/perl/lib");
+use lib abs_path("$FindBin::Bin/../../../perl/lib");
 
 use API_Utilities;
 use FileUtilities;
