@@ -405,6 +405,7 @@ our $K_USESUBDIR = "use_subdir";
 our $K_SPANTOUSE = "span_to_use";
 our $K_USESUFF   = "use_suff";
 our $K_NOSUFF    = "no_suff";
+our $K_USEDIR    = "use_dir";
 
 # ------------------------------------------------------------
 # Numerical Constants.
@@ -966,7 +967,7 @@ sub analyze_recon_dir {
   my $lm_hdrfile = ($this->fileName($K_LIST_HDR))[1]->{$DIR_CYGWIN_NEW};
   my $dirstr = "HRRTRecon::analyze_recon_dir($indir)";
   unless ((-f $lm_file) && (-s $lm_file > $MILL)) {
-    print "ERROR: $dirstr: fails test: (-f $lm_file) && (-s $lm_file > $MILL)\n";
+    print "ERROR: $dirstr: lm_file: (-f '$lm_file') && (-s $lm_file > $MILL)\n";
     return 1;
   }
 
@@ -1335,8 +1336,10 @@ sub fileName {
   my $frameno     = hashEl($argref, $K_FRAMENO);
   my $span_to_use = hashEl($argref, $K_SPANTOUSE);
   my $nosuff      = hashEl($argref, $K_NOSUFF);
+  my $use_dir     = hashEl($argref, $K_USEDIR);
   my $recon_key   = $keyname;
   $frameno        = '' unless (hasLen($frameno));
+  $use_dir        = 1 unless (hasLen($use_dir));
 
   # print "***** fileName(keyname $keyname, frameno $frameno, span_to_use $span_to_use, nosuff $nosuff)\n";
   # If span_to_use is defined, it needs to be appended to a prefix and dereferenced.
@@ -1389,7 +1392,9 @@ sub fileName {
   } else {
     $filename = "${filename}${suff}";
   }
-  unless ($size == $DIR_SIZE) {
+  # Only add full path if specified.
+#  unless ($size == $DIR_SIZE) {
+  if ($use_dir and ($size != $DIR_SIZE)) {
     my $dir = undef;
     if ($recon_key =~ /^norm[\d]*$/) {
       $dir = $this->{$_FNAMES}->{$_NORMDIR_};
@@ -1403,8 +1408,21 @@ sub fileName {
     }
     $filename = "${dir}/${filename}";
   }
+  # print "XXX fileName($keyname, $use_dir): '$filename'\n";
 
   my $hptr = convertDirName($filename);
+
+  # print "XXX fileName($keyname): '$filename'\n";
+  # printHash($hptr, "fileName($keyname)");
+
+  unless ($use_dir or ($size == $DIR_SIZE)) {
+    my %ret = (
+      $DIR_CYGWIN     => $filename,
+      $DIR_CYGWIN_NEW => $filename,
+      $DIR_DOS        => $filename,
+	);
+    $hptr = \%ret;
+  }
   my $pathtype = ($this->{$O_ONUNIX}) ? $DIR_CYGWIN_NEW : $DIR_DOS;
   my $dosfilename = $hptr->{$pathtype};
   return wantarray() ? ($dosfilename, $hptr) : $dosfilename;
@@ -1695,10 +1713,10 @@ sub program_name {
 sub do_rebin {
   my ($this) = @_;
 
-  $this->printLine("do_rebin begin");
+  $this->printLine("do_rebin the begin");
 
   my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
-  my $listmode_file = $this->fileName($K_LISTMODE);
+  my $listmode_file = $this->fileName($K_LISTMODE, {$K_USEDIR => 0} );
   (my $s_file = $listmode_file) =~ s/\.l64/\.s/;
 
   my ($progpath, $progname, $lmhistogram) = $this->program_name($PROG_LMHISTOGRAM);
@@ -1720,8 +1738,8 @@ sub do_rebin {
       return $this->printLine("do_rebin: TX lm file $tx_listmode_file missing");
     }
     my $cmd = $lmhistogram;
-    $cmd .= ' '    . $this->fileName($K_TX_LM);
-    $cmd .= ' -o ' . $this->fileName($K_TX_SUBJ);
+    $cmd .= ' '    . $this->fileName($K_TX_LM, {$K_USEDIR => 0});
+    $cmd .= ' -o ' . $this->fileName($K_TX_SUBJ, {$K_USEDIR => 0});
     $cmd .= " -notimetag" if ($this->{$O_NOTIMETAG});
     $cmd .= " -l $logfile";
     # ahc 2/6/13 made this a required argument
@@ -1870,15 +1888,15 @@ sub do_transmission {
   # If not running tx_tv3dreg, generate TX.i/TX.i.hdr directly.
   # Otherwise, generate TX_tmp.i and tx_tv3dreg will create TX.i.
   my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
-  my $tx_i_file     = $this->fileName($K_TX_I);
-  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I);
+  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => 0});
+  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => 0});
   my $tx_outfile    = ($run_txtv) ? $tx_i_tmp_file : $tx_i_file;
 
   my $cmd = $this->program_name($PROG_E7_ATTEN);
   $cmd .= " --model 328";
   $cmd .= " --ucut";
-  $cmd .= " -b "   . $this->fileName($K_TX_BLANK);
-  $cmd .= " -t "   . $this->fileName($K_TX_SUBJ);
+  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => 0});
+  $cmd .= " -t "   . $this->fileName($K_TX_SUBJ , {$K_USEDIR => 0});
   $cmd .= " -q "   . $this->fileName($K_DIR_RECON);
   $cmd .= " --ou $tx_outfile";
   $cmd .= " -w 128";
@@ -1907,8 +1925,8 @@ sub do_transmission {
   if ($run_txtv and not $ret) {
 
     $cmd = $this->program_name($PROG_TX_TV3DREG);
-    $cmd .= " -i " . $this->fileName($K_TX_TMP_I);
-    $cmd .= " -o " . $this->fileName($K_TX_I);
+    $cmd .= " -i " . $this->fileName($K_TX_TMP_I, {$K_USEDIR => 0});
+    $cmd .= " -o " . $this->fileName($K_TX_I    , {$K_USEDIR => 0});
 
     $ret += $this->runit($cmd, "do_transmission tx_tv3dreg");
 
@@ -1949,8 +1967,8 @@ sub do_attenuation {
     foreach my $span_to_make (@spans_to_make) {
       my $cmd = $prog_e7;
       $cmd .= " --model 328 ";
-      $cmd .= " -u "   . $this->fileName($K_TX_I);
-      $cmd .= " --oa " . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_make});
+      $cmd .= " -u "   . $this->fileName($K_TX_I, {$K_USEDIR => 0});
+      $cmd .= " --oa " . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_make, $K_USEDIR => 0} );
       $cmd .= " -w 128";
       $cmd .= " --span $span_to_make";
       $cmd .= " --mrd 67";
@@ -2019,13 +2037,19 @@ sub do_scatter {
     my $qc_subdir = sprintf("%s/frame%02d", $qc_path, $i);
     mkDir(convertDirName($qc_subdir)->{$DIR_CYGWIN_NEW}) or die "Can't create $qc_subdir";
 
+    # A bit messy.  Don't use dir for most calls, but it's needed for check_file_ok
     my %cf_args = (
+      $K_FRAMENO   => $i,
+      $K_SPANTOUSE => $this->{$O_SPAN},
+      $K_USEDIR    => 0,
+	);
+    my %cf_args_d = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
 	);
 
     my $msg = "Scatter processing - e7_sino - Frame $i";
-    unless ($this->check_file_ok($FRAME_SC_PREFIX, \%cf_args, $msg)) {
+    unless ($this->check_file_ok($FRAME_SC_PREFIX, \%cf_args_d, $msg)) {
       # User software in span 3 needs: span-9 tr.s file, span-9 tx.a file.
       my ($span_to_use, $normkey);
       if ($this->{$_USER_SW}) {
@@ -2039,7 +2063,7 @@ sub do_scatter {
       my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
       my $e7_sino_prog      = $prog_e7_sino;
       my $cmd               = $e7_sino_prog;
-      $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
+      $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use, $K_USEDIR => 0});
       $cmd .= " -e "   . $this->fileName($FRAME_TR_S_PREFIX, \%cf_args);
       $cmd .= " -n "   . $this->fileName($normkey);
       $cmd .= " --os " . $this->fileName($FRAME_SC_PREFIX  , \%cf_args);
@@ -2056,7 +2080,7 @@ sub do_scatter {
       # ahc 2/13/13/ I think I put this in by mistake.
       # $cmd .= " -r $rebinner_lut_file";
       if ($this->{$_USER_SW}) {
-	$cmd .= " -u " . $this->fileName($K_TX_I);
+	$cmd .= " -u " . $this->fileName($K_TX_I, {$K_USEDIR => 0});
 	$cmd .= " -w 128";
 	$cmd .= " --os2d";
       }
@@ -2083,9 +2107,9 @@ sub do_scatter {
     unless ($this->{$_USER_M_SW}) {
       my $frametime = $framing[$i];
       my $msg = "do_scatter($i) gendelays starting: frame $i ($frametime sec)";
-      unless ($this->check_file_ok($FRAME_RA_SMO_PREFIX, \%cf_args, $msg)) {
+      unless ($this->check_file_ok($FRAME_RA_SMO_PREFIX, \%cf_args_d, $msg)) {
 	my $cmd = $prog_gendelays;
-	$cmd .= " -h " . $this->fileName($K_FRAME_CH, {$K_FRAMENO => $i});
+	$cmd .= " -h " . $this->fileName($K_FRAME_CH, {$K_FRAMENO => $i, $K_USEDIR => 0});
 	$cmd .= " -O " . $this->fileName($FRAME_RA_SMO_PREFIX, \%cf_args);
 	$cmd .= " -t $frametime";
 	$cmd .= " -s $this->{$O_SPAN},67";
@@ -2155,6 +2179,7 @@ sub do_sensitivity {
   my %fn_args = (
     $K_FRAMENO   => 0,
     $K_SPANTOUSE => $span,
+    $K_USEDIR    => 0,
       );
 
   # Parameter -K (sensitivity image) has undocumented behaviour:
@@ -2169,8 +2194,8 @@ sub do_sensitivity {
   my $ret = 0;
   my $cmd = $this->program_name($PROG_OSEM3D);
   $cmd .= " -t " . $this->fileName($FRAME_S_PREFIX, \%fn_args);
-  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span});
-  $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span});
+  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 0});
+  $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 0});
   $cmd .= " -o $sensitivity_file";	    # Note: Not used.
   $cmd .= " -W $OSEM_SENS_WEIGHTING";	    # -W  weighting method
   $cmd .= " -I $OSEM_SENS_ITER";	    # -I  number of iterations
@@ -2219,6 +2244,7 @@ sub do_reconstruction {
     my %fn_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
+      $K_USEDIR    => 0,
 	);
     my $niter = ($this->{$_USER_SW}) ? $ITER_USERSW : $ITER_OLDSW;
     my $msg = "${line}\nReconstruction (dim: 256) - Frame $i";
@@ -2230,17 +2256,17 @@ sub do_reconstruction {
     unless ($this->check_file_ok($K_FRAME_I, {$K_FRAMENO => $i}, $msg)) {
       # Input file for -d: 3D_flat_float_scan (smoothed un-normalized delayed)) or coinc_histogram (.ch)
       my $ra_smo_file = $this->fileName($FRAME_RA_SMO_PREFIX, \%fn_args);
-      my $ch_file     = $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
-      my $output_file = $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i});
+      my $ch_file     = $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i, $K_USEDIR => 0});
+      my $output_file = $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
       my $d_file      = ($this->{$_USER_M_SW}) ? $ch_file : $ra_smo_file;
       
       my $cmd = $prog_osem3d;
       $cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
       $cmd .= " -d " . $d_file;
       $cmd .= " -s " . $this->fileName($FRAME_SC_PREFIX    , \%fn_args);
-      $cmd .= " -a " . $this->fileName($TX_A_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}});
-      $cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}});
-      $cmd .= " -o " . $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i});
+      $cmd .= " -a " . $this->fileName($TX_A_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+      $cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+      $cmd .= " -o " . $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
       $cmd .= " -I $niter";
       $cmd .= " -S $NUM_SUBSETS";
       $cmd .= " -m $this->{$O_SPAN},67";
@@ -2273,10 +2299,10 @@ sub do_reconstruction {
       unless ($this->check_file_ok($K_FRAME_128_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $prog_osem3d;
 	$cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
-	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}});
-	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i});
+	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i, $K_USEDIR => 0});
 	$cmd .= " -W 3";
-	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
+	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i, $K_USEDIR => 0});
 	$cmd .= " -I $ITER_128";
 	$cmd .= " -S $NUM_SUBSETS";
 	$cmd .= " -m $this->{$O_SPAN},67";
@@ -2309,15 +2335,15 @@ sub do_reconstruction {
   if ($this->{$_USER_M_SW}) {
     # For user s/w, smooth .v by 2 mm now that -B option is removed from osem3d.
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_NORESL_V);
+    $cmd .= " " . $this->fileName($K_IMAGE_NORESL_V, {$K_USEDIR => 0});
     $cmd .= " 2";
     if ($ret += $this->runit($cmd, "gsmooth")) {
       print "ERROR in gsmooth\n";
     }
     # Special case: Static framing, Motion software.  Copy _noresl.v file to .v
     if ($this->{$_HDRDET}->{$NFRAMES} == 1) {
-      my $v_noresl_file = $this->fileName($K_IMAGE_NORESL_V);
-      my $v_file = $this->fileName($K_IMAGE_V);
+      my $v_noresl_file = $this->fileName($K_IMAGE_NORESL_V, {$K_USEDIR => 0});
+      my $v_file = $this->fileName($K_IMAGE_V, {$K_USEDIR => 0});
       copy($v_noresl_file, $v_file);
     }
   }
