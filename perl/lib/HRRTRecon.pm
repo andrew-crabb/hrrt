@@ -71,8 +71,10 @@ our $CNF_SEC_PLAT = 'PLAT';
 our $CNF_VAL_HOST = 'host';
 
 # External programs section
-our $CNF_SEC_PROGS = 'PROGS';
+our $CNF_SEC_PROGS   = 'PROGS';
 our $CNF_VAL_GNUPLOT = 'gnuplot';
+our $CNF_VAL_LMHDR   = 'lmhdr';
+our $CNF_VAL_E7EMHDR = 'e7emhdr';
 
 # ------------------------------------------------------------
 # String Constants.
@@ -109,9 +111,9 @@ our $SW_USER_M   = "sw_user_m"; # User software 2011 with motion
 # String constants: Directories of executables.
 # my $SETVARS      = "export GMINI=C:/CPS/bin; export LOGFILEDIR=C:/CPS/LOG;";
 my $GMLINE       = "crystalLayerBackgroundErgRatio";
-my $GNUPLOT      = "/usr/local/bin/gnuplot";
-my $LMHDR        = "/usr/local/turku/bin/lmhdr";
-my $E7EMHDR      = "/usr/local/turku/bin/e7emhdr";
+# my $GNUPLOT      = "/usr/local/bin/gnuplot";
+# my $LMHDR        = "/usr/local/turku/bin/lmhdr";
+# my $E7EMHDR      = "/usr/local/turku/bin/e7emhdr";
 my $STUDY_DESC   = "study_description";
 my $PATIENT_NAME = "patient_name";
 my $SCAN_START   = "scan_start_time";
@@ -2877,15 +2879,16 @@ sub get_study_description {
   my ($this, $filename) = @_;
 
   my $study_desc = '';
-  if (-f $LMHDR or -f "${LMHDR}.exe") {
-    my @ecatlines = `$LMHDR $filename`;
+  my $lmhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_LMHDR});
+  if (-f $lmhdr) {
+    my @ecatlines = `$lmhdr $filename`;
     my ($study_line) = grep(/$STUDY_DESC/, @ecatlines);
     $study_line = '' unless (hasLen($study_line));
     $study_line =~ /$STUDY_DESC\s+:=\s+(.+)/;
     my $study_desc = $1;
     $study_desc = '' unless (hasLen($study_desc));
   } else {
-    print "******** ERROR: Missing $LMHDR ********\n";
+    print "******** ERROR: Missing $lmhdr ********\n";
   }
   return $study_desc;
 }
@@ -2893,12 +2896,13 @@ sub get_study_description {
 sub set_study_description {
   my ($this, $filename, $study_desc) = @_;
 
-  if (-f $E7EMHDR or -f "${$E7EMHDR}.exe") {
-    my $cmdstr = "$E7EMHDR $filename $STUDY_DESC := '$study_desc'";
+  my $e7emhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_E7EMHDR});
+  if (-f $e7emhdr) {
+    my $cmdstr = "$e7emhdr $filename $STUDY_DESC := '$study_desc'";
     $this->log_msg($cmdstr);
     system($cmdstr) unless ($this->{$O_DUMMY});
   } else {
-    print "******** ERROR: Missing $E7EMHDR ********\n";
+    print "******** ERROR: Missing $e7emhdr ********\n";
   }
 }
 
@@ -3132,8 +3136,9 @@ sub do_crystalmap {
   push(@edit_strings, "$PATIENT_NAME := \"$patient_name\"");
   push(@edit_strings, "$SCAN_START := \"$date_str\"");
   push(@edit_strings, "$STUDY_DESC := \"type_crystal-map\"");
+  my $e7emhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_E7EMHDR});
   foreach my $edit_string (@edit_strings) {
-    $cmd = "$E7EMHDR $crystal_file $edit_string";
+    $cmd = "$e7emhdr $crystal_file $edit_string";
     $this->log_msg("$cmd\n");
     `$cmd` unless ($this->{$O_DUMMY});
   }
