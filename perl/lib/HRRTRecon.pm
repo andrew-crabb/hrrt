@@ -878,12 +878,21 @@ sub setopt {
   return $ret;
 }
 
+# Return path to file from configuration file.
+
+sub conf_file {
+  my ($this, $section, $value) = @_;
+
+  return abs_path($this->{$_ROOT} . $this->{$_CNF}{$section}{$value});
+}
+
 sub test_prereq {
   my ($this) = @_;
 
   my $template_file  = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
   my $rebin_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-  my $gnuplot_file   = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
+  # my $gnuplot_file   = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
+  my $gnuplot_file = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
 
   (-s $template_file)  or return $this->log_msg("No GM328 template file '$template_file'", 1);
   (-s $rebin_lut_file) or return $this->log_msg("No rebin_lut file '$rebin_lut_file'"    , 1);
@@ -1897,7 +1906,7 @@ sub do_transmission {
   my $cmd = $this->program_name($PROG_E7_ATTEN);
   $cmd .= " --model 328";
   $cmd .= " --ucut";
-  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => 0});
+  $cmd .= " -b "   . $this->fileName($K_TX_BLANK);
   $cmd .= " -t "   . $this->fileName($K_TX_SUBJ , {$K_USEDIR => 0});
   $cmd .= " -q "   . $this->fileName($K_DIR_RECON);
   $cmd .= " --ou $tx_outfile";
@@ -2392,7 +2401,7 @@ sub do_motion_qc_as_script {
   # Step 1: Smooth 128-resolution .v file.
   unless ($this->check_file_ok($K_IMAGE_128_SM_V, '', "do_motion_qc 1: $K_IMAGE_128_SM_V")) {
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V);
+    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
     $cmd .= " " . $SMOOTH_FWHM;
     $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V);
     $ret = $this->runit($cmd, "do_motion qc step 1: gsmooth");
@@ -2403,11 +2412,11 @@ sub do_motion_qc_as_script {
   my $threshold = int($MOT_QC_AIR_THRESH * 32767 / 100);
   my @mot_qc_lines = ();
   for (my $i = 0; $i < $nframes; $i++) {
-    my $frame_air = $this->fileName($K_MOTION_QC_AIR, {$K_FRAMENO => $i});
+    my $frame_air = $this->fileName($K_MOTION_QC_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
     unless ($this->check_file_ok($K_MOTION_QC_AIR, '', "do_motion_qc 2: $K_MOTION_QC_AIR")) {
       # ECAT files count frame numbers 1..N, standard is frames indexed from 0.
       my $ref_frame = $this->{$_FNAMES}{$_MOT_REF_FR_} + 1;
-      my $v_128_file = $this->fileName($K_IMAGE_128_V);
+      my $v_128_file = $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
       my $em_file_str  = sprintf("%s,%1d,1,1", $v_128_file, $i + 1);
       my $ref_file_str = sprintf("%s,%1d,1,1", $v_128_file, $ref_frame);
       my $cmd = $this->program_name($PROG_ALIGNLINEAR);
@@ -2465,7 +2474,8 @@ sub do_motion_qc_as_script {
   my $plt_file = $this->fileName($K_MOTION_QC_PLT);
   writeFile($plt_file, \@motion_qc_plt_lines);
 
-  my $gnuplot_cmd = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT} . ' ' . $plt_file;
+  my $gnuplot_cmd = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT) . ' ' . $plt_file;
+  # my $gnuplot_cmd = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT} . ' ' . $plt_file;
   $ret = $this->runit($gnuplot_cmd, 'do_motion_qc_as_script step 3b');
 }
 
@@ -2518,9 +2528,9 @@ sub do_motion_as_script {
   # Step 1: Smooth 128-resolution .v file.
   unless ($this->check_file_ok($K_IMAGE_128_SM_V, '', "do_motion 1a: $K_IMAGE_128_SM_V")) {
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V);
+    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
     $cmd .= " " . $SMOOTH_FWHM;
-    $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V);
+    $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V, {$K_USEDIR => 0});
     $ret = $this->runit($cmd, "do_motion step 1: gsmooth");
   }
   return $this->printLine("do_motion(): ERROR in PROG_GSMOOTH", $ret) if ($ret);
@@ -2528,14 +2538,14 @@ sub do_motion_as_script {
   # Step 2: Create mu-map frame transfromer by inverting transformer
   # created by motion_qc program from uncorrected images.
   for (my $i = 0; $i < $nframes; $i++) {
-    my $mu_reslice_file = $this->fileName($K_TX_FRAME_I   , {$K_FRAMENO => $i});
-
+    my $mu_reslice_file_d = $this->fileName($K_TX_FRAME_I, {$K_FRAMENO => $i});
+    my $mu_reslice_file   = $this->fileName($K_TX_FRAME_I, {$K_USEDIR => 0, $K_FRAMENO => $i});
     if ($i == $this->{$_FNAMES}{$_MOT_REF_FR_}) {
       # This is the reference frame.
       $this->log_msg("do_motion_as_script(): Frame $i is ref frame: Not resliced");
-      my $tx_i_file = $this->fileName($K_TX_I);
-      print "copy($tx_i_file, $mu_reslice_file);\n";
-      copy($tx_i_file, $mu_reslice_file);
+      my $tx_i_file_d = $this->fileName($K_TX_I);
+      print "copy($tx_i_file_d, $mu_reslice_file_d);\n";
+      copy($tx_i_file_d, $mu_reslice_file_d);
     } else {
       # Step 2a: Invert AIR file
       my $msg = "do_motion frame $i step 2a: $K_MOTION_TX_AIR";
@@ -2554,9 +2564,9 @@ sub do_motion_as_script {
       print "$msg\n";
       unless ($this->check_file_ok($K_TX_FRAME_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $this->program_name($PROG_ECAT_RESLICE);
-	$cmd .= ' '    . $this->fileName($K_MOTION_TX_AIR, {$K_FRAMENO => $i});
+	$cmd .= ' '    . $this->fileName($K_MOTION_TX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
 	$cmd .= ' '    . $mu_reslice_file;
-	$cmd .= ' -a ' . $this->fileName($K_TX_I);
+	$cmd .= ' -a ' . $this->fileName($K_TX_I, {$K_USEDIR => 0});
 	$cmd .= ' -o';
 	$cmd .= ' -k';
 	$ret = $this->runit($cmd, "do_motion step 2b: ecat_reslice");
@@ -2565,7 +2575,7 @@ sub do_motion_as_script {
     }
 
     # Step 3: Attenuation.
-    my $acf_output_file = $this->fileName($K_TX_FRAME_A   , {$K_FRAMENO => $i});
+    my $acf_output_file = $this->fileName($K_TX_FRAME_A   , {$K_USEDIR => 0, $K_FRAMENO => $i});
     my $msg = "do_motion frame $i step 3: $K_TX_FRAME_A ($acf_output_file)";
     print "$msg\n";
     unless ($this->check_file_ok($K_TX_FRAME_A, {$K_FRAMENO => $i}, $msg)) {
@@ -2590,9 +2600,9 @@ sub do_motion_as_script {
     print "$msg\n";
     unless ($this->check_file_ok($K_FRAME_ATX_S, {$K_FRAMENO => $i}, $msg)) {
       my $cmd = $this->program_name($PROG_E7_SINO);
-      $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_FRAMENO => $i});
+      $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -u "   . $mu_reslice_file,
-      $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
+      $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}});
       $cmd .= " -w $MU_WIDTH";
       $cmd .= " -a " . $acf_output_file;
@@ -2614,7 +2624,8 @@ sub do_motion_as_script {
     }
 
     # Step 5: gnuplot
-    my $cmd  = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
+    my $cmd = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
+    # my $cmd  = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
     $cmd .= "$recondir/scatter_qc_00.plt";
     $ret = $this->runit($cmd, "do_motion step 5: gnuplot");
     rename("$recondir/scatter_qc_00.ps", $this->fileName($K_MOTION_QC_F_PS));
@@ -2624,11 +2635,11 @@ sub do_motion_as_script {
     print "$msg\n";
     unless ($this->check_file_ok($K_FRAME_ATX_I, {$K_FRAMENO => $i}, $msg)) {
       my $cmd  = $this->program_name($PROG_OSEM3D);
-      $cmd .= " -s " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
-      $cmd .= " -a " . $this->fileName($K_TX_FRAME_A  , {$K_FRAMENO => $i});
-      $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_FRAMENO => $i});
-      $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_FRAMENO => $i});
-      $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_FRAMENO => $i});
+      $cmd .= " -s " . $this->fileName($K_FRAME_ATX_S , {$K_USEDIR => 0, $K_FRAMENO => $i});
+      $cmd .= " -a " . $this->fileName($K_TX_FRAME_A  , {$K_USEDIR => 0, $K_FRAMENO => $i});
+      $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_USEDIR => 0, $K_FRAMENO => $i});
+      $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_USEDIR => 0, $K_FRAMENO => $i});
+      $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}});
       $cmd .= " -W 3";
       $cmd .= " -I $ITER_MOTION_CORR";
@@ -2655,7 +2666,7 @@ sub do_motion_as_script {
     $cmd .= " -v";
     $cmd .= " -e 0.0";
     $cmd .= " -s " . $this->{$_FNAMES}->{$_CALIB_};
-    $cmd .= $this->fileName($K_FRAME_ATX_I , {$K_FRAMENO => 0});
+    $cmd .= $this->fileName($K_FRAME_ATX_I , {$K_USEDIR => 0, $K_FRAMENO => 0});
 
     $ret = $this->runit($cmd, "do_motion step 7: if2e7");
     return $this->printLine("do_motion(): ERROR in if2e7", $ret) if ($ret);
@@ -2671,25 +2682,25 @@ sub do_motion_as_script {
       if ($i == $this->{$_FNAMES}{$_MOT_REF_FR_}) {
 	# Reference frame
 	my $cmd = $this->program_name($PROG_MATCOPY);
-	$cmd .= " -i " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
-	$cmd .= " -o " . $this->fileName($K_IMAGE_ATX_RSL) . ",${iplus1},1,1";
+	$cmd .= " -i " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0}) . ",${iplus1},1,1";
+	$cmd .= " -o " . $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => 0}) . ",${iplus1},1,1";
 
 	$ret = $this->runit($cmd, "do_motion step 8: matcopy");
 	return $this->printLine("do_motion(): ERROR in matcopy", $ret) if ($ret);
       } else {
 	# Not reference frame
 	my $cmd = $this->program_name($PROG_MAKE_AIR);
-	$cmd .= " -s " . $this->fileName($K_IMAGE_ATX_V)   . ",${rplus1},1,1";
-	$cmd .= " -r " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
-	$cmd .= " -i " . $this->fileName($K_FRAME_128_AIR, {$K_FRAMENO => $i});
-	$cmd .= " -o " . $this->fileName($K_FRAME_ATX_AIR, {$K_FRAMENO => $i});
+	$cmd .= " -s " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0})   . ",${rplus1},1,1";
+	$cmd .= " -r " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0})   . ",${iplus1},1,1";
+	$cmd .= " -i " . $this->fileName($K_FRAME_128_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
+	$cmd .= " -o " . $this->fileName($K_FRAME_ATX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
 
 	$ret = $this->runit($cmd, "do_motion step 8: make_air");
 	return $this->printLine("do_motion(): ERROR in make_air", $ret) if ($ret);
 
 	$cmd  = $this->program_name($PROG_ECAT_RESLICE);
-	$cmd .= $this->fileName($K_FRAME_ATX_AIR, {$K_FRAMENO => $i});
-	$cmd .= $this->fileName($K_IMAGE_ATX_RSL) . ",${iplus1},1,1";
+	$cmd .= $this->fileName($K_FRAME_ATX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
+	$cmd .= $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => 0}) . ",${iplus1},1,1";
 	$cmd .= " -k";
 	$cmd .= " -o";
 
@@ -2712,14 +2723,14 @@ sub do_motion {
   unless ($this->check_file_ok($K_MOTION_QC, '', "do_motion 1: $K_MOTION_QC")) {
     #  motion_qc $v_file_name_128 -v -O -R 0 #-a 1.03,4 #-r $ref_frame
     my $cmd = $this->program_name($PROG_MOTION_QC);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V);
+    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
     $cmd .= " -v ";		  # Verbose
     $cmd .= " -O ";		  # Overwrite
     $cmd .= " -R 0 ";		  # ecat_reslice_flag
     $cmd .= " -r -1";		  # Reference frame
     # Added 2/28/13 program path and fq path of gnuplot now required args.
     $cmd .= " -p $bindir";	# Path of HRRT executables.
-    $cmd .= " -z " . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
+    $cmd .= " -z " . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);  # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
     $cmd .= " -l " . $this->{$_LOG_DIR};
     $cmd .= " -x " . $this->program_name($PROG_OSEM3D);
 
@@ -2741,10 +2752,10 @@ sub do_motion {
   unless ($this->check_file_ok($K_IMAGE_ATX_V, '', "do_motion 2: $K_IMAGE_ATX_V")) {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
-    $cmd .= " "    . $this->fileName($K_DYN);
-    $cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}});
-    $cmd .= " -u " . $this->fileName($K_TX_I); # Mu-map file
-    $cmd .= " -E " . $this->fileName($K_IMAGE_128_V); # Uncorrected Ecat file
+    $cmd .= " "    . $this->fileName($K_DYN, {$K_USEDIR => 0});
+    $cmd .= " -n " . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}});
+    $cmd .= " -u " . $this->fileName($K_TX_I, {$K_USEDIR => 0}); # Mu-map file
+    $cmd .= " -E " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0}); # Uncorrected Ecat file
     #################### TEMP TAKEN OUT ####################
     # Leaving this out causes 'normfac.i' to be created in local dir.
     # If you want a better name but still locally generated normfac, delete K_NORMFAC_256 first.
@@ -2761,7 +2772,7 @@ sub do_motion {
     $cmd .= " -r -1";		       # Reference frame
     # ahc newly-required params
     $cmd .= " -p $bindir";	# Path of HRRT executables.
-    $cmd .= " -z " . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
+    $cmd .= " -z " . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT); # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
     $cmd .= " -l " . $this->{$_LOG_DIR};
     $cmd .= " -b $rebinner_lut_file";
 
@@ -2805,8 +2816,8 @@ sub run_conversion {
   my $recon_dir = $this->fileName($K_DIR_RECON);
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   my $lastframe = $nframes - 1;
-  my $imgfile = $this->fileName($i_file_key, {$K_FRAMENO => $lastframe});
-  my $ecat_file = $this->fileName($v_file_key);
+  my $imgfile   = $this->fileName($i_file_key, {$K_FRAMENO => $lastframe, $K_USEDIR => 0});
+  my $ecat_file = $this->fileName($v_file_key, {$K_USEDIR => 0});
   $this->printLine("run_conversion(): ecat_file $ecat_file");
 
   my $fstat = $this->check_file($v_file_key);
@@ -3057,8 +3068,9 @@ sub do_transfer {
   # ------------------------------------------------------------
   # QC produces 'frame00/scatter_qc_00.plt' etc.
   # Process with gnuplot and rename output to scatter_qc_<frame>.ps
+  my $gnuplot = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
   if ($this->{$O_DO_QC} and not $this->{$O_DUMMY}) {
-    if (-f $GNUPLOT) {
+    if (-f $gnuplot) {
       my $qc_path = $recon_dir . "/QC";
       my $qc_dest_dir = $span_dir . "/QC";
       mkdir($qc_dest_dir);
@@ -3066,7 +3078,7 @@ sub do_transfer {
       for (my $i = 0; $i < $nframes; $i++) {
 	my $frame     = sprintf("%02d", $i);
 	my $qc_subdir = "$qc_path/frame${frame}";
-	my $sysstr    = "cd $qc_subdir; $GNUPLOT $QC_PLT";
+	my $sysstr    = "cd $qc_subdir; $gnuplot $QC_PLT";
 	my $ret       = system($sysstr);
 	my $qcsrc     = "${qc_subdir}/${QC_PS}";
 	
@@ -3090,7 +3102,7 @@ sub do_crystalmap {
   my ($this, $do_make_histo) = @_;
 
   # Run a short histograming to be sure we have a clean log file for errors.
-  my $listmode_file = $this->fileName($K_LISTMODE);
+  my $listmode_file = $this->fileName($K_LISTMODE, {$K_USEDIR => 0});
   my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
   #   my $s_file = $C_TEMP_HISTO;
   my $recon_dir = $this->fileName($K_DIR_RECON);
@@ -3137,8 +3149,8 @@ sub do_crystalmap {
   }
 
   # Create the crystalmap file.
-  my $em_file      = $this->fileName($K_LISTMODE);
-  my $crystal_file = $this->fileName($K_CRYSTAL_V);
+  my $em_file      = $this->fileName($K_LISTMODE , {$K_USEDIR => 0});
+  my $crystal_file = $this->fileName($K_CRYSTAL_V, {$K_USEDIR => 0});
 
   $cmd = $this->program_name($PROG_CRYSTALMAP);
   $cmd   .= " -i $em_file";
