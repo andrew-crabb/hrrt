@@ -95,23 +95,23 @@ our $HRRT_DTIM = '#hrrt_dtim#';
 our %HRRT_FILES = (
   $HRRT_TX_S => {
     $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX\.(s|l64|l64\.7z)",
-  },
-  $HRRT_TX_HDR => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX\.l64.hdr",
-  },
-  $HRRT_EM_HC => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.hc",
-  },
-  $HRRT_EM_L64 => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64(\.7z)*\$",
-  },
-  $HRRT_EM_HDR => {
-    $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64.hdr",
-  },
-  $HRRT_BLANK => {
-    $HRRT_PATT => "SCAN_BLANK.*${HRRT_DATE}.*_TX\.s",
-  },
-);
+    },
+    $HRRT_TX_HDR => {
+      $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DATE}.*_TX\.l64.hdr",
+      },
+      $HRRT_EM_HC => {
+        $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.hc",
+        },
+        $HRRT_EM_L64 => {
+          $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64(\.7z)*\$",
+          },
+          $HRRT_EM_HDR => {
+            $HRRT_PATT => "${HRRT_SUBJ}.*${HRRT_DTIM}_EM.l64.hdr",
+            },
+            $HRRT_BLANK => {
+              $HRRT_PATT => "SCAN_BLANK.*${HRRT_DATE}.*_TX\.s",
+              },
+              );
 
 # ------------------------------------------------------------
 # HRRT name types
@@ -139,8 +139,8 @@ our %FNAME_TYPES = (
     $THEREST    => 4,
     $HIST_NO    => undef,
     $MODALITY   => undef,
-  },
-  $FNAME_TYPE_WHIST => {
+    },
+    $FNAME_TYPE_WHIST => {
     # LAST-FIRST-1234567-9999-2014.6.24.12.59.55_EM.l64 (Old, with random, with history)
     $FNAME_TYPE => $FNAME_TYPE_OLD,
     $FNAME_PATT => q/([^-]+)-([^-]+)-([^-]*)-(?:[^-]+-)*(\d{4}\.\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{1,2})(.+)/,
@@ -151,8 +151,8 @@ our %FNAME_TYPES = (
     $THEREST    => 5,
     $HIST_NO    => 3,
     $MODALITY   => undef,
-  },
-  $FNAME_TYPE_STD => {
+    },
+    $FNAME_TYPE_STD => {
     # LAST_first_0123456_MOD_070809_101112_something.suff  (Standard style)
     $FNAME_TYPE => $FNAME_TYPE_STD,
     $FNAME_PATT => q/(.+)_(.*)_(.*)_([A-Z]{3})_(\d{6}_\d{6})(.+)/,
@@ -163,8 +163,8 @@ our %FNAME_TYPES = (
     $MODALITY   => 4,
     $DATE       => 5,
     $THEREST    => 6,
-  },
-  $FNAME_TYPE_DIR => {
+    },
+    $FNAME_TYPE_DIR => {
     # LAST_FIRST_070809_101112 (Reconstruction directory name)
     $FNAME_TYPE => $FNAME_TYPE_DIR,
     $FNAME_PATT => q/^(.+)_(.)_(\d{6}_\d{6})$/,
@@ -175,7 +175,7 @@ our %FNAME_TYPES = (
     $HIST_NO    => undef,
     $MODALITY   => undef,
     $THEREST    => undef,
-  },
+    },
     );
 
 # ------------------------------------------------------------
@@ -256,29 +256,29 @@ sub make_hrrt_name {
   my ($det, $format) = @_;
 
    # printHash($det, "HRRT_Utilities::make_hrrt_name($format)");
-  my $newname = '';
-  our ($name_last, $name_first, $hist_no, $date, $therest) = hashElements($det, [$NAME_LAST, $NAME_FIRST, $HIST_NO, $DATE, $THEREST]);
-  if ($format eq $FNAME_TYPE_OLD) {
+   my $newname = '';
+   our ($name_last, $name_first, $hist_no, $date, $therest) = hashElements($det, [$NAME_LAST, $NAME_FIRST, $HIST_NO, $DATE, $THEREST]);
+   if ($format eq $FNAME_TYPE_OLD) {
     # LAST-FIRST-2007.8.9.10.11.12_something.suff
     $newname = "${name_last}-${name_first}-" . $date->{$DATES_HRRTFILE} . "_${therest}";
-  } elsif ($format eq $FNAME_TYPE_WHIST) {
+    } elsif ($format eq $FNAME_TYPE_WHIST) {
     # LAST-FIRST-0123456-2007.8.9.10.11.12_something.suff
     $newname = "${name_last}-${name_first}-${hist_no}-" . $date->{$DATES_HRRTFILE} . "_${therest}";
-  } elsif ($format eq $FNAME_TYPE_STD) {
+    } elsif ($format eq $FNAME_TYPE_STD) {
     # LAST_first_0123456_MOD_070809_101112_something.suff
     my $std_date = $date->{$DATES_HRRTDIR};
     foreach my $varname (qw(name_last name_first hist_no)) {
       $$varname =~ s/[^A-Za-z0-9]//g;
     }
     $newname = "${name_last}_${name_first}_${hist_no}_PET_${std_date}_${therest}";
-  } elsif ($format eq $FNAME_TYPE_DIR) {
+    } elsif ($format eq $FNAME_TYPE_DIR) {
     # LAST_FIRST_070809_101112
     $newname = "\U$name_last" . '_' . "\U$name_first" . '_' . $date->{$DATES_HRRTDIR} . "_${therest}";
-  } else {
-    print "ERROR: HRRT_Utilities::make_hrrt_name(): Unknown format $format\n";
+    } else {
+      print "ERROR: HRRT_Utilities::make_hrrt_name(): Unknown format $format\n";
+    }
+    return $newname;
   }
-  return $newname;
-}
 
 # ============================================================
 # Functions below here are from the old library and are to be replaced
@@ -295,8 +295,8 @@ sub detailsHRRTheader {
 
   return undef unless ($hdr);
   my ($last, $first) = split(/[,\s]+/, $hdr->{'Patient_name'});
-  my $datestr = $hdr->{'study_date_(dd:mm:yryr)'};	# 13:11:2007
-  my $timestr = $hdr->{'study_time_(hh:mm:ss)'};	# 12:58:19
+  my $datestr = $hdr->{'study_date_(dd:mm:yryr)'};  # 13:11:2007
+  my $timestr = $hdr->{'study_time_(hh:mm:ss)'};  # 12:58:19
   my $dates = convertDates("$datestr $timestr");
   my $hist_no = $hdr->{'Patient_ID'};
   $hist_no =~ s/\D//g if (isAnimal($last) or isAnimal($first));
@@ -307,8 +307,8 @@ sub detailsHRRTheader {
     $DATE      => $dates,
     $FILENAME   => $fname,
     $FILEPATH   => $filepath,
-    $FORMAT	 => 'HRRT',
-    $HIST_NO	 => $hist_no,
+    $FORMAT  => 'HRRT',
+    $HIST_NO   => $hist_no,
     $MODALITY   => 'PET',
     $NAME_FIRST => "\U$last",
     $NAME_LAST  => "\U$first",
@@ -317,10 +317,10 @@ sub detailsHRRTheader {
     $SCANDATE   => $dates->{'YYMMDD'},
     $SCANTIME   => $dates->{'HR:MN:SC'},
     $SQLDATE    => $dates->{'YYYY-MM-DD'},
-    $TIME	     => $dates->{'HRMNSC'},
-    $TYPE	     => 'ECAT',
+    $TIME      => $dates->{'HRMNSC'},
+    $TYPE      => 'ECAT',
     $UNIXPATH   => $unixpath,
-      );
+    );
 
   # ANTHONY-CHRISTAIN-19144-2007.11.20.15.18.20_EM.l64.hdr
   if ($fname =~ /(.+)-(.+)-(.+)-(\d+)\..+/) {
@@ -340,26 +340,26 @@ sub analyzeHRRTname {
   if (scalar(@filebits) == 4) {
     ($first, $last, $id, $datestr) = @filebits;
     # (GREEN  LEVI  26034  2007.8.22.12.55.46_EM.l64)
-  } elsif (scalar(@filebits) == 3) {
-    ($first, $last, $datestr) = @filebits;
-  }
+    } elsif (scalar(@filebits) == 3) {
+      ($first, $last, $datestr) = @filebits;
+    }
 
-  unless (hasLen($datestr)) {
-    print "ERROR: HRRT_Utilities::analyzeHRRTname($infile) returning undef\n";
-    return undef;
-  }
-  $datestr =~ s/_.*//;
-  my $dates = convertDates($datestr);
+    unless (hasLen($datestr)) {
+      print "ERROR: HRRT_Utilities::analyzeHRRTname($infile) returning undef\n";
+      return undef;
+    }
+    $datestr =~ s/_.*//;
+    my $dates = convertDates($datestr);
 
-  my %ret = (
-    'dates' => $dates, 
-    'first' => $first,
-    'last'  => $last,
-    'subj'  => "\u\L${last}" . ", " . "\u\L${first}",
+    my %ret = (
+      'dates' => $dates, 
+      'first' => $first,
+      'last'  => $last,
+      'subj'  => "\u\L${last}" . ", " . "\u\L${first}",
       );
-  printHash(\%ret, "HRRT_Utilities::analyzeHRRTname($infile)") if ($verbose);
-  return \%ret;
-}
+    printHash(\%ret, "HRRT_Utilities::analyzeHRRTname($infile)") if ($verbose);
+    return \%ret;
+  }
 
 # Return ptr to hash of file details, based on HRRT file name.
 # Return undef if this is not an HRRT-style file name.
@@ -377,7 +377,7 @@ sub analyzeHRRTfile {
   if (scalar(@filebits) == 4) {
     # (GREEN  LEVI  26034  2007.8.22.12.55.46_EM.l64)
     ($first, $last, $id, $rest) = @filebits;
-  } else {
+    } else {
     # calibration phantom 2010.7.19.12.0.39_EM.l64.hdr
     ($first, $last, $rest) = @filebits;
   }
@@ -402,15 +402,15 @@ sub analyzeHRRTfile {
     'last'  => $last,
     'subj'  => "\u\L${last}" . ", " . "\u\L${first}",
     %{$stat},
-      );
+    );
   my $ret = \%ret;
   my %hopts = (
     'comment' => "HRRT_Utilities::analyzeHRRTfile($infile)",
     'expand'  => 0,
     'expkey'  => 'datetime',
-      );
-   print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n" if ($verbose);
-   printHash($ret, \%hopts) if ($verbose);
+    );
+  print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n" if ($verbose);
+  printHash($ret, \%hopts) if ($verbose);
   # print "*** HRRT_Utilities::analyzeHRRTfile($infile)\n";
   # printHash($ret, \%hopts);
   return $ret;
@@ -428,17 +428,17 @@ sub analyzeHRRTdir {
 #       printHash($fptr->{'dates'}, $infile);
 #       print "$infile a $fptr->{'dates'}->{'datetime'}\n";
 #       print "$infile b $fptr->{'size'}\n";
-      if (defined($ret{$fptr->{'dates'}->{'datetime'}})) {
-	$ret{$fptr->{'dates'}->{'datetime'}} += $fptr->{'size'};
-      } else {
-	$ret{$fptr->{'dates'}->{'datetime'}} = $fptr->{'size'};
-      }
-    }
-  }
-  if ($verbose) {
-    printHash(\%ret, "analyzeHRRTdir($indir)");
-  }
-  return \%ret;
+if (defined($ret{$fptr->{'dates'}->{'datetime'}})) {
+  $ret{$fptr->{'dates'}->{'datetime'}} += $fptr->{'size'};
+  } else {
+   $ret{$fptr->{'dates'}->{'datetime'}} = $fptr->{'size'};
+ }
+}
+}
+if ($verbose) {
+  printHash(\%ret, "analyzeHRRTdir($indir)");
+}
+return \%ret;
 }
 
 # Return 1 if given file is a 'keeper' given keeper hash & rules.
@@ -457,11 +457,11 @@ sub isKeeper {
       my $delextns = $keepers{$keepdir};
       my @delextns = @{$delextns};
       foreach my $delextn (@delextns) {
-	$delflag = 1 if ($name =~ /\.${delextn}$/);
-      }
-    }
-  }
-  return $delflag;
+       $delflag = 1 if ($name =~ /\.${delextn}$/);
+     }
+   }
+ }
+ return $delflag;
 }
 
 # !INTERFILE
@@ -522,27 +522,27 @@ sub analyzeHRRTheader {
     my $duration = $det{$HDR_IMAGE_DURATION};
     $det{$HDR_FRAME_DEFINITION} = "$duration*1";
     push(@frames, $duration);
-  } else {
-    foreach my $bit (@bits) {
-      my ($len, $mul) = split(/\*/, $bit);
-      $len =~ s/[^0-9]//g;
-      $mul =~ s/[^0-9]//g;
+    } else {
+      foreach my $bit (@bits) {
+        my ($len, $mul) = split(/\*/, $bit);
+        $len =~ s/[^0-9]//g;
+        $mul =~ s/[^0-9]//g;
       # print "HRRT_Utilities::analyzeHRRTheader(): (len, mul) = ($len, $mul)\n";
       # if (hasLen($mul) and ($mul =~ /^[0-9]+$/) and ($mul > 1)) {
-      if (hasLen($mul) and ($mul =~ /^[0-9]+$/)) {
-	# print "HRRT_Utilities::analyzeHRRTheader(): up to here 0\n";
-	foreach my $cnt (1..$mul) {
-	  push(@frames, $len);
-	  # print "HRRT_Utilities::analyzeHRRTheader(): push(" . join("_", @frames) . ", $len)\n";
-	}
-      }
-    }
+        if (hasLen($mul) and ($mul =~ /^[0-9]+$/)) {
+  # print "HRRT_Utilities::analyzeHRRTheader(): up to here 0\n";
+  foreach my $cnt (1..$mul) {
+   push(@frames, $len);
+    # print "HRRT_Utilities::analyzeHRRTheader(): push(" . join("_", @frames) . ", $len)\n";
   }
-  $det{'nframes'} = scalar(@frames);
-  $det{'frames'} = \@frames;
-  printHash(\%det, "analyzeHRRTheader($hdrfile)") if ($verbose);
+}
+}
+}
+$det{'nframes'} = scalar(@frames);
+$det{'frames'} = \@frames;
+printHash(\%det, "analyzeHRRTheader($hdrfile)") if ($verbose);
 
-  return \%det;
+return \%det;
 }
 
 # Print a formatted summary of files with given keys.
@@ -585,11 +585,11 @@ sub is_hrrt_file {
   # HENRY_jacqueline_1261768_PET_091118_102949_EM.l64
   my $ret = 0;
   if (($infile =~ /(.+)-(.+)(-\d+){0,1}-(\d{4})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})\.(\d{1,2})_(TX|EM).+/) 
-      or ($infile =~ /(.+)_(.+)_(-\d+){0,1}_PET_(\d{6})_(\d{6})_(TX|EM).+/)) {
-        $ret = 1;
+    or ($infile =~ /(.+)_(.+)_(-\d+){0,1}_PET_(\d{6})_(\d{6})_(TX|EM).+/)) {
+    $ret = 1;
   }
 #   print "HRRT_Utilities::is_hrrt_file($infile) returning: $ret\n";
-  return $ret;
+return $ret;
 }
 
 # Return ptr to hash of backup disks currently mounted.
@@ -607,12 +607,12 @@ sub list_backup_disks {
       my @ycont = dirContents("${filesystem}/${year_dir}");
       my @month_dirs = grep(/$HRRT_MONTH_PATT/, @ycont);
       foreach my $month_dir (@month_dirs) {
-	$disk_data{$filesystem}{$year_dir}{$month_dir} = ();
-      }
-    }
-  }
+       $disk_data{$filesystem}{$year_dir}{$month_dir} = ();
+     }
+   }
+ }
 
-  return \%disk_data;
+ return \%disk_data;
 }
 
 # Return ptr to hash of files matching this date on this disk.
@@ -647,19 +647,19 @@ sub get_backup_files {
     if ($n  == 1) {
       $files{$needed} = $found[0];
       $n_ok++;
-    } elsif ($n > 1) {
+      } elsif ($n > 1) {
       # NOTE NEED TO MOVE THIS TO THE SUBJECT & SCAN SELECTION LOCATION.
       # HERE, ALL AMBIGUOUS FILES ARE QUESTIONED IN A LIST AFTER ALL SUBJECT/SCAN.
       my $selected_file = select_one_of(\@found);
       $files{$needed} = $selected_file;
       $n_ok++;
-    } else {
-      print "HRRT_Utilities::get_backup_files(): Pattern '$search_patt' not found: n = $n.\n";
+      } else {
+        print "HRRT_Utilities::get_backup_files(): Pattern '$search_patt' not found: n = $n.\n";
+      }
     }
+    my $allgood = ($n_ok == scalar(@needed)) ? 1 : 0;
+    return ($allgood) ? \%files : undef;
   }
-  my $allgood = ($n_ok == scalar(@needed)) ? 1 : 0;
-  return ($allgood) ? \%files : undef;
-}
 
 # Given array of options, return index of selected element, else null.
 
@@ -721,28 +721,28 @@ sub assemble_study {
       my $dirstart = $dir->{'start'};
       my $dirstop = $dir->{'stop'};
       if (($scan_secs >= $dirstart) and ($scan_secs <= $dirstop)) {
-	$backup_disk = $disk;
-	last;
-      }
+       $backup_disk = $disk;
+       last;
+     }
+   }
+   if (defined($backup_disk)) {
+    print "Backup disk: $backup_disk\n";
+    if (defined(my $backup_files = get_backup_files($scan_datetime, $subject_record, $backup_disk))) {
+     my $recon_dir = make_recon_dir_name($subject_record, $scan_datetime);
+     print "recon_dir $recon_dir\n" if ($opts->{$Opt::OPT_VERBOSE});
+     mkDir($recon_dir, 0777) unless ((-d $recon_dir) or $opts->{$Opts::OPT_DUMMY});
+     foreach my $backup_key (sort keys %$backup_files) {
+      # printf("copy %-80s  %s\n", $backup_file, $recon_dir);
+      my $backup_file = $backup_files->{$backup_key};
+      $threads{$backup_key} = threads->create(\&copy_file_in_thread, $backup_file, $recon_dir, $opts, $recon_opts);
+      $threads{$backup_key}->detach();
     }
-    if (defined($backup_disk)) {
-      print "Backup disk: $backup_disk\n";
-      if (defined(my $backup_files = get_backup_files($scan_datetime, $subject_record, $backup_disk))) {
-	my $recon_dir = make_recon_dir_name($subject_record, $scan_datetime);
-	print "recon_dir $recon_dir\n" if ($opts->{$Opt::OPT_VERBOSE});
-	mkDir($recon_dir, 0777) unless ((-d $recon_dir) or $opts->{$Opts::OPT_DUMMY});
-	foreach my $backup_key (sort keys %$backup_files) {
-	  # printf("copy %-80s  %s\n", $backup_file, $recon_dir);
-	  my $backup_file = $backup_files->{$backup_key};
-	  $threads{$backup_key} = threads->create(\&copy_file_in_thread, $backup_file, $recon_dir, $opts, $recon_opts);
-	  $threads{$backup_key}->detach();
-	}
-      }
-    } else {
-      my @available_disks = sort keys(%$backup_disks);
-      print join("\n", @available_disks) . "\n";
-      croak("No backup disk for $subject_name, $scan_datetime");
-    }
+  }
+  } else {
+    my @available_disks = sort keys(%$backup_disks);
+    print join("\n", @available_disks) . "\n";
+    croak("No backup disk for $subject_name, $scan_datetime");
+  }
   } else {
     croak("No defined scan_datetime for $subject_name, $scan_datetime");
   }
@@ -760,21 +760,21 @@ sub copy_file_in_thread {
 
   if ($opts->{$Opts::OPT_DUMMY}) {
     # print "HRRT_Utilities::copy_file_in_thread(): rsync $src_file $dst_dir\n";
-  } else {
-    my $rsync = new File::Rsync();
-    my %opts = (
-      'src'	=> $src_file,
-      'dest'	=> $dst_dir,
-      'recursive' => 1,
-      'times'	=> 1,
-    );
-    my $ret = $rsync->exec(\%opts);
-    if ($ret) {
-      print "copy_file_in_thread($src_file, $dst_dir) ended OK\n";
     } else {
-      print "copy_file_in_thread($src_file, $dst_dir): ERROR: $!\n";
-    }
-  }
+      my $rsync = new File::Rsync();
+      my %opts = (
+        'src' => $src_file,
+        'dest'  => $dst_dir,
+        'recursive' => 1,
+        'times' => 1,
+        );
+      my $ret = $rsync->exec(\%opts);
+      if ($ret) {
+        print "copy_file_in_thread($src_file, $dst_dir) ended OK\n";
+        } else {
+          print "copy_file_in_thread($src_file, $dst_dir): ERROR: $!\n";
+        }
+      }
 
   # Edit hdr file.  Kind of a hack to put it here but need to be sure file copy finished.
   if ($src_file =~ /l64\.hdr$/) {
@@ -795,26 +795,26 @@ sub copy_file_in_thread {
       print "frame_definition = '$frame_definition'\n";
       my $line_no = -1;
       foreach my $line (@lines) {
-	$line_no++;
-	print "$line\n";
-	if ($line =~ /$HDR_FRAME_STR/) {
-	  print "xxx found on $line_no\n";
-	  $lines[$line_no] = "Frame definition := $frame_definition";
-	  last;
-	}
-      }
-      if ($line_no >= 0) {
-	print "$HDR_FRAME_DEFINITION found on line $line_no\n";
-	writeFile($dst_file, \@lines);
-      } else {
-	print "$HDR_FRAME_DEFINITION not found\n";
-      }
-    }
-  }
-  $copies_running--;
-}
+       $line_no++;
+       print "$line\n";
+       if ($line =~ /$HDR_FRAME_STR/) {
+         print "xxx found on $line_no\n";
+         $lines[$line_no] = "Frame definition := $frame_definition";
+         last;
+       }
+     }
+     if ($line_no >= 0) {
+       print "$HDR_FRAME_DEFINITION found on line $line_no\n";
+       writeFile($dst_file, \@lines);
+       } else {
+         print "$HDR_FRAME_DEFINITION not found\n";
+       }
+     }
+   }
+   $copies_running--;
+ }
 
-sub rename_hrrt_files {
+ sub rename_hrrt_files {
   my ($infiles, $args) = @_;
   my $verbose = $args->{$Opts::OPT_VERBOSE} // 0;
   my $dummy   = $args->{$Opts::OPT_DUMMY}   // 0;
@@ -829,22 +829,22 @@ sub rename_hrrt_files {
   my $max_len = longest_element(\@allfiles);
 
 # Do the header files first, as they have hist nos for the DB.
-  my @filesinorder = (grep(/\.hdr/, @allfiles), grep(!/\.hdr/, @allfiles));
+my @filesinorder = (grep(/\.hdr/, @allfiles), grep(!/\.hdr/, @allfiles));
 
-  foreach my $infile (@filesinorder) {
-    my ($filename, $filepath, $filesuff) = fileparse($infile);
-    my %args = (
-      $API_Utilities::IS_HEADER => ($infile =~ /\.hdr$/) ? 1 : 0,
-      $API_Utilities::VERBOSE   => $verbose,
-        );
-    my $newname = make_std_name($infile, \%args);
-    my $is_diff = ($newname ne $filename);
-    my $newfull = "${filepath}${newname}";
-    my $prefix = ($is_diff) ? '+' : ' ';
-    my $fmtstr = "%2s %-${max_len}s %-${max_len}s\n";
-    if ($is_diff) {
-      printf($fmtstr, $prefix, $infile, $newfull) if ($verbose);
-      rename($infile, $newfull) unless ($dummy);
+foreach my $infile (@filesinorder) {
+  my ($filename, $filepath, $filesuff) = fileparse($infile);
+  my %args = (
+    $API_Utilities::IS_HEADER => ($infile =~ /\.hdr$/) ? 1 : 0,
+    $API_Utilities::VERBOSE   => $verbose,
+    );
+  my $newname = make_std_name($infile, \%args);
+  my $is_diff = ($newname ne $filename);
+  my $newfull = "${filepath}${newname}";
+  my $prefix = ($is_diff) ? '+' : ' ';
+  my $fmtstr = "%2s %-${max_len}s %-${max_len}s\n";
+  if ($is_diff) {
+    printf($fmtstr, $prefix, $infile, $newfull) if ($verbose);
+    rename($infile, $newfull) unless ($dummy);
     } else {
       print "No name change: $infile\n" if ($verbose);
     }
@@ -888,17 +888,17 @@ sub files_for_scan {
     }
     my @found = sort grep(/$search_patt$/, @dircontents);
      # print "xxx needed $needed, patt '$search_patt': " . join(" ", @found) . "\n";
-    if ((scalar(@found) > 0) and (scalar(@found) <= $maxmatches)) {
+     if ((scalar(@found) > 0) and (scalar(@found) <= $maxmatches)) {
       push(@scanfiles, $found[0]);
-    } else {
-      print "ERROR: HRRT_Utilities::files_for_scan($scandir): 0 or multi: $search_patt\n";
+      } else {
+        print "ERROR: HRRT_Utilities::files_for_scan($scandir): 0 or multi: $search_patt\n";
+      }
     }
+    if (scalar(@scanfiles) != (scalar(@needed) - 1)) {
+      print "ERROR: HRRT_Utilities;:files_for_scan($scandir): Not all files found\n";
+      @scanfiles = ();
+    }
+    return \@scanfiles;
   }
-  if (scalar(@scanfiles) != (scalar(@needed) - 1)) {
-    print "ERROR: HRRT_Utilities;:files_for_scan($scandir): Not all files found\n";
-    @scanfiles = ();
-  }
-  return \@scanfiles;
-}
 
-1;
+  1;
