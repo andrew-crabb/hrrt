@@ -277,43 +277,43 @@ my $PROG_MAKE_AIR        = 'make_air';
 my %PROGRAMS = (
   $PROG_LMHISTOGRAM => {
     $SW_CPS    => "lmhistogram.exe",
-    $SW_USER   => "lmhistogram_u_x64.exe",
+    $SW_USER   => "lmhistogram_mp",
     $SW_USER_M => "lmhistogram_mp",
   },
   $PROG_E7_ATTEN => {
     $SW_CPS    => "e7_atten.exe",
-    $SW_USER   => "e7_atten_u.exe",
+    $SW_USER   => "e7_atten_u",
     $SW_USER_M => "e7_atten_u",
   },
   $PROG_E7_FWD => {
     $SW_CPS    => "e7_fwd.exe",
-    $SW_USER   => "e7_fwd_u.exe",
+    $SW_USER   => "e7_fwd_u",
     $SW_USER_M => "e7_fwd_u",
   },
   $PROG_E7_SINO => {
     $SW_CPS    => "e7_sino.exe",
-    $SW_USER   => "e7_sino_u.exe",
+    $SW_USER   => "e7_sino_u",
     $SW_USER_M => "e7_sino_u",
   },
   $PROG_GENDELAYS => {
     $SW_CPS    => "GenDelays.exe",
-    $SW_USER   => "gen_delays_x64.exe",
+    $SW_USER   => "gen_delays",
     $SW_USER_M => "",
   },
   $PROG_OSEM3D => {
     $SW_CPS    => "hrrt_osem3d_x64.exe",
-    $SW_USER   => "hrrt_osem3d_x64.exe",
+    $SW_USER   => "hrrt_osem3d",
     $SW_USER_M => "je_hrrt_osem3d",
   },
   $PROG_IF2E7 => {
     $SW_CPS    => "if2e7.exe",
-    $SW_USER   => "if2e7.exe",
+    $SW_USER   => "if2e7",
     $SW_USER_M => "if2e7",
   },
 
   $PROG_TX_TV3DREG => {
     $SW_CPS    => "",
-    $SW_USER   => "TX_TV3DReg.exe",
+    $SW_USER   => "TX_TV3DReg",
     $SW_USER_M => "TX_TV3DReg",
   },
   $PROG_CRYSTALMAP => {
@@ -323,7 +323,7 @@ my %PROGRAMS = (
   },
   $PROG_GSMOOTH => {
     $SW_CPS    => "",
-    $SW_USER   => "gsmooth_u.exe",
+    $SW_USER   => "gsmooth_ps",
     $SW_USER_M => "gsmooth_ps",
   },
   $PROG_MOTION_QC => {
@@ -2198,14 +2198,14 @@ sub do_sensitivity {
   # The -o option must be specified or the program will not run.
   # If the sens image is present, it is used to create the output file.  The sens image is not modified.
 
-  my $normfac_256_file = $this->fileName($K_NORMFAC_256);
-  my $sensitivity_file = $this->fileName($K_FRAME_SENS_I, {$K_FRAMENO => 0});
+  my $normfac_256_file = $this->fileName($K_NORMFAC_256, {$K_USEDIR => 0});
+  my $sensitivity_file = $this->fileName($K_FRAME_SENS_I, {$K_FRAMENO => 0, $K_USEDIR => 0});
   $this->safe_unlink($normfac_256_file);
   $this->safe_unlink($sensitivity_file);
   my $ret = 0;
   my $cmd = $this->program_name($PROG_OSEM3D);
   $cmd .= " -t " . $this->fileName($FRAME_S_PREFIX, \%fn_args);
-  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 0});
+  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 1});
   $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 0});
   $cmd .= " -o $sensitivity_file";	    # Note: Not used.
   $cmd .= " -W $OSEM_SENS_WEIGHTING";	    # -W  weighting method
@@ -2272,28 +2272,28 @@ sub do_reconstruction {
       my $d_file      = ($this->{$_USER_M_SW}) ? $ch_file : $ra_smo_file;
       
       my $cmd = $prog_osem3d;
-      $cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
-      $cmd .= " -d " . $d_file;
-      $cmd .= " -s " . $this->fileName($FRAME_SC_PREFIX    , \%fn_args);
-      $cmd .= " -a " . $this->fileName($TX_A_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
-      $cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
-      $cmd .= " -o " . $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
-      $cmd .= " -I $niter";
-      $cmd .= " -S $NUM_SUBSETS";
-      $cmd .= " -m $this->{$O_SPAN},67";
-      $cmd .= " -W 3";
-      $cmd .= " -v 125";
-      $cmd .= " -N";		# Might not want this with user_m.
+      $cmd .= ' -p ' . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
+      $cmd .= ' -d ' . $d_file;
+      $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX    , \%fn_args);
+      $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
+      $cmd .= ' -o ' . $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
+      $cmd .= ' -I ' . $niter;
+      $cmd .= ' -S ' . $NUM_SUBSETS;
+      $cmd .= ' -m ' . $this->{$O_SPAN},67;
+      $cmd .= ' -W ' . 3;
+      $cmd .= ' -v ' . 125;
+      $cmd .= ' -N';		# Might not want this with user_m.
       if ($this->{$_USER_SW}) {
 	#        $cmd .= " -B0,0,0";    # Change 7/26/11 ahc.
-	$cmd .= " -D " . $this->{$_FNAMES}{$_RECONDIR_};
-	$cmd .= " -L $logfile";
+	$cmd .= ' -D ' . $this->{$_FNAMES}{$_RECONDIR_};
+	$cmd .= ' -L ' . $logfile;
       }
       if ($this->{$_USER_M_SW}) {
-	$cmd .= " -K " . $this->fileName($K_NORMFAC_256); # Computed in do_sensitivity.
-	$cmd .= " -T $OSEM_SENS_THREADS"; # -T  number of threads
-	$cmd .= " -X 256";
-	$cmd .= " -r $rebinner_lut_file"; # added 2/10/13 ahc
+	$cmd .= ' -K ' . $this->fileName($K_NORMFAC_256, {$K_USEDIR => 0}); # Computed in do_sensitivity.
+	$cmd .= ' -T ' . $OSEM_SENS_THREADS; # -T  number of threads
+	$cmd .= ' -X ' . 256;
+	$cmd .= ' -r ' . $rebinner_lut_file; # added 2/10/13 ahc
       }
       $this->safe_unlink($output_file, 0) unless ($this->{$O_DUMMY});
       $ret += $this->runit($cmd, "do_reconstruction($i)");
