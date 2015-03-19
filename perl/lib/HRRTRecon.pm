@@ -2272,15 +2272,15 @@ sub do_reconstruction {
       my $d_file      = ($this->{$_USER_M_SW}) ? $ch_file : $ra_smo_file;
       
       my $cmd = $prog_osem3d;
-      $cmd .= ' -p ' . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
+      $cmd .= ' -p ' . $this->fileName($FRAME_S_PREFIX , \%fn_args);
       $cmd .= ' -d ' . $d_file;
-      $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX    , \%fn_args);
-      $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
-      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
-      $cmd .= ' -o ' . $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
+      $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX, \%fn_args);
+      $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
+      $cmd .= ' -o ' . $this->fileName($K_FRAME_I      , {$K_FRAMENO => $i, $K_USEDIR => 0});
       $cmd .= ' -I ' . $niter;
       $cmd .= ' -S ' . $NUM_SUBSETS;
-      $cmd .= ' -m ' . $this->{$O_SPAN},67;
+      $cmd .= ' -m ' . $this->{$O_SPAN} . ',67';
       $cmd .= ' -W ' . 3;
       $cmd .= ' -v ' . 125;
       $cmd .= ' -N';		# Might not want this with user_m.
