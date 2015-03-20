@@ -370,7 +370,7 @@ sub analyzeHRRTfile {
   my ($infile, $verbose) = @_;
 
   $| = 1;
-  print "xxx HRRT_Utilities::analyzeHRRTfile($infile)\n";
+  # print "xxx HRRT_Utilities::analyzeHRRTfile($infile)\n";
   my ($fpath, $fname) = pathParts($infile);
   my @filebits = split(/\-/, $fname);
   my ($first, $last, $rest, $id);
@@ -524,6 +524,7 @@ sub analyzeHRRTheader {
     push(@frames, $duration);
   } else {
     foreach my $bit (@bits) {
+      # print "HRRT_Utilities::analyzeHRRTheader($hdrfile): bit = '$bit'\n";
       my ($len, $mul) = split(/\*/, $bit);
       $len =~ s/[^0-9]//g;
       $mul =~ s/[^0-9]//g;
