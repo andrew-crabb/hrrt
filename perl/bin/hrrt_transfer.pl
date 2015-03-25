@@ -1,7 +1,8 @@
 #! /usr/bin/env perl
 
-use warnings;
+use autodie;
 use strict;
+use warnings;
 
 use Carp;
 use Cwd qw(abs_path);
@@ -104,8 +105,6 @@ if ( $opts->{$Opts::OPT_HELP} ) {
 
 # Main
 my $platform = ( $opts->{$OPT_LOCAL} ) ? $PLAT_LOCAL : $PLAT_PRODN;
-# $ssh = make_ssh_connection();
-# croak "Can't connect SSH to $RSYNC_HOST" unless $ssh;
 
 # Data directory.
 $data_dir = $CONFIG{$DATA_DIR}{$platform};
@@ -135,7 +134,8 @@ make_blank_scans_by_date();
 # Select EM and TX scan times.
 my $scans_to_send = select_scan($scans_by_date);
 # Select and edit framing.
-my $framing = select_framing($framing_array);
+my $scan_to_send = $scans_by_date->{$scans_to_send->{'EM'}};
+my $framing = select_framing($scan_to_send, $framing_array);
 # Should be only one blank scan per day.
 printHash($scans_to_send, "scans to send");
 my $blank_scan = select_blank_scan($scans_to_send->{'EM'});
@@ -201,7 +201,6 @@ sub edit_framing {
 #  move($hdr_file, "${hdr_file}.bak") or die "move($hdr_file, ${hdr_file}.bak: $!\n";
   unlink($hdr_file);
   writeFile($hdr_file, \@outlines);
-
 }
 
 sub all_files_subj {
@@ -268,7 +267,7 @@ sub create_dest_dir {
   # 	 }, 
   # 	 $dirname );
   # }
-  mkdir($dirname, 0755);
+  (-d $dirname) or mkdir($dirname, 0755);
 }
 
 sub delete_found_files {
@@ -313,22 +312,36 @@ sub make_xfer_files {
   printHash($scan_times, "make_xfer_files scan_times") if ($opts->{$Opts::OPT_VERBOSE});
   our $all_rec = $scans_by_date->{ $scan_times->{'EM'} };
   our $em_rec = $all_rec->{'EM'};
-  our $tx_rec = $all_rec->{'TX'}->{ $scan_times->{'TX'} };
+
+  # Skip TX recs for norm scans.
+  # Normal scans without TX would have died by now.
+  our $tx_rec = undef;
+  my $is_norm_scan = is_norm_scan($em_rec);
+  unless ($is_norm_scan) {
+    $tx_rec = $all_rec->{'TX'}->{ $scan_times->{'TX'} };
+    print "tx_rec:\n";
+    printHash($tx_rec, 'tx_rec');
+  }
   # printHash($all_rec, "make_xfer_files all_rec");
   # printHash($em_rec, "make_xfer_files em_rec");
   # printHash($tx_rec, "make_xfer_files tx_rec");
 
-  foreach my $type (qw{em tx}) {
+  my @modes = ($is_norm_scan) ? (qw{em}) : (qw{em tx});
+  foreach my $type (@modes) {
+    print "type: $type\n";
     my $rec_name = "${type}_rec";
     my $rec      = $$rec_name;
+    # printHash($rec, 'rec');
     my $l64_file = $rec->{'_fullname'};
 
     $xfer_files{"${type}_l64"} = $l64_file;
-    $xfer_files{"${type}_hdr"} = "${l64_file}.hdr";
+    $xfer_files{"${type}_hdr"} = $l64_file . '.hdr';
     if ( $type =~ /em/ ) {
       ( $xfer_files{"${type}_hc"} = $l64_file ) =~ s/l64/hc/;
     }
   }
+
+  printHash(\%xfer_files, "xxx xfer_files");
 
   # Create destination directory name.
   my $dirname = "$em_rec->{'name_last'}_$em_rec->{'name_first'}_";
@@ -443,18 +456,33 @@ sub select_blank_scan {
 }
 
 sub select_framing {
-  my ($hrrt_framing) = @_;
+  my ($scan_to_send, $hrrt_framing) = @_;
+
+  my $hdr_file = $scan_to_send->{'EM'}{'_fullname'} . '.hdr';
+  # printHash($scan_to_send, "select_framing:  $hdr_file");
+  my $hdr_det = analyzeHRRTheader($hdr_file);
+  my $scan_mins = $hdr_det->{'image_duration'} / 60;
 
   my $framing = prompt(
-    'Select Duration',
+    "Select Duration (default $scan_mins)",
     -verb,
-    # -menu => \%FRAMING,
     -menu => $hrrt_framing,
     '>'
   );
   $framing =~ s/^.*\ //;
+  print "Using framing: $framing\n";
   return $framing;
 }
+
+# sub describe_scan {
+#   my () = @_;
+#   my $selected_scan = $scans_by_date->{$em_time};
+#   # printHash($selected_scan, "selected_scan");
+#   my $hdr_file = $selected_scan->{'EM'}{'_fullname'} . '.hdr';
+#   my $hdr_det = analyzeHRRTheader($hdr_file);
+#   my $scan_mins = $hdr_det->{'image_duration'} / 60;
+#   # printHash($hdr_det, "hdr_det $em_time");
+# }
 
 sub select_scan {
   my ($scans_by_date) = @_;
@@ -467,14 +495,14 @@ sub select_scan {
   my ( $em_time, $tx_time ) = ( undef, undef );
   foreach my $scan_time ( sort keys %scans_by_date ) {
     my $scan_rec = $scans_by_date->{$scan_time};
-#    printHash( $scan_rec, $scan_time );
+    # printHash( $scan_rec, "select_scan $scan_time" );
     my $em_rec = $scans_by_date{$scan_time}{'EM'};
     my %em_rec = %$em_rec;
     my ( $name_last, $name_first, $size ) = @em_rec{qw(name_last name_first size)};
     my $gb = sprintf("%3.1f", ($size / $BILLION));
     $menu_det{"$scan_time $name_last, $name_first ($gb)"} = $scan_time;
   }
-#  printHash( \%menu_det );
+  # printHash( \%menu_det );
   $em_time = prompt 'Select Emission Scan', -verb,
       -menu => \%menu_det,
       '>';
@@ -482,10 +510,16 @@ sub select_scan {
   print "Emission scan time: $em_time\n";
   $ret{'EM'} = $em_time;
 
+
+  my $is_norm_scan = is_norm_scan($scans_by_date->{$em_time}{'EM'});
+
   # Select transmission scan for emission scan, if multiple.
-  my $tx_scan_recs = $scans_by_date{$em_time}{'TX'};
-  my %tx_scan_recs = %$tx_scan_recs;
-  my @tx_times     = sort keys %tx_scan_recs;
+  my @tx_times = ();
+  my $tx_scan_recs = undef;
+  if ($tx_scan_recs = $scans_by_date{$em_time}{'TX'}) {
+    my %tx_scan_recs = %$tx_scan_recs;
+    @tx_times     = sort keys %tx_scan_recs;
+  }
 
   if ( scalar(@tx_times) == 1 ) {
     $tx_time = $tx_scan_recs->{ $tx_times[0] }->{'date'}->{'hrrtdir'};
@@ -497,12 +531,30 @@ sub select_scan {
     my $tx_use_suffix = prompt('Append TX time to dest dir?', -yes);
     $ret{$USE_TX_SUFFIX} = ($tx_use_suffix) ? 1 : 0;
   } else {
-    croak("No TX record");
+    unless ($is_norm_scan) {
+      croak("No TX record");
+    }
     # Error? No TX record.
   }
-  print "tx_time $tx_time\n";
-  $ret{'TX'} = $tx_time;
+  # Norm scan doesn't have to have a TX
+  unless ($is_norm_scan) {
+    print "tx_time $tx_time\n";
+    $ret{'TX'} = $tx_time;
+  }
   return \%ret;
+}
+
+sub is_norm_scan {
+  my ($rec) = @_;
+
+  my $name_first = $rec->{'name_first'};
+  my $name_last  = $rec->{'name_last'};
+  my $is_norm_scan = (($name_first =~ /NORM|SCAN/i) and ($name_last =~ /NORM|SCAN/i)) ? 1 : 0;
+  # print "XXX is_norm_scan($name_first, $name_last) returning $is_norm_scan\n";
+  if ($is_norm_scan) {
+    print "is_norm_scan($name_first, $name_last) returning $is_norm_scan\n";
+  }
+  return $is_norm_scan;
 }
 
 # sub make_ssh_connection {
