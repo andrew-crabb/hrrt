@@ -2310,7 +2310,7 @@ sub do_reconstruction {
       unless ($this->check_file_ok($K_FRAME_128_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $prog_osem3d;
 	$cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
-	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
+	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
 	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i, $K_USEDIR => 0});
 	$cmd .= " -W 3";
 	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i, $K_USEDIR => 0});
@@ -2603,7 +2603,7 @@ sub do_motion_as_script {
       $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -u "   . $mu_reslice_file,
       $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}});
+      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
       $cmd .= " -w $MU_WIDTH";
       $cmd .= " -a " . $acf_output_file;
       $cmd .= " --force";
@@ -2640,7 +2640,7 @@ sub do_motion_as_script {
       $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_USEDIR => 0, $K_FRAMENO => $i});
       $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}});
+      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
       $cmd .= " -W 3";
       $cmd .= " -I $ITER_MOTION_CORR";
       $cmd .= " -S 16";
@@ -2723,18 +2723,18 @@ sub do_motion {
   unless ($this->check_file_ok($K_MOTION_QC, '', "do_motion 1: $K_MOTION_QC")) {
     #  motion_qc $v_file_name_128 -v -O -R 0 #-a 1.03,4 #-r $ref_frame
     my $cmd = $this->program_name($PROG_MOTION_QC);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
-    $cmd .= " -v ";		  # Verbose
-    $cmd .= " -O ";		  # Overwrite
-    $cmd .= " -R 0 ";		  # ecat_reslice_flag
-    $cmd .= " -r -1";		  # Reference frame
+    $cmd .= ' ' . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
+    $cmd .= ' -v ';		  # Verbose
+    $cmd .= ' -O ';		  # Overwrite
+    $cmd .= ' -R 0 ';		  # ecat_reslice_flag
+    $cmd .= ' -r -1';		  # Reference frame
     # Added 2/28/13 program path and fq path of gnuplot now required args.
-    $cmd .= " -p $bindir";	# Path of HRRT executables.
-    $cmd .= " -z " . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);  # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
-    $cmd .= " -l " . $this->{$_LOG_DIR};
-    $cmd .= " -x " . $this->program_name($PROG_OSEM3D);
+    $cmd .= ' -p ' . $bindir;	# Path of HRRT executables.
+    $cmd .= ' -z ' . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);  # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
+    $cmd .= ' -l ' . $this->{$_LOG_DIR};
+    $cmd .= ' -x ' . $this->program_name($PROG_OSEM3D);
 
-    $ret = $this->runit($cmd, "do_motion");
+    $ret = $this->runit($cmd, 'do_motion');
   }
 
   my $calib_factors = $this->calibrationFactors();
@@ -2742,41 +2742,41 @@ sub do_motion {
   # Horrible bug in motion_correct_recon means calib factor file must be in local dir.
   # calibration factor file is created in edit_calibration_file().
   if ($this->edit_calibration_file()) {
-    return $this->log_msg("do_motion(): error in edit_calibration");
+    return $this->log_msg('do_motion(): error in edit_calibration');
   }
   $this->file_must_exist($this->{$_FNAMES}->{$_CALIB_});
 
   # Output file is $K_IMAGE_ATX_VR.  But renamed to $K_IMAGE_V, so test for $K_IMAGE_ATX_V.
   my $prog_name = undef;
-  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-  unless ($this->check_file_ok($K_IMAGE_ATX_V, '', "do_motion 2: $K_IMAGE_ATX_V")) {
+  my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . '/' . $REBINNER_LUT_FILE;
+  unless ($this->check_file_ok($K_IMAGE_ATX_V, '', 'do_motion 2: ' . $K_IMAGE_ATX_V)) {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
-    $cmd .= " "    . $this->fileName($K_DYN, {$K_USEDIR => 0});
-    $cmd .= " -n " . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}});
-    $cmd .= " -u " . $this->fileName($K_TX_I, {$K_USEDIR => 0}); # Mu-map file
-    $cmd .= " -E " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0}); # Uncorrected Ecat file
+    $cmd .= ' '    . $this->fileName($K_DYN, {$K_USEDIR => 0});
+    $cmd .= ' -n ' . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
+    $cmd .= ' -u ' . $this->fileName($K_TX_I, {$K_USEDIR => 0}); # Mu-map file
+    $cmd .= ' -E ' . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0}); # Uncorrected Ecat file
     #################### TEMP TAKEN OUT ####################
     # Leaving this out causes 'normfac.i' to be created in local dir.
     # If you want a better name but still locally generated normfac, delete K_NORMFAC_256 first.
-    # $cmd .= " -K " . $this->fileName($K_NORMFAC_256);
+    # $cmd .= ' -K ' . $this->fileName($K_NORMFAC_256);
     #################### TEMP TAKEN OUT ####################
-    $cmd .= " -L $calib_ratio";
-    $cmd .= " -I $ITER_MOTION_CORR";
-    $cmd .= " -a 1.03,4";
-    $cmd .= " -v";
-    #   $cmd .= " -P";        # Enable PSF, which sets '-B 0,0,0' in call to osem3d.
-    $cmd .= " -O ";		# Overwrite
+    $cmd .= ' -L ' . $calib_ratio;
+    $cmd .= ' -I ' . $ITER_MOTION_CORR;
+    $cmd .= ' -a 1.03,4';
+    $cmd .= ' -v';
+    #   $cmd .= ' -P';        # Enable PSF, which sets '-B 0,0,0' in call to osem3d.
+    $cmd .= ' -O ';		# Overwrite
     # Horrible bug in motion_correct_recon calling if2e7:  calib factor must be in local dir.
-    $cmd .= " -s " . $this->{$_FNAMES}->{$_CALIB_};
-    $cmd .= " -r -1";		       # Reference frame
+    $cmd .= ' -s ' . $this->{$_FNAMES}->{$_CALIB_};
+    $cmd .= ' -r -1';		       # Reference frame
     # ahc newly-required params
-    $cmd .= " -p $bindir";	# Path of HRRT executables.
-    $cmd .= " -z " . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT); # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
-    $cmd .= " -l " . $this->{$_LOG_DIR};
-    $cmd .= " -b $rebinner_lut_file";
+    $cmd .= ' -p ' . $bindir;	# Path of HRRT executables.
+    $cmd .= ' -z ' . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT); # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
+    $cmd .= ' -l ' . $this->{$_LOG_DIR};
+    $cmd .= ' -b ' . $rebinner_lut_file;
 
-    $ret += $this->runit($cmd, "do_motion");
+    $ret += $this->runit($cmd, 'do_motion');
   }
   return $this->printLine("do_motion ERROR '$ret' in $prog_name", $ret) if ($ret);
 

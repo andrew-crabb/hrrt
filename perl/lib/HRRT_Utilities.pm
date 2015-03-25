@@ -370,7 +370,7 @@ sub analyzeHRRTfile {
   my ($infile, $verbose) = @_;
 
   $| = 1;
-  print "xxx HRRT_Utilities::analyzeHRRTfile($infile)\n";
+  # print "xxx HRRT_Utilities::analyzeHRRTfile($infile)\n";
   my ($fpath, $fname) = pathParts($infile);
   my @filebits = split(/\-/, $fname);
   my ($first, $last, $rest, $id);
