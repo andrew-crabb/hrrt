@@ -1899,8 +1899,8 @@ sub do_transmission {
   # If not running tx_tv3dreg, generate TX.i/TX.i.hdr directly.
   # Otherwise, generate TX_tmp.i and tx_tv3dreg will create TX.i.
   my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
-  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => 0});
-  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => 0});
+  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => 1});
+  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => 1});
   my $tx_outfile    = ($run_txtv) ? $tx_i_tmp_file : $tx_i_file;
 
   my $cmd = $this->program_name($PROG_E7_ATTEN);
