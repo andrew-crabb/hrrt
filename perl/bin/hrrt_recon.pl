@@ -3,15 +3,20 @@
 # hrrt_recon_new.pl
 # Use HRRTRecon in OO form to analyze an HRRT recon directory.
 
+use autodie;
 use warnings;
 use strict;
 
+use Carp;
 use Config::Std;
 use Cwd;
+use Cwd qw(abs_path);
 use File::Basename;
+use File::Path qw(make_path remove_tree);
 use File::Spec;
 use File::Spec::Unix;
 use Getopt::Std;
+use POSIX;
 
 use FindBin;
 use lib Cwd::abs_path($FindBin::Bin . '/../lib');
@@ -21,15 +26,23 @@ use FileUtilities;
 use Utilities_new;
 use HRRTUtilities;
 use HRRTRecon;
+use HRRT_Config;
 
 no strict 'refs';
+
+# ------------------------------------------------------------
+# Globals
+# ------------------------------------------------------------
+
+our $g_recon_start = undef;
+our $g_logger = undef;
 
 # ------------------------------------------------------------
 # Command line options.
 # ------------------------------------------------------------
 
 my %opts;
-getopts('cbtasrpYydDe:fgG:hHijKIl:mMNnoqQuvR:S:UVz369', \%opts);
+getopts('cbtasrpYydDe:fgG:hHijKImMNnoqQuvR:S:UVz369', \%opts);
 our $do_complete       = $opts{'c'} || 0;   # Options BTASRP, in that order.
 our $do_rebin          = $opts{'b'} || 0;   # lmhistogram (makes *EM.s)
 our $do_transmission   = $opts{'t'} || 0;   # e7_atten (makes *TX.i)
@@ -46,21 +59,20 @@ my $bigdummy           = $opts{'D'} || 0;   # Don't test for prereqs, print acti
 my $ergratio           = $opts{'e'} || '';  # Use given ergratio value.
 my $force              = $opts{'f'} || 0;   # Overwrite destination files if existing.
 my $config_file        = $opts{'G'} || '';  # Config file
-my $do_log             = $opts{'g'} || 0;   # Log process to VHIST file.
+my $do_vhist           = $opts{'g'} || 0;   # Log process to VHIST file.
 my $help               = $opts{'h'} || 0;   # Print help text, exit.
 my $nohost             = $opts{'H'} || 0;   # Do not scp image files to host.
 my $dbrecord           = $opts{'i'} || 0;   # Insert database record of recon.
 my $nodbrecord         = $opts{'I'} || 0;   # Don't insert database record.
 my $usesubdir          = $opts{'j'} || 0;   # Use span-named subdirs for dest files.
-my $widekernel          = $opts{'K'} || 0;   # Use 5 mm wide kernel to if2e7
-my $logfile            = $opts{'l'} || '';  # File to write debug messages to.
+my $widekernel         = $opts{'K'} || 0;   # Use 5 mm wide kernel to if2e7
 my $frame_count        = $opts{'n'} || 0;   # Include frame count in image file name.
 my $multiline          = $opts{'z'} || 0;   # Print log commands in multiline format.
 my $notimetag          = $opts{'N'} || 0;   # Add option '-notimetag' to lmhistogram
 my $docopy             = $opts{'o'} || 0;   # Copy from server to this node first.
 my $quiet              = $opts{'q'} || 0;   # STFU
 my $do_qc              = $opts{'Q'} || 0;   # Create QC files.
-my $recon_start        = $opts{'R'} || '';  # Start time string to encode into image files.
+$g_recon_start        = $opts{'R'} || undef;  # Start time string to encode into image files.
 my $step               = $opts{'S'} || '';  # Step (alone) to run.
 my $usersw             = $opts{'u'} || 0;   # Run HRRT_User software, not CPS.
 my $usersw_m           = $opts{'U'} || 0;   # Run HRRT_User 2011 software with motion correction.
@@ -79,19 +91,55 @@ if ($usersw_m and not $do_motion) {
   $do_motion = ($do_reconstruction) ? ($no_motion) ? 0 : 1 : 0;
 }
 
+# ------------------------------------------------------------
+# Main
+# ------------------------------------------------------------
+
+my %recons;
+our $subj_dir = $ARGV[0];
+
+# Initialize recon start time, and flag on whether to create log.
+my $time_now = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
+$g_recon_start //= $time_now;
+my $do_any = $do_rebin + $do_transmission + $do_attenuation + $do_scatter + $do_reconstruction + $do_postrecon;
+
+# Get path of this executable
+my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
+$root_path = abs_path("${root_path}/../../") . '/';
+
+# Read configuration file
+my $conf_file = conf_file_name();
+my %config = ();
+my $config = read_config($conf_file, %config);
+
+# If no steps performed, or dummy, don't log to file.
+if ($do_any) {
+  my $log_dir = $subj_dir . '/recon_' . $g_recon_start;
+  make_path($log_dir) or croak("Can't make_path($log_dir)");
+}
+
+# Initialize log4perl logging if performing any steps.
+
+my $log4perl_file = ($do_any) ? $HRRTRecon::LOG4PERL_FILE_CNF : $HRRTRecon::LOG4PERL_SCREEN_CNF;
+my $log4perl_conf = $root_path . $config{$CNF_SEC_BIN}{$CNF_VAL_ETC} . '/' . $log4perl_file;
+Log::Log4perl::init($log4perl_conf);
+croak("ERROR: Cannot initialize log4perl") unless (Log::Log4perl->initialized());
+
+my $log_category = 'hrrt_recon';
+$g_logger = Log::Log4perl->get_logger($log_category);
+$g_logger->more_logging() if ($verbose);
+
 my $motion_str = ($usersw_m) ? ", Motion $do_motion" : "";
-print "Opts selected: Rebin $do_rebin, Transmission $do_transmission, Attenuation $do_attenuation, Scatter $do_scatter, Recon $do_reconstruction, Postrecon $do_postrecon${motion_str}\n";
+$g_logger->info("Opts selected: Rebin $do_rebin, Transmission $do_transmission, Attenuation $do_attenuation, Scatter $do_scatter, Recon $do_reconstruction, Postrecon $do_postrecon${motion_str}");
 
 # Determine softwware group to use.
 if ($usersw or $usersw_m) {
   $span9 = $use64 = $usesubdir = 1;
-  print "****************************************\n";
-  print "* Using User software.                 *\n";
-  print "* Setting Span-9, 64-bit, and Subdir.  *\n";
-  print "****************************************\n";  
+  $g_logger->info("* Using User software.                 *");
+  $g_logger->info("* Setting Span-9, 64-bit, and Subdir.  *");
 }
 if ($usersw_m and $usersw) {
-  print "ERROR: Selected both usersw_m and usersw\n";
+  $g_logger->error("Selected both usersw_m and usersw");
   exit 1;
 }
 my $sw_group = ($usersw_m) ? $SW_USER_M : ($usersw) ? $SW_USER : $SW_CPS;
@@ -99,20 +147,13 @@ my $spanno = (hasLen($span9) and $span9) ? $HRRTRecon::SPAN9 : $HRRTRecon::SPAN3
 
 # Record to database if do_complete or dbrecord set, but not if 'no dbrecord'.
 # This allows do_complete to run if you don't have a network or DB connection.
-$dbrecord |= $do_complete;
-$dbrecord = 0 if ($nodbrecord);
-print "*** dbrecord = $dbrecord ***\n";
-
-# ------------------------------------------------------------
-# Main
-# ------------------------------------------------------------
-
-my %recons;
-my $subj_dir = $ARGV[0];
+# $dbrecord |= $do_complete;
+# $dbrecord = 0 if ($nodbrecord);
+# print "*** dbrecord = $dbrecord ***\n";
 
 # First things first.  If 'Copy to Node' selected, copy from /f/recon to /e/recon
 if ($docopy) {
-  print "****************   subj_dir $subj_dir\n";
+  $g_logger->info("****************   subj_dir $subj_dir");
   if ($subj_dir =~ /$FPATH/i) {
     (my $destdir = $subj_dir) =~ s/$FPATH/$EPATH/;
     mkdir($destdir);
@@ -125,7 +166,7 @@ if ($docopy) {
       'size-only' => 1,
                 }) or warn ("rsync($subj_dir, $destdir) failed");
     $subj_dir = $destdir;
-    print "*** Changing recon dir to $destdir\n";
+    $g_logger->info('*** Changing recon dir to $destdir');
   }
 }
 
@@ -134,8 +175,7 @@ my %recon_opts = (
   $O_VERBOSE     => $verbose,
   $O_DUMMY       => $dummy,
   $O_FORCE       => $force,
-  $O_LOGFILE     => $logfile,
-  $O_DO_LOG      => $do_log,
+  $O_DO_VHIST      => $do_vhist,
   $O_ERGRATIO    => $ergratio,
   $O_DBRECORD    => $dbrecord,
   $O_NOTIMETAG   => $notimetag,
@@ -149,14 +189,16 @@ my %recon_opts = (
   $O_NOHOST      => $nohost,
   $O_CRYSTAL     => ($no_crystalmap) ? 0 : 1,
   $O_SW_GROUP    => $sw_group,
-  $O_RECON_START => $recon_start,
+  $O_RECON_START => $g_recon_start,
   $O_FRAME_CNT   => $frame_count,
   $O_DO_QC	 => $do_qc,
   $O_CONF_FILE   => $config_file,
   $O_WIDE_KERNEL => $widekernel,
+  $O_LOG_CAT     => $log_category,
 );
 
 my $recon = HRRTRecon->new(\%recon_opts);
+$recon->test_logging();
 
 if ($help or (scalar(@ARGV) == 0)) {
   usage_old();
@@ -164,16 +206,16 @@ if ($help or (scalar(@ARGV) == 0)) {
 }
 
 if ($recon->test_prereq()) {
-  print "ERROR: Missing prerequisites\n";
-  exit 1;
+  $g_logger->logdie('Missing prerequisites');
 }
 
-die "Can't initialize HRRTRecon" unless ($recon);
+$g_logger->logdie('Cannot initialize HRRTRecon') unless ($recon);
 if ($recon->analyze_recon_dir($subj_dir)) {
-  print "ERROR in recon->analyze_recon_dir($subj_dir): Exiting\n";
-  exit 1;
+  $g_logger->logdie("ERROR in recon->analyze_recon_dir($subj_dir)");
 }
-$recon->initialize_log_file();
+# initialize_log_file is only to do with vhist and database
+# $recon->initialize_log_file();
+
 $recon->print_study_summary({'do_vhist' => 1});
 
 # Special case for testing: Option 'S' (step) runs a specific step.
@@ -183,7 +225,7 @@ if (defined(my $stepnum = $opts{'S'})) {
     exit;
   }
   my $subroutine = $HRRTRecon::SUBROUTINES{$stepnum};
-  print "Running step $stepnum: $subroutine\n";
+  $g_logger->info("Running step $stepnum: $subroutine");
   my $retval = $recon->$subroutine();
   exit;
 }
@@ -210,23 +252,22 @@ foreach my $process (@processes_to_run) {
 
   my $proc_name = "do_${p_name}";
   unless ($$proc_name) {
-    $recon->log_msg("$proc_name not set: skipping");
+    $g_logger->info("$proc_name not set: skipping");
     next;
   }
   my $spc = "                                                  ";
   my $tstr = "Step $count: \u$p_name Process";
   my $sp1 = substr($spc, 0, (50 - length($tstr)) / 2);
   my $sp2 = substr($spc, 0, 50 - length($tstr) - length($sp1));
-  $recon->log_msg("------------------------------------------------------------");
-  $recon->log_msg("*****${sp1}${tstr}${sp2}*****");
-  $recon->log_msg("(p_name $p_name, p_done $p_done, p_ready $p_ready)");
+  $g_logger->info("------------------------------------------------------------");
+  $g_logger->info("*****${sp1}${tstr}${sp2}*****");
 
   # Check that post-requisites are correct.
   $recon->analyze_recon_dir($subj_dir);
   $p_ready = $recon->{$_PROCESSES}{$process}->{$PROC_PREOK};
   # Check if it's been done already.
   if ($p_done and not $force) {
-    $recon->log_msg("$proc_name skipped - Already done (-f to force)");
+    $g_logger->info("$proc_name skipped - Already done (-f to force)");
   } else {
     # Check that it has all its prerequsites.
     if ($p_ready or $bigdummy) {
@@ -235,7 +276,7 @@ foreach my $process (@processes_to_run) {
       # May be attempted more than once as defined in %procsumm.
       my $procsumm = $recon->{$_PROCESS_SUMM}->{$process};
       my ($pname, $pinit, $proc_iter) = @{$procsumm};
-      print "***************  ($pname, $pinit, $proc_iter)\n";
+      $g_logger->info("***************  ($pname, $pinit, $proc_iter)");
       $proc_iter = 1 if ($dummy);
       # Loop max proc_iter times until success result from running process.
     ITER:
@@ -245,23 +286,23 @@ foreach my $process (@processes_to_run) {
         $recon->analyze_recon_dir($subj_dir);
         $p_done       = $recon->{$_PROCESSES}{$process}->{$PROC_POSTOK};
         my $proc_name = $recon->{$_PROCESSES}{$process}->{$PROC_NAME};
-        $recon->log_msg("Process $count ($process) attempt $iter of $proc_iter: $proc_name, p_done = $p_done\n");
+        $g_logger->info("Process $count ($process) attempt $iter of $proc_iter: $proc_name, p_done = $p_done\n");
         if ($p_done) {
           last ITER;
         } else {
-          $recon->log_msg("Process step $count ($process) attempt $iter of $proc_iter did not complete");
+          $g_logger->info("Process step $count ($process) attempt $iter of $proc_iter did not complete");
           if ($iter == $proc_iter) {
-            $recon->log_msg("Exiting after attempt $iter of $proc_iter");
+            $g_logger->info("Exiting after attempt $iter of $proc_iter");
             exit(-1) unless ($bigdummy);
           }
         }
       }
     } else {
-      $recon->log_msg("ERROR: Prerequsites for $p_name process are missing!", 1);
+      $g_logger->info("ERROR: Prerequsites for $p_name process are missing!", 1);
       exit(1) unless ($bigdummy);
     }
   }
-  $recon->log_msg("------------------------------------------------------------");
+  $g_logger->info("------------------------------------------------------------");
 }
 $recon->print_study_summary() if ($do_rebin or $do_transmission or $do_attenuation or $do_scatter or $do_reconstruction or $do_postrecon);
 ;
@@ -313,6 +354,11 @@ sub usage_old {
   print "\nConfiguration options are read from this required file: $conf_file\n\n";
 
   exit(-1);
+}
+
+sub logfile_name {
+  my $log_dir = $subj_dir . '/recon_' . $g_recon_start;
+  return $log_dir . '/' . 'recon_' . $g_recon_start . '.log';
 }
 
 exit;
