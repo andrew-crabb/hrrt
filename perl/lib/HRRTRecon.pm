@@ -1718,7 +1718,9 @@ sub do_rebin {
   # Changed this 10/7/14 ahc
   # check_file_ok(K_TX_SUBJ) would fail when -f set, causing check for K_TX_LM
 #  unless ($this->check_file_ok($K_TX_SUBJ, '', $msg)) {
-  unless (-s $this->fileName($K_TX_SUBJ, {$K_USEDIR => $DIR_CYGWIN}) and not $this->{$O_FORCE}) {
+  my $tx_s_file = $this->fileName($K_TX_SUBJ, {$K_USEDIR => $DIR_CYGWIN});
+  unless ((-s $tx_s_file) and not $this->{$O_FORCE}) {
+    $this->{$_LOG}->info("Creating TX.s file $tx_s_file");
     my $tx_listmode_file = $this->fileName($K_TX_LM, {$K_USEDIR => $DIR_CYGWIN});
     unless (-s $tx_listmode_file) {
       $this->{$_LOG}->error("TX lm file $tx_listmode_file missing");
@@ -1886,9 +1888,9 @@ sub do_transmission {
   my $cmd = $this->program_name($PROG_E7_ATTEN);
   $cmd .= " --model 328";
   $cmd .= " --ucut";
-  $cmd .= " -b "   . $this->fileName($K_TX_BLANK);
+  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => $DIR_DOS});
   $cmd .= " -t "   . $this->fileName($K_TX_SUBJ);
-  $cmd .= " -q "   . $this->fileName($K_DIR_RECON);
+  $cmd .= " -q "   . $this->fileName($K_DIR_RECON, {$K_USEDIR => $DIR_DOS});
   $cmd .= " --ou $tx_outfile";
   $cmd .= " -w 128";
   $cmd .= " --force";
