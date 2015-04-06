@@ -2009,8 +2009,7 @@ sub do_scatter {
   
   $this->{$_LOG}->info('========== do_scatter begin ==========');
   my $nhdr      = $this->{$_HDRDET}->{$NFRAMES};
-  my $qc_path   = $this->fileName($K_DIR_RECON) . "/QC";
-  my $recon_dir = $this->fileName($K_DIR_RECON);
+  my $qc_path   = $this->fileName($K_DIR_RECON, {$K_USEDIR => $DIR_DOS}) . "/QC";
   unless (mkDir(convertDirName($qc_path)->{$DIR_CYGWIN})) {
     $this->{$_LOG}->error("Can't create dir: $qc_path");
   }
@@ -2055,7 +2054,7 @@ sub do_scatter {
       my $cmd               = $e7_sino_prog;
       $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
       $cmd .= " -e "   . $this->fileName($FRAME_TR_S_PREFIX, \%cf_args);
-      $cmd .= " -n "   . $this->fileName($normkey);
+      $cmd .= " -n "   . $this->fileName($normkey, {$K_USEDIR => $DIR_DOS});
       $cmd .= " --os " . $this->fileName($FRAME_SC_PREFIX  , \%cf_args);
       $cmd .= " --force";
       $cmd .= " --gf";
@@ -2257,7 +2256,7 @@ sub do_reconstruction {
       $cmd .= ' -d ' . $d_file;
       $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX, \%fn_args);
       $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}});
-      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}});
+      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
       $cmd .= ' -o ' . $this->fileName($K_FRAME_I      , {$K_FRAMENO => $i});
       $cmd .= ' -I ' . $niter;
       $cmd .= ' -S ' . $NUM_SUBSETS;
