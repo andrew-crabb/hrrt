@@ -1400,9 +1400,11 @@ sub fileName {
   }
 
   if ($isframe and $nframes > 1) {
-    $filename = "${filename}_frame${frameno}${suff}";
+    # This is where you would have 2-digit frame names 'frame04' etc.  But lmhistogram uses no padding 0's.
+#    $filename = sprintf("%s_frame%02d%s", $filename, $frameno, $suff);
+    $filename = sprintf("%s_frame%d%s", $filename, $frameno, $suff);
   } else {
-    $filename = "${filename}${suff}";
+    $filename = $filename. $suff;
   }
   # Only add full path if specified.
   if ($use_dir and ($size != $DIR_SIZE)) {
@@ -2314,7 +2316,7 @@ sub do_reconstruction {
 
 	# je_hrrt_osem3d without -K makes 'normfac.i' in current dir.  Silent errors if it already exists.  Horrible.
 	# Rename 'normfac.i' to 'normfac_128_frameN.i'
-	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i});
+	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i, $K_USEDIR => $this->{$_PATH_STYLE}});
 	my $recon_dir = $this->fileName($K_DIR_RECON);
 	my $normfac_src = "${recon_dir}/${NORMFAC_I}";
 	if ($this->{$O_DUMMY}) {
