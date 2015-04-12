@@ -2829,8 +2829,8 @@ sub do_motion {
   }
 
   # Rename resliced motion file to standard format.
-  my $reslice_file = $this->fileName($K_IMAGE_ATX_RSL);
-  my $std_image_file = $this->fileName($K_IMAGE_V);
+  my $reslice_file   = $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => $this->{$_PATH_STYLE}});
+  my $std_image_file = $this->fileName($K_IMAGE_V      , {$K_USEDIR => $this->{$_PATH_STYLE}});
   copy($reslice_file, $std_image_file) unless ($this->{$O_DUMMY});
   $this->{$_LOG}->info("do_motion: copy generated file $reslice_file to standard name $std_image_file");
   my %opts = (
