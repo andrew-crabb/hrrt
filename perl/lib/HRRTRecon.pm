@@ -1739,6 +1739,13 @@ sub do_rebin {
       $this->{$_LOG}->error('subject TX');
       return 1;
     }
+
+    # Transfer TX.s file while this recon is running.
+    my $dest_dir  = $this->fileName($K_DIR_DEST, {$K_USEDIR => $DIR_CYGWIN});
+    my $recon_dir = $this->fileName($K_DIR_RECON);
+    (my $destfile = $tx_s_file) =~ s/$recon_dir/$dest_dir/;
+    $this->rsync_file($tx_s_file, $destfile);
+
   }
 
   # Check all frames to see if done.
