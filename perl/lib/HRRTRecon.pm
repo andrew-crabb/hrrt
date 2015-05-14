@@ -476,6 +476,7 @@ our $_BIN_SUBDIR    = 'subdir_bin';
 our $_LOG_DIR       = 'dir_log';
 our $_LOG_FILE       = 'file_log';
 our $_LOG       = 'log';
+our $_PATH_STYLE    = 'path_style';
 our $_HOST          = 'host';
 our $_RECON_START    = 'recon_start_time';
 our $_DEBUG         = 'debug';
@@ -787,6 +788,7 @@ sub new {
   # print "(process_list, bindir) = (" . join(",", @$process_list) . ", $bindir)\n";
 
   my $platform = $config->{$CNF_SEC_PLAT}{$CNF_VAL_HOST};
+  my $on_unix = ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0;
   my $processes = create_processes($arg_ref, $process_list, \%procsumm, $arg_ref->{$O_VERBOSE});
   unless (ref($processes) eq 'HASH') {
     $logger->error("create_processes");
@@ -816,9 +818,9 @@ sub new {
   my %self = (
     'DEBUG'         => 0,
     $_ROOT          => $root_path,    # ~/DEV/hrrt, ~/BIN/hrrt
-    $_CNF	          => $config,		    # Read from config file.
+    $_CNF	    => $config,		    # Read from config file.
     $_RECON         => \%recon,		    #
-    $_FNAMES	      => \%fnames,		    #
+    $_FNAMES	    => \%fnames,		    #
     $_PROCESSES     => $processes, # Details of processes to run.
     $_PROCESS_LIST  => $process_list, # List of processes to run.
     $_PROCESS_SUMM  => \%procsumm,    # Process summary
@@ -826,10 +828,11 @@ sub new {
     $_USER_M_SW     => ($sw_group eq $SW_USER_M) ? 1 : 0,
     $_RECON_START   => $arg_ref->{$O_RECON_START},
     $_DBI_HANDLE    => undef,
-    $O_ONUNIX       => ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0,
+    $O_ONUNIX       => ($on_unix) ? 1 : 0,
     $_LOG_DIR       => '',		# recon/subject/recon_yymmdd_hhmmss
     $_LOG_FILE      => '', # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
     $_LOG           => $logger,
+    $_PATH_STYLE    => ($on_unix) ? $DIR_CYGWIN : $DIR_DOS,
       );
   # arg_ref is ptr to hash of extra arguments.
   %self = (%self, %$arg_ref);
@@ -1045,7 +1048,7 @@ sub check_process {
 	} else {
 	  # File not present.
 	  $this_file_ok = 0;
-	  my $filename = $this->fileName($key, {$K_FRAMENO => $frame, $K_USEDIR => $DIR_DOS});
+	  my $filename = $this->fileName($key, {$K_FRAMENO => $frame, $K_USEDIR => $this->{$_PATH_STYLE}});
 	  $errmsg = sprintf("%-15s: %s", $key, "$filename: Missing");
 	}
 	$this_key_ok *= $this_file_ok;
@@ -1397,9 +1400,11 @@ sub fileName {
   }
 
   if ($isframe and $nframes > 1) {
-    $filename = "${filename}_frame${frameno}${suff}";
+    # This is where you would have 2-digit frame names 'frame04' etc.  But lmhistogram uses no padding 0's.
+#    $filename = sprintf("%s_frame%02d%s", $filename, $frameno, $suff);
+    $filename = sprintf("%s_frame%d%s", $filename, $frameno, $suff);
   } else {
-    $filename = "${filename}${suff}";
+    $filename = $filename. $suff;
   }
   # Only add full path if specified.
   if ($use_dir and ($size != $DIR_SIZE)) {
@@ -1888,16 +1893,16 @@ sub do_transmission {
   # If not running tx_tv3dreg, generate TX.i/TX.i.hdr directly.
   # Otherwise, generate TX_tmp.i and tx_tv3dreg will create TX.i.
   my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
-  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => $DIR_DOS});
-  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => $DIR_DOS});
+  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => $this->{$_PATH_STYLE}});
+  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => $this->{$_PATH_STYLE}});
   my $tx_outfile    = ($run_txtv) ? $tx_i_tmp_file : $tx_i_file;
 
   my $cmd = $this->program_name($PROG_E7_ATTEN);
   $cmd .= " --model 328";
   $cmd .= " --ucut";
-  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => $DIR_DOS});
+  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => $this->{$_PATH_STYLE}});
   $cmd .= " -t "   . $this->fileName($K_TX_SUBJ);
-  $cmd .= " -q "   . $this->fileName($K_DIR_RECON, {$K_USEDIR => $DIR_DOS});
+  $cmd .= " -q "   . $this->fileName($K_DIR_RECON, {$K_USEDIR => $this->{$_PATH_STYLE}});
   $cmd .= " --ou $tx_outfile";
   $cmd .= " -w 128";
   $cmd .= " --force";
@@ -2016,7 +2021,7 @@ sub do_scatter {
   
   $this->{$_LOG}->info('========== do_scatter begin ==========');
   my $nhdr      = $this->{$_HDRDET}->{$NFRAMES};
-  my $qc_path   = $this->fileName($K_DIR_RECON, {$K_USEDIR => $DIR_DOS}) . "/QC";
+  my $qc_path   = $this->fileName($K_DIR_RECON, {$K_USEDIR => $this->{$_PATH_STYLE}}) . "/QC";
   unless (mkDir(convertDirName($qc_path)->{$DIR_CYGWIN})) {
     $this->{$_LOG}->error("Can't create dir: $qc_path");
   }
@@ -2041,7 +2046,7 @@ sub do_scatter {
     my %cf_args_d = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-      $K_USEDIR    => $DIR_DOS,
+      $K_USEDIR    => $this->{$_PATH_STYLE},
 	);
 
     my $msg = "Scatter processing - e7_sino - Frame $i";
@@ -2061,7 +2066,7 @@ sub do_scatter {
       my $cmd               = $e7_sino_prog;
       $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
       $cmd .= " -e "   . $this->fileName($FRAME_TR_S_PREFIX, \%cf_args);
-      $cmd .= " -n "   . $this->fileName($normkey, {$K_USEDIR => $DIR_DOS});
+      $cmd .= " -n "   . $this->fileName($normkey, {$K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " --os " . $this->fileName($FRAME_SC_PREFIX  , \%cf_args);
       $cmd .= " --force";
       $cmd .= " --gf";
@@ -2190,7 +2195,7 @@ sub do_sensitivity {
   my $ret = 0;
   my $cmd = $this->program_name($PROG_OSEM3D);
   $cmd .= " -t " . $this->fileName($FRAME_S_PREFIX, \%fn_args);
-  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => $DIR_DOS});
+  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => $this->{$_PATH_STYLE}});
   $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span});
   $cmd .= " -o $sensitivity_file";	    # Note: Not used.
   $cmd .= " -W $OSEM_SENS_WEIGHTING";	    # -W  weighting method
@@ -2263,7 +2268,7 @@ sub do_reconstruction {
       $cmd .= ' -d ' . $d_file;
       $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX, \%fn_args);
       $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}});
-      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
+      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= ' -o ' . $this->fileName($K_FRAME_I      , {$K_FRAMENO => $i});
       $cmd .= ' -I ' . $niter;
       $cmd .= ' -S ' . $NUM_SUBSETS;
@@ -2301,7 +2306,7 @@ sub do_reconstruction {
       unless ($this->check_file_ok($K_FRAME_128_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $prog_osem3d;
 	$cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
-	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
+	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
 	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i});
 	$cmd .= " -W 3";
 	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
@@ -2318,7 +2323,7 @@ sub do_reconstruction {
 
 	# je_hrrt_osem3d without -K makes 'normfac.i' in current dir.  Silent errors if it already exists.  Horrible.
 	# Rename 'normfac.i' to 'normfac_128_frameN.i'
-	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i});
+	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i, $K_USEDIR => $this->{$_PATH_STYLE}});
 	my $recon_dir = $this->fileName($K_DIR_RECON);
 	my $normfac_src = "${recon_dir}/${NORMFAC_I}";
 	if ($this->{$O_DUMMY}) {
@@ -2632,7 +2637,7 @@ sub do_motion_as_script {
       $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_FRAMENO => $i});
       $cmd .= " -u "   . $mu_reslice_file,
       $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
-      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
+      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " -w $MU_WIDTH";
       $cmd .= " -a " . $acf_output_file;
       $cmd .= " --force";
@@ -2672,7 +2677,7 @@ sub do_motion_as_script {
       $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_FRAMENO => $i});
       $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_FRAMENO => $i});
       $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_FRAMENO => $i});
-      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
+      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " -W 3";
       $cmd .= " -I $ITER_MOTION_CORR";
       $cmd .= " -S 16";
@@ -2800,7 +2805,7 @@ sub do_motion {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
     $cmd .= ' '    . $this->fileName($K_DYN);
-    $cmd .= ' -n ' . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $DIR_DOS});
+    $cmd .= ' -n ' . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
     $cmd .= ' -u ' . $this->fileName($K_TX_I); # Mu-map file
     $cmd .= ' -E ' . $this->fileName($K_IMAGE_128_V); # Uncorrected Ecat file
     #################### TEMP TAKEN OUT ####################
@@ -2831,8 +2836,8 @@ sub do_motion {
   }
 
   # Rename resliced motion file to standard format.
-  my $reslice_file = $this->fileName($K_IMAGE_ATX_RSL);
-  my $std_image_file = $this->fileName($K_IMAGE_V);
+  my $reslice_file   = $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => $this->{$_PATH_STYLE}});
+  my $std_image_file = $this->fileName($K_IMAGE_V      , {$K_USEDIR => $this->{$_PATH_STYLE}});
   copy($reslice_file, $std_image_file) unless ($this->{$O_DUMMY});
   $this->{$_LOG}->info("do_motion: copy generated file $reslice_file to standard name $std_image_file");
   my %opts = (
