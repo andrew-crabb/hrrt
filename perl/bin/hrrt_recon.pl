@@ -133,7 +133,8 @@ my $motion_str = ($usersw_m) ? ", Motion $do_motion" : "";
 $g_logger->info("Opts selected: Rebin $do_rebin, Transmission $do_transmission, Attenuation $do_attenuation, Scatter $do_scatter, Recon $do_reconstruction, Postrecon $do_postrecon${motion_str}");
 
 # Determine softwware group to use.
-if ($usersw or $usersw_m) {
+# if ($usersw or $usersw_m) {
+if ($usersw_m) {
   $span9 = $use64 = $usesubdir = 1;
   $g_logger->info("* Using User software.                 *");
   $g_logger->info("* Setting Span-9, 64-bit, and Subdir.  *");

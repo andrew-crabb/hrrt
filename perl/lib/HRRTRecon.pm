@@ -690,7 +690,9 @@ our @prer_sca_3   = ($K_NORM_3, $K_FRAME_CH, $K_TX_A_3); # Should require TR_S?
 our @prer_sca_3_u = ($K_NORM_9, $K_FRAME_CH, $K_TX_A_3, $K_TX_A_9);
 our @prer_sca_9   = ($K_NORM_9, $K_FRAME_CH, $K_TX_A_9);
 our @prer_rec_3   = ($K_NORM_3, $K_FRAME_SC_3, $K_TX_A_3, $K_FRAME_RA_SMO_3);
-our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_9, $K_TX_A_3, $K_FRAME_RA_SMO_3);
+# ahc 5/19/15 trying user sw span 3.
+# our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_9, $K_TX_A_3, $K_FRAME_RA_SMO_3);
+our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_3, $K_TX_A_3, $K_FRAME_RA_SMO_3);
 our @prer_rec_9_m = ($K_NORM_9, $K_FRAME_SC_9, $K_TX_A_9);
 our @prer_rec_9   = ($K_NORM_9, $K_FRAME_SC_9, $K_TX_A_9, $K_FRAME_RA_SMO_9);
 our @prer_mot_9_m = ($K_IMAGE_NORESL_V, $K_TX_I_HDR);
@@ -700,14 +702,18 @@ our @prer_pos     = ($K_IMAGE_V);
 # 12/8/09 ahc I took out from post_reb frame_ra_s and frame_ra_shd as not used.
 # User s/w rebin span 3 produces span 9 EM.tr.s file for use in e7_sino.
 our @post_reb_3   = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_3, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
-our @post_reb_3_u = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
+# ahc 5/19/15 trying user sw span 3.
+# our @post_reb_3_u = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
+our @post_reb_3_u   = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_3, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
 our @post_reb_9   = ($K_FRAME_S_9, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
 our @post_trx     = ($K_TX_I);
 our @post_atn_3   = ($K_TX_A_3);
 our @post_atn_3_u = ($K_TX_A_3, $K_TX_A_9);
 our @post_atn_9   = ($K_TX_A_9);
 our @post_sca_3   = ($K_FRAME_SC_3, $K_FRAME_RA_SMO_3);
-our @post_sca_3_u = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_3);
+# ahc 5/19/15 trying user sw span 3.
+# our @post_sca_3_u = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_3);
+our @post_sca_3_u = ($K_FRAME_SC_3, $K_FRAME_RA_SMO_3);
 our @post_sca_9   = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_9);
 our @post_sca_9_m = ($K_FRAME_SC_9);
 our @post_rec     = ($K_FRAME_I);
@@ -1892,7 +1898,9 @@ sub do_transmission {
 
   # If not running tx_tv3dreg, generate TX.i/TX.i.hdr directly.
   # Otherwise, generate TX_tmp.i and tx_tv3dreg will create TX.i.
-  my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
+  # ahc 5/19/15 separate U from M
+  my $run_txtv      = ($this->{$_USER_M_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
+#   my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
   my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => $this->{$_PATH_STYLE}});
   my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => $this->{$_PATH_STYLE}});
   my $tx_outfile    = ($run_txtv) ? $tx_i_tmp_file : $tx_i_file;
@@ -1994,7 +2002,9 @@ sub check_attenuation_done {
   # Span 3 in User S/W requires extra span 9 atten file.
   my $curr_span      = $this->{$O_SPAN};
   my @spans_to_check = ($curr_span);
-  push(@spans_to_check, $SPAN9) if ($this->{$_USER_SW} and ($curr_span == $SPAN3));
+  # ahc 5/19/15
+#  push(@spans_to_check, $SPAN9) if ($this->{$_USER_SW} and ($curr_span == $SPAN3));
+  push(@spans_to_check, $SPAN9) if ($this->{$_USER_M_SW} and ($curr_span == $SPAN3));
 
   my @spans_to_make = ();
   foreach my $span_to_check (@spans_to_check) {
@@ -2053,7 +2063,9 @@ sub do_scatter {
     unless ($this->check_file_ok($FRAME_SC_PREFIX, \%cf_args_d, $msg)) {
       # User software in span 3 needs: span-9 tr.s file, span-9 tx.a file.
       my ($span_to_use, $normkey);
-      if ($this->{$_USER_SW}) {
+#      if ($this->{$_USER_SW}) {
+      # ahc 5/19/15.  Only use span-9 for motion (and really this should come from the SPAN option)
+      if ($this->{$_USER_M_SW}) {
 	$span_to_use = $SPAN9;
 	$normkey = $K_NORM_9;
       } else {
@@ -2080,7 +2092,9 @@ sub do_scatter {
       # ahc 2/6/13 made this a required argument
       # ahc 2/13/13/ I think I put this in by mistake.
       # $cmd .= " -r $rebinner_lut_file";
-      if ($this->{$_USER_SW}) {
+      # ahc 5/19/15
+#      if ($this->{$_USER_SW}) {
+      if ($this->{$_USER_M_SW}) {
 	$cmd .= " -u " . $this->fileName($K_TX_I);
 	$cmd .= " -w 128";
 	$cmd .= " --os2d";
@@ -2114,6 +2128,10 @@ sub do_scatter {
 	$cmd .= " -O " . $this->fileName($FRAME_RA_SMO_PREFIX, \%cf_args);
 	$cmd .= " -t $frametime";
 	$cmd .= " -s $this->{$O_SPAN},67";
+
+	# ahc 5/19/15
+	my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+	$cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_SW});
 	
 	$this->runit($cmd, "do_delays($i)");
 	$this->{$_LOG}->info("do_delays($i) completed");
