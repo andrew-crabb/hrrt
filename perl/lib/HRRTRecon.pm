@@ -10,26 +10,30 @@ package HRRTRecon;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw($O_DO_LOG $O_LOGFILE $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USESUBDIR  $O_USE64 $O_MULTILINE $O_BIGDUMMY $O_NOHOST $O_CRYSTAL);
+our @EXPORT = qw($O_DO_VHIST $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USESUBDIR  $O_USE64 $O_MULTILINE $O_BIGDUMMY $O_NOHOST $O_CRYSTAL);
 @EXPORT = (@EXPORT, qw($_PROCESSES $_PROCESS_SUMM %SUBROUTINES));
 @EXPORT = (@EXPORT, qw($PROC_NAME $PROC_PREREQ $PROC_POSTREQ $PROC_PREOK $PROC_POSTOK $PROC_INIT));
 @EXPORT = (@EXPORT, qw($FPATH $EPATH));
 # Reconstruction software
-@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL));
+@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL $O_LOG_CAT));
 
 @EXPORT = (@EXPORT, qw($CALIB_DATE $CALIB_RATIO $CALIB_FACT));
 
-use Config::Std;
-use Cwd;
-use Cwd qw(abs_path);
-use File::Basename;
-use File::Spec;
-use File::Spec::Unix;
-use File::Copy;
-use Getopt::Std;
+use autodie;
 use Carp;
-use Sys::Hostname;
+use Config::Std;
+use Cwd qw(abs_path);
+use Cwd;
+use Data::Dumper;
+use File::Basename;
+use File::Copy;
+use File::Path qw(make_path remove_tree);
+use File::Spec::Unix;
+use File::Spec;
 use FindBin;
+use Getopt::Std;
+use Log::Log4perl;
+use Sys::Hostname;
 
 use lib $FindBin::Bin;
 use lib abs_path("$FindBin::Bin/../../../perl/lib");
@@ -38,6 +42,7 @@ use Utility;
 use Utilities_new;
 use HRRTUtilities;
 use HRRT_Utilities;
+use HRRT_Config;
 use MySQL;
 use VHIST;
 
@@ -47,34 +52,6 @@ no strict 'refs';
 # Constant Definitions.
 # ================================================================================
 
-# ------------------------------------------------------------
-# Config file constants
-# ------------------------------------------------------------
-
-# Binaries section
-our $CNF_SEC_BIN = 'BIN';
-our $CNF_VAL_BIN = 'bin';
-our $CNF_VAL_LIB = 'lib';
-our $CNF_VAL_ETC = 'etc';
-# our $CNF_VAL_LOG = 'log';
-
-# Data section
-our $CNF_SEC_DATA   = 'DATA';
-our $CNF_VAL_SOURCE = 'source';
-our $CNF_VAL_RECON  = 'recon';
-our $CNF_VAL_NORM   = 'norm';
-our $CNF_VAL_BLANK   = 'blank';
-our $CNF_VAL_CALIB  = 'calib';
-
-# Platform section
-our $CNF_SEC_PLAT = 'PLAT';
-our $CNF_VAL_HOST = 'host';
-
-# External programs section
-our $CNF_SEC_PROGS   = 'PROGS';
-our $CNF_VAL_GNUPLOT = 'gnuplot';
-our $CNF_VAL_LMHDR   = 'lmhdr';
-our $CNF_VAL_E7EMHDR = 'e7emhdr';
 
 # ------------------------------------------------------------
 # String Constants.
@@ -84,8 +61,7 @@ our $CNF_VAL_E7EMHDR = 'e7emhdr';
 our $O_VERBOSE   = 'opt_verbose';
 our $O_DUMMY     = 'opt_dummy';
 our $O_FORCE     = 'opt_force';
-our $O_DO_LOG    = 'opt_do_log';
-our $O_LOGFILE   = 'opt_logfile';
+our $O_DO_VHIST    = 'opt_do_vhist';
 our $O_ERGRATIO  = 'opt_ergratio';
 our $O_DBRECORD  = 'opt_dbrecord';
 our $O_NOTIMETAG = 'opt_notimetag';
@@ -104,6 +80,7 @@ our $O_RECON_START = 'opt_recon_start';	# Externally-supplied start time to iden
 our $O_DO_QC        = 'opt_do_qc';
 our $O_CONF_FILE  = 'opt_conf_file';
 our $O_WIDE_KERNEL = 'opt_wide_kernel'; # Use 5 mm wide kernel in if2e7
+our $O_LOG_CAT     = 'opt_log_cat'; # Log level for log4perl
 # String constants: Software to use.
 our $SW_CPS      = "sw_cps";    # CPS software
 our $SW_USER     = "sw_user";   # User software 2010
@@ -251,8 +228,7 @@ my $QCDAILY      = "QC_Daily";
 
 # Remote systems.
 my $HEADNODE     = "headnode";
-my $SYS_HAL      = "ahc\@wonglab.rad.jhmi.edu:/data/dicom/incoming";
-my $SYS_RECON    = "ahc\@hrrt-recon.rad.jhmi.edu:/human/";
+my $SYS_WONGLAB  = "ahc\@wonglab.rad.jhmi.edu:/data/dicom/incoming";
 
 my $PROG_LMHISTOGRAM     = "lmhistogram";
 my $PROG_E7_ATTEN        = "e7_atten";
@@ -377,6 +353,10 @@ my $ERGRATIO0    = "crystalLayerBackgroundErgRatio[0]=";
 my $ERGRATIO1    = "crystalLayerBackgroundErgRatio[1]=";
 my $REBINNER_LUT_FILE = "hrrt_rebinner.lut";
 
+# Needed in hrrt_recon.pl
+our $LOG4PERL_FILE_CNF   = 'hrrt_log4perl_tofile.conf';
+our $LOG4PERL_SCREEN_CNF = 'hrrt_log4perl_toscreen.conf';
+
 # String constants: Attenuation parameters.
 my $ATTEN_PARAM_STD        = "4,0.000,0.005,0.030,10.00,0.096,0.02,0.110,10.,0.03,0.07,0.100";
 my $ATTEN_PARAM_PHANT_ANTH = "4,0.000,0.005,0.030,10.00,0.096,0.02,0.110,10.,0.03,0.07,0.105";
@@ -495,6 +475,8 @@ our $_BIN_DIR       = 'dir_bin';
 our $_BIN_SUBDIR    = 'subdir_bin';
 our $_LOG_DIR       = 'dir_log';
 our $_LOG_FILE       = 'file_log';
+our $_LOG       = 'log';
+our $_PATH_STYLE    = 'path_style';
 our $_HOST          = 'host';
 our $_RECON_START    = 'recon_start_time';
 our $_DEBUG         = 'debug';
@@ -708,7 +690,9 @@ our @prer_sca_3   = ($K_NORM_3, $K_FRAME_CH, $K_TX_A_3); # Should require TR_S?
 our @prer_sca_3_u = ($K_NORM_9, $K_FRAME_CH, $K_TX_A_3, $K_TX_A_9);
 our @prer_sca_9   = ($K_NORM_9, $K_FRAME_CH, $K_TX_A_9);
 our @prer_rec_3   = ($K_NORM_3, $K_FRAME_SC_3, $K_TX_A_3, $K_FRAME_RA_SMO_3);
-our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_9, $K_TX_A_3, $K_FRAME_RA_SMO_3);
+# ahc 5/19/15 trying user sw span 3.
+# our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_9, $K_TX_A_3, $K_FRAME_RA_SMO_3);
+our @prer_rec_3_u = ($K_NORM_3, $K_FRAME_SC_3, $K_TX_A_3, $K_FRAME_RA_SMO_3);
 our @prer_rec_9_m = ($K_NORM_9, $K_FRAME_SC_9, $K_TX_A_9);
 our @prer_rec_9   = ($K_NORM_9, $K_FRAME_SC_9, $K_TX_A_9, $K_FRAME_RA_SMO_9);
 our @prer_mot_9_m = ($K_IMAGE_NORESL_V, $K_TX_I_HDR);
@@ -718,14 +702,18 @@ our @prer_pos     = ($K_IMAGE_V);
 # 12/8/09 ahc I took out from post_reb frame_ra_s and frame_ra_shd as not used.
 # User s/w rebin span 3 produces span 9 EM.tr.s file for use in e7_sino.
 our @post_reb_3   = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_3, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
-our @post_reb_3_u = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
+# ahc 5/19/15 trying user sw span 3.
+# our @post_reb_3_u = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
+our @post_reb_3_u   = ($K_FRAME_S_3, $K_FRAME_SHD, $K_FRAME_TR_S_3, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
 our @post_reb_9   = ($K_FRAME_S_9, $K_FRAME_SHD, $K_FRAME_TR_S_9, $K_FRAME_TR_SHD, $K_FRAME_LM_HC, $K_FRAME_CH, $K_TX_SUBJ);
 our @post_trx     = ($K_TX_I);
 our @post_atn_3   = ($K_TX_A_3);
 our @post_atn_3_u = ($K_TX_A_3, $K_TX_A_9);
 our @post_atn_9   = ($K_TX_A_9);
 our @post_sca_3   = ($K_FRAME_SC_3, $K_FRAME_RA_SMO_3);
-our @post_sca_3_u = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_3);
+# ahc 5/19/15 trying user sw span 3.
+# our @post_sca_3_u = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_3);
+our @post_sca_3_u = ($K_FRAME_SC_3, $K_FRAME_RA_SMO_3);
 our @post_sca_9   = ($K_FRAME_SC_9, $K_FRAME_RA_SMO_9);
 our @post_sca_9_m = ($K_FRAME_SC_9);
 our @post_rec     = ($K_FRAME_I);
@@ -789,6 +777,8 @@ sub new {
   my $class = ref($that) || $that;
   my $sw_group = $arg_ref->{$O_SW_GROUP};
 
+  print "XXX HRRTRecon log level $arg_ref->{$O_LOG_CAT}\n";
+  my $logger = Log::Log4perl->get_logger($arg_ref->{$O_LOG_CAT});
   # Base (~/DEV/hrrt, ~/BIN/hrrt) comes from $0 (~/DEV/hrrt/perl/bin/foo.pl)
   my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
   $root_path = abs_path("${root_path}/../../") . '/';
@@ -796,7 +786,7 @@ sub new {
   my $conf_file = $arg_ref->{$O_CONF_FILE};
   my $config = read_conf($conf_file);
   check_conf($config);
-  print_conf($config, $conf_file);
+  log_hash($config, "Conf file $conf_file", $logger);
 
   # Process list and bin directory depend on software group.
   my $process_details = $process_details{$sw_group};
@@ -804,15 +794,12 @@ sub new {
   # print "(process_list, bindir) = (" . join(",", @$process_list) . ", $bindir)\n";
 
   my $platform = $config->{$CNF_SEC_PLAT}{$CNF_VAL_HOST};
+  my $on_unix = ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0;
   my $processes = create_processes($arg_ref, $process_list, \%procsumm, $arg_ref->{$O_VERBOSE});
   unless (ref($processes) eq 'HASH') {
-    print "Error in create_processes\n";
+    $logger->error("create_processes");
     return 1;
   }
-
-  # Time of initialization will be used as a primary identifier.
-  # Local time is used unless an external time was specified.
-  my $recon_start_time_str = ($arg_ref->{$O_RECON_START} or (timeNow())[1]);
 
   # Will be filled in with name stems.
   my %fnames = (
@@ -837,19 +824,21 @@ sub new {
   my %self = (
     'DEBUG'         => 0,
     $_ROOT          => $root_path,    # ~/DEV/hrrt, ~/BIN/hrrt
-    $_CNF	          => $config,		    # Read from config file.
+    $_CNF	    => $config,		    # Read from config file.
     $_RECON         => \%recon,		    #
-    $_FNAMES	      => \%fnames,		    #
+    $_FNAMES	    => \%fnames,		    #
     $_PROCESSES     => $processes, # Details of processes to run.
     $_PROCESS_LIST  => $process_list, # List of processes to run.
     $_PROCESS_SUMM  => \%procsumm,    # Process summary
     $_USER_SW       => ($sw_group =~ /$SW_USER|$SW_USER_M/) ? 1 : 0,
     $_USER_M_SW     => ($sw_group eq $SW_USER_M) ? 1 : 0,
-    $_RECON_START   => $recon_start_time_str,
+    $_RECON_START   => $arg_ref->{$O_RECON_START},
     $_DBI_HANDLE    => undef,
-    $O_ONUNIX       => ($platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/) ? 1 : 0,
+    $O_ONUNIX       => ($on_unix) ? 1 : 0,
     $_LOG_DIR       => '',		# recon/subject/recon_yymmdd_hhmmss
     $_LOG_FILE      => '', # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
+    $_LOG           => $logger,
+    $_PATH_STYLE    => ($on_unix) ? $DIR_CYGWIN : $DIR_DOS,
       );
   # arg_ref is ptr to hash of extra arguments.
   %self = (%self, %$arg_ref);
@@ -857,9 +846,8 @@ sub new {
   bless($this, $class);
 
   # Initialization actions.
-  $this->safe_unlink($this->{$O_LOGFILE}) if (hasLen($this->{$O_LOGFILE}));
-  printHash($arg_ref, "HRRT Reconstruction Options") if ($this->{$O_VERBOSE});
-  printHash($this, "HRRTRecon::new") if ($this->{$O_VERBOSE});
+  log_hash($arg_ref, "HRRT Reconstruction Options", $this->{$_LOG}) if ($this->{$O_VERBOSE});
+  log_hash($this, "HRRTRecon::new", $this->{$_LOG}) if ($this->{$O_VERBOSE});
 
   return($this);
 }
@@ -889,14 +877,15 @@ sub conf_file {
 sub test_prereq {
   my ($this) = @_;
 
-  my $template_file  = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
-  my $rebin_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-  # my $gnuplot_file   = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT};
-  my $gnuplot_file = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
+  our $template_file  = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_GM328}";
+  our $rebin_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
-  (-s $template_file)  or return $this->log_msg("No GM328 template file '$template_file'", 1);
-  (-s $rebin_lut_file) or return $this->log_msg("No rebin_lut file '$rebin_lut_file'"    , 1);
-  #	(-s $gnuplot_file)   or return $this->log_msg("No gnuplot file '$gnuplot_file'"        , 1);
+  foreach my $file_name (qw{template_file rebin_lut_file}) {
+    unless (-s $$file_name) {
+      $this->{$_LOG}->error("No file $file_name");
+      return 1;
+    }
+  }
   return 0;
 }
 
@@ -908,6 +897,7 @@ sub create_processes {
   my $spanno   = $arg_ref->{$O_SPAN};
   my $sw_group = $arg_ref->{$O_SW_GROUP};
   my ($prestr, $poststr) = (undef, undef);
+  my $logger = Log::Log4perl->get_logger($arg_ref->{$O_LOG_CAT});
 
   my %processes = ();
   foreach my $process (@process_list) {
@@ -933,19 +923,19 @@ sub create_processes {
 	$prer = $prename;
 	@prer = @$prer;
 	$prestr = join(" ", @prer);
-	print "HRRTRecon::new(): $processname prereq ($prer) = $prestr\n" if ($verbose);
+	$logger->info("HRRTRecon::new(): $processname prereq ($prer) = $prestr") if ($verbose);
       }
       my $postname = "post_${name_to_test}";
       if (!$postr and @${postname}) {
 	$postr = $postname;
 	@postr = @$postr;
 	$poststr = join(" ", @postr);
-	print "HRRTRecon::new(): $processname postreq ($postr) = $poststr\n" if ($verbose);
+	$logger->info("HRRTRecon::new(): $processname postreq ($postr) = $poststr") if ($verbose);
       }
     }
 
     unless (defined($prer) and defined($postr)) {
-      print "HRRTRecon::create_processes(): undefined pre/postreq for process $process ($processname)\n";
+      $logger->error("HRRTRecon::create_processes(): undefined pre/postreq for process $process ($processname)");
       return 1;
     }
 
@@ -958,7 +948,7 @@ sub create_processes {
       $PROC_INIT    => $processinit,
 	);
     $processes{$process} = \%popt;
-    printHash(\%popt, "HRRTRecon::new: processes{$process}") if ($verbose);
+    log_hash(\%popt, "HRRTRecon::new: processes{$process}", $logger) if ($verbose);
   }
   return \%processes;
 }
@@ -971,30 +961,36 @@ sub analyze_recon_dir {
   my ($this, $indir) = @_;
 
   (my $fulldir = File::Spec->rel2abs($indir)) =~ s/\/$//;
-  (-d $fulldir) or return $this->log_msg("Dir '$fulldir' does not exist\n");
-  ($this->fill_in_names($fulldir)) and return $this->log_msg("Error: fill_in_names($fulldir)");
+  unless (-d $fulldir) {
+    $this->{$_LOG}->error("Dir '$fulldir' does not exist");
+    return 1;
+  }
+  if ($this->fill_in_names($fulldir)) {
+    $this->{$_LOG}->error("fill_in_names($fulldir)");
+    return 1;
+  }
 
-  my $lm_file    = ($this->fileName($K_LISTMODE))[1]->{$DIR_CYGWIN_NEW};
-  my $lm_hdrfile = ($this->fileName($K_LIST_HDR))[1]->{$DIR_CYGWIN_NEW};
+  my $lm_file    = $this->fileName($K_LISTMODE, {$K_USEDIR => $DIR_CYGWIN});
+  my $lm_hdrfile = $this->fileName($K_LIST_HDR, {$K_USEDIR => $DIR_CYGWIN});
   my $dirstr = "HRRTRecon::analyze_recon_dir($indir)";
   unless ((-f $lm_file) && (-s $lm_file > $MILL)) {
-    print "ERROR: $dirstr: lm_file: (-f '$lm_file') && (-s $lm_file > $MILL)\n";
+    $this->{$_LOG}->error("$dirstr: lm_file: (-f '$lm_file') && (-s $lm_file > $MILL)");
     return 1;
   }
 
   unless ($this->{$_LMDET}  = hrrt_filename_det($lm_file, $this->{$O_VERBOSE})) {
-    print "ERROR: $dirstr: fails test: analyzeHRRTfile($lm_file)\n";
+    $this->{$_LOG}->error("$dirstr: fails test: analyzeHRRTfile($lm_file)");
     return 1;
   }
   unless ($this->{$_HDRDET} = analyzeHRRTheader($lm_hdrfile, $this->{$O_VERBOSE})) {
-    print "ERROR: $dirstr: fails test: analyzeHRRTheader($lm_hdrfile)\n";
+    $this->{$_LOG}->error("$dirstr: fails test: analyzeHRRTheader($lm_hdrfile)");
     return 1;
   }
 
   # Special case: s/w type U (Motion) omits Motion step on static studies.
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   if ($this->{$_USER_M_SW} and ($nframes == 1)) {
-    print "*** NOTE *** Omitting Motion step for s/w type U due to static framing\n";
+    $this->{$_LOG}->info("*** NOTE *** Omitting Motion step for s/w type U due to static framing");
     $this->{$_PROCESS_LIST} = \@processes_cu;
   }
 
@@ -1043,7 +1039,7 @@ sub check_process {
     my $nframes = $this->{$_HDRDET}->{$NFRAMES};
 
     if ($verbose and ($verbose == 2)) {
-      $this->log_msg("check_process($processname) (key $keyname, is $isframe, suff $suff, desired size $size, nframes $nframes) = this->{$_RECON}->{$key}}\n");
+      $this->{$_LOG}->info("check_process($processname) (key $keyname, is $isframe, suff $suff, desired size $size, nframes $nframes) = this->{$_RECON}->{$key}}\n");
     }
 
     # Special case.  Frames = 1 => lmhistogram (at least) does not use frame no.
@@ -1058,7 +1054,7 @@ sub check_process {
 	} else {
 	  # File not present.
 	  $this_file_ok = 0;
-	  my $filename = ($this->fileName($key, {$K_FRAMENO => $frame}))[1]->{$DIR_CYGWIN_NEW};
+	  my $filename = $this->fileName($key, {$K_FRAMENO => $frame, $K_USEDIR => $this->{$_PATH_STYLE}});
 	  $errmsg = sprintf("%-15s: %s", $key, "$filename: Missing");
 	}
 	$this_key_ok *= $this_file_ok;
@@ -1073,7 +1069,7 @@ sub check_process {
 	}
       } else {
 	$this_file_ok = 0;
-	my $filename = ($this->fileName($key))[1]->{$DIR_CYGWIN_NEW};
+	my $filename = $this->fileName($key, {$K_USEDIR => $DIR_CYGWIN});
 	$errmsg = sprintf("%-15s: %s", $key, "$filename: Missing");
       }
       $this_key_ok *= $this_file_ok;
@@ -1088,15 +1084,13 @@ sub check_process {
     }
   }
 
-  if ($verbose) {
-    $this->log_msg("============================================================\n");
-    $this->log_msg("check_process($processname) returning $ret\n") ;
-    $this->log_msg("$lretstr\n") unless ($ret);
-    foreach my $errline (@errlines) {
-      $this->log_msg($errline) if (hasLen($errline));
-    }
-    $this->log_msg("============================================================\n");
+  $this->{$_LOG}->debug("============================================================\n");
+  $this->{$_LOG}->debug("check_process($processname) returning $ret\n") ;
+  $this->{$_LOG}->debug("$lretstr\n") unless ($ret);
+  foreach my $errline (@errlines) {
+    $this->{$_LOG}->debug($errline) if (hasLen($errline));
   }
+  $this->{$_LOG}->debug("============================================================\n");
   return wantarray() ? ($ret, $sretstr) : $ret;
 }
 
@@ -1108,12 +1102,12 @@ sub check_file_ok {
   $msg = '' unless (hasLen($msg));
   my $is_ok = 0;
   my $fstat = $this->check_file($stem, $params);
-  printHash($fstat, "XXX $stem $F_OK");
+  log_hash($fstat, "XXX $stem $F_OK", $this->{$_LOG});
   if ($fstat and $fstat->{$F_OK} and not $this->{$O_FORCE}) {
-    $this->log_msg("$msg - Skipping - already done (-f to force)");
+    $this->{$_LOG}->info("$msg - Skipping - already done (-f to force)");
     $is_ok = 1;
   } else {
-    $this->log_msg("$msg");
+    # $this->{$_LOG}->info("'$stem': $msg");
   }
 
   return $is_ok;
@@ -1124,24 +1118,29 @@ sub check_file_ok {
 
 sub fill_in_names {
   my ($this, $indir) = @_;
-
-  ((-d $indir) and (-W $indir)) or return $this->log_msg("'$indir' does not exist", 1);
+  unless ((-d $indir) and (-W $indir)) {
+    $this->{$_LOG}->error("'$indir' does not exist");
+    return 1;
+  }
 
   my @infiles = dirContents($indir);
   my @bits = split(/\//, $indir);
 
   # Log-related files.
   # Windows programs require log file to be in Windows path format.
-  my $local_dir = convertDirName($indir)->{($this->{$O_ONUNIX}) ? $DIR_CYGWIN_NEW : $DIR_DOS};
+  my $local_dir = convertDirName($indir)->{($this->{$O_ONUNIX}) ? $DIR_CYGWIN : $DIR_DOS};
 
   $this->{$_LOG_DIR} = "${local_dir}/recon_" . $this->{$_RECON_START};
   $this->{$_LOG_FILE} = $this->{$_LOG_DIR} . '/recon_' . $this->{$_RECON_START} . '.log';
-  # $this->log_msg("this->{$_LOG_DIR}  = " . $this->{$_LOG_DIR});
-  # $this->log_msg("this->{$_LOG_FILE} = " . $this->{$_LOG_FILE});
+  # $this->{$_LOG}->info("this->{$_LOG_DIR}  = " . $this->{$_LOG_DIR});
+  # $this->{$_LOG}->info("this->{$_LOG_FILE} = " . $this->{$_LOG_FILE});
 
   # Emission-related files.
   my @em_files = grep(/_EM.l64$/, @infiles);
-  (scalar(@em_files) == 1) or return $this->log_msg("'$indir': No EM file", 1);
+  unless (scalar(@em_files) == 1) {
+    $this->{$_LOG}->error("'$indir': No EM file");
+    return;
+  }
   my $em_file = $em_files[0];
   (my $em_stem = $em_file) =~ s/\.l64$//;
 
@@ -1161,7 +1160,8 @@ sub fill_in_names {
   my ($nblank, $ntxsino, $ntxlm) = (scalar(@blank_files), scalar(@txsino_files), scalar(@tx_lm_files));
 #    unless (($nblank == 1) and (($ntxsino == 1) or ($ntxlm == 1))) {
   unless (($ntxsino == 1) or ($ntxlm == 1)) {
-    return ($this->log_msg("ERROR: nblank = $nblank, ntxsino = $ntxsino (not 1)\n"));
+    $this->{$_LOG}->error("nblank = $nblank, ntxsino = $ntxsino (not 1)");
+    return 1;
   }
   my $tx_stem = undef;
   if ($ntxsino) {
@@ -1191,7 +1191,7 @@ sub fill_in_names {
   if ($indir =~ /_TX_(\d{6})/) {
     $this->{$_TX_TIME} = $1;
     $this->{$_USE_TX_TIME} = 1;
-    print "XXX tx_time $this->{$_TX_TIME}\n";
+    $this->{$_LOG}->info("tx_time $this->{$_TX_TIME}");
   }
 
   # ------------------------------------------------------------
@@ -1216,7 +1216,7 @@ sub fill_in_names {
   $this->{$_FNAMES}->{$_UMAPQ_}    = "umap_qc";
 
   # foreach my $key (sort keys %{$this->{$_FNAMES}}) {
-  #   $this->log_msg(sprintf("%-22s = %s", "FNAMES{$key}", $this->{$_FNAMES}->{$key}));
+  #   $this->{$_LOG}->info(sprintf("%-22s = %s", "FNAMES{$key}", $this->{$_FNAMES}->{$key}));
   # }
   return 0;
 }
@@ -1231,9 +1231,21 @@ sub find_blank_file {
   if (scalar(@blankfiles) == 1) {
     ($blankfile = $blankfiles[0]) =~ s/\.s$//;
   } else {
-    $this->log_msg("find_blank_file(): Not 1 file matching $blankdate in $blankdir", 1);
+    $this->{$_LOG}->error("Not 1 file matching $blankdate in $blankdir");
+    return;
   }
   return $blankfile;
+}
+
+# Initialize Perl log module
+
+sub test_logging {
+  my ($this) = @_;
+
+  my $log = Log::Log4perl->get_logger($this->{$O_LOG_CAT});
+  $log->debug("Test of logging message level DEBUG");
+  $log->info("Test of logging message level INFO");
+  $log->error("Test of logging message level ERROR");
 }
 
 # Initializes DB connection and VHIST file, and inserts DB record.
@@ -1250,16 +1262,15 @@ sub initialize_log_file {
     if (my $dbh = DBI->connect($dsn, "ahc")) {
       $this->{$_DBI_HANDLE} = $dbh;
     } else {
-      $this->log_msg("HRRTRecon::intialize_log_file(): Cannot make dbh connection");
+      $this->{$_LOG}->info("HRRTRecon::intialize_log_file(): Cannot make dbh connection");
     }
+    # Insert DB record if required.
+    $this->insert_recon_record();
   }
 
-  # Insert DB record if required.
-  $this->insert_recon_record();
-
   # Initialize VHIST file if specified.
-  if ($this->{$O_DO_LOG}) {
-    my $vhist_dir = $this->fileName($K_DIR_RECON);
+  if ($this->{$O_DO_VHIST}) {
+    my $vhist_dir = $this->fileName($K_DIR_RECON, {$K_USEDIR => $DIR_CYGWIN});
     my %vhist_opts = (
       $VHIST::VERBOSE    => 1,
       $VHIST_DIR         => $vhist_dir,
@@ -1270,8 +1281,8 @@ sub initialize_log_file {
     }
     unless (hasLen($this->{$_VHIST})) {
       # Nonfatal error: Print error message, turn off logging.
-      $this->log_msg("ERROR: Could not create VHIST file");
-      ($this->{$O_DO_LOG}) = 0;
+      $this->{$_LOG}->info("ERROR: Could not create VHIST file");
+      ($this->{$O_DO_VHIST}) = 0;
     }
   }
 }
@@ -1299,19 +1310,19 @@ sub check_file {
 
   my $ptr = $this->{$_RECON}->{$keyname};
   unless (ref($ptr)) {
-    print "ERROR: HRRTRecon::check_file(keyname $keyname): Null pointer!\n";
+    $this->{$_LOG}->error("check_file(keyname $keyname): Null pointer!");
     exit(1);
   }
   my ($stemkey, $isframe, $suff, $size) = @$ptr;
 
-  my $filename = ($this->fileName($keyname, {$K_FRAMENO => $frameno}))[1]->{$DIR_CYGWIN_NEW};
+  my $filename = $this->fileName($keyname, {$K_FRAMENO => $frameno, $K_USEDIR => $DIR_CYGWIN});
   if ($use_subdir) {
     my @bits = split(/\//, $filename);
     my $nbits = scalar(@bits);
     my $newname = join("/", @bits[0..($nbits - 2)]);
     $newname .= "/span$this->{$O_SPAN}/";
     $newname .= $bits[$nbits - 1];
-    print "*** check_file(): $filename = $newname\n";
+    $this->{$_LOG}->info("*** check_file(): $filename = $newname");
     $filename = $newname;
   }
 
@@ -1335,7 +1346,7 @@ sub check_file {
     }
   }
   $fstat->{$F_OK} = $file_ok;
-  printHash($fstat, "check_file($filename)") if ($this->{$O_VERBOSE} == 2);
+  log_hash($fstat, "check_file($filename, $this->{$_LOG})") if ($this->{$O_VERBOSE} == 2);
 
   return $fstat;
 }
@@ -1347,24 +1358,23 @@ sub fileName {
   my $frameno     = hashEl($argref, $K_FRAMENO);
   my $span_to_use = hashEl($argref, $K_SPANTOUSE);
   my $nosuff      = hashEl($argref, $K_NOSUFF);
-  my $use_dir     = hashEl($argref, $K_USEDIR);
+  my $use_dir     = hashEl($argref, $K_USEDIR);	# Blank, DIR_DOS or DIR_CYGWIN
   my $recon_key   = $keyname;
   $frameno        = '' unless (hasLen($frameno));
-  $use_dir        = 1 unless (hasLen($use_dir));
 
   # print "***** fileName(keyname $keyname, frameno $frameno, span_to_use $span_to_use, nosuff $nosuff)\n";
   # If span_to_use is defined, it needs to be appended to a prefix and dereferenced.
   if (defined($span_to_use) and $span_to_use) {
     my $varname = $keyname . $span_to_use;
     unless (defined($$varname)) {
-      print "ERROR: filename($keyname, $frameno, $span_to_use): No variable $varname exists\n";
+      $this->{$_LOG}->error("filename($keyname, $frameno, $span_to_use): No var $varname");
       return undef;
     }
     $recon_key = $$varname;
   }
 
   unless (defined($this->{$_RECON}->{$recon_key}) and ref($this->{$_RECON}->{$recon_key})) {
-    print "*** ERROR: fileName($keyname): this->{$_RECON}->{$recon_key} invalid.\n";
+    $this->{$_LOG}->error("fileName($keyname): this->{$_RECON}->{$recon_key} invalid.");
   }
   my ($stemkey, $isframe, $suff, $size) = @{$this->{$_RECON}->{$recon_key}};
   $size = $size->{$this->{$O_SPAN}} if (ref($size));
@@ -1373,9 +1383,6 @@ sub fileName {
 
   # Special case.  Frames = 1 => lmhistogram (at least) does not use frame no.
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
-
-  # print "*** HRRTRecon::fileName($keyname):     recon_key $recon_key, (stemkey, isframe, suff, size) = ($stemkey, $isframe, $suff, $size)\n";
-  # print "*** HRRTRecon::fileName($keyname):     $filename\n";
 
   # ***** HACK ***** This duplicates the suffix string generated in do_postrecon *****
   # Special case.  Image files get reconstruction suffix...sometimes.
@@ -1399,12 +1406,13 @@ sub fileName {
   }
 
   if ($isframe and $nframes > 1) {
-    $filename = "${filename}_frame${frameno}${suff}";
+    # This is where you would have 2-digit frame names 'frame04' etc.  But lmhistogram uses no padding 0's.
+#    $filename = sprintf("%s_frame%02d%s", $filename, $frameno, $suff);
+    $filename = sprintf("%s_frame%d%s", $filename, $frameno, $suff);
   } else {
-    $filename = "${filename}${suff}";
+    $filename = $filename. $suff;
   }
   # Only add full path if specified.
-#  unless ($size == $DIR_SIZE) {
   if ($use_dir and ($size != $DIR_SIZE)) {
     my $dir = undef;
     if ($recon_key =~ /^norm[\d]*$/) {
@@ -1419,24 +1427,17 @@ sub fileName {
     }
     $filename = "${dir}/${filename}";
   }
-  # print "XXX fileName($keyname, $use_dir): '$filename'\n";
-
-  my $hptr = convertDirName($filename);
-
-  # print "XXX fileName($keyname): '$filename'\n";
-  # printHash($hptr, "fileName($keyname)");
-
-  unless ($use_dir or ($size == $DIR_SIZE)) {
-    my %ret = (
-      $DIR_CYGWIN     => $filename,
-      $DIR_CYGWIN_NEW => $filename,
-      $DIR_DOS        => $filename,
-	);
-    $hptr = \%ret;
+  # Convert path, if required.
+  my $retfilename = undef;
+  if ($use_dir) {
+    my $hptr = convertDirName($filename);
+    $retfilename = $hptr->{$use_dir};
+    # $this->{$_LOG}->info("fileName($keyname, $use_dir) = $retfilename");
+  } else {
+    $retfilename = $filename;
+    # $this->{$_LOG}->info("fileName($keyname) = $retfilename");
   }
-  my $pathtype = ($this->{$O_ONUNIX}) ? $DIR_CYGWIN_NEW : $DIR_DOS;
-  my $dosfilename = $hptr->{$pathtype};
-  return wantarray() ? ($dosfilename, $hptr) : $dosfilename;
+  return $retfilename;
 }
 
 # Return erg ratio and calibration factor for given date.
@@ -1451,7 +1452,7 @@ sub calibrationFactors {
   my $calib_dir = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_CALIB};
   my $calib_factors_file = "${calib_dir}/${CALIBFACTORS}";
   unless (-s $calib_factors_file) {
-    $this->log_msg("No calib file '$calib_factors_file'", 1);
+    $this->{$_LOG}->info("No calib file '$calib_factors_file'", 1);
     return;
   }
   my @calibfactors = sort(fileContents($calib_factors_file));
@@ -1471,7 +1472,7 @@ sub calibrationFactors {
   # This was done in create_gm328_file() but is also called for subdir naming.
   if (my $param_ergratio = $this->{$O_ERGRATIO}) {
     $calib_ratio = $param_ergratio;
-    $this->log_msg("***  HRRTRecon::calibrationFactors(): Using cmd line Ergratio = $calib_ratio  ***\n", 0);
+    $this->{$_LOG}->info("***  HRRTRecon::calibrationFactors(): Using cmd line Ergratio = $calib_ratio  ***\n", 0);
   }
   
   # Adjust calibration factor for span-9 scan, if necessary.
@@ -1486,7 +1487,7 @@ sub calibrationFactors {
     $CALIB_RATIO    => $calib_ratio,
     $CALIB_FACT     => $calib_factor,
       );
-  printHash(\%ret, "calibrationFactors($hdate, $calib_factors_file)") if ($this->{$O_VERBOSE});
+  log_hash(\%ret, "calibrationFactors($hdate, $calib_factors_file, $this->{$_LOG})") if ($this->{$O_VERBOSE});
   return (length($calib_date)) ?  \%ret : undef;
 }
 
@@ -1503,7 +1504,7 @@ sub identify_norm_file {
       );
   my $normfile = $this->identifyParamFile(\%paramargs);
   unless (-s "${normdir}/${normfile}.n") {
-    return $this->log_msg("No norm file ${normdir}/${normfile}.n\n", 1);
+    return $this->{$_LOG}->info("No norm file ${normdir}/${normfile}.n\n", 1);
   }
   # return "${normdir}/${normfile}";
   return $normfile;
@@ -1520,7 +1521,7 @@ sub identifyParamFile {
   my ($param_dir, $param_key, $span) = @args{($PFILE_DIR, $PFILE_KEY, $PFILE_SPAN)};
 
   unless (-d $param_dir) {
-    $this->log_msg("ERROR: identifyParamFile(): Directory '$param_dir' not readable.");
+    $this->{$_LOG}->info("ERROR: identifyParamFile(): Directory '$param_dir' not readable.");
     return "";
   }
   my @paramfiles = dirContents($param_dir);
@@ -1557,11 +1558,12 @@ sub identifyParamFile {
       }
     }
   }
-  # $this->log_msg("identifyParamFile($thedate, $param_dir, $param_key) = $paramfile", 0);
+  # $this->{$_LOG}->info("identifyParamFile($thedate, $param_dir, $param_key) = $paramfile", 0);
   # Took this out 2/12/13: Can't see why I was deleting the suffix.
   unless ($paramfile) {
-    print "ERROR: HRRTRecon::identifyParamFile(): No param file found\n";
-    printHash($argptr, "identifyParamFile");
+    $this->{$_LOG}->error("No param file found");
+    log_hash($argptr, "identifyParamFile", $this->{$_LOG});
+    return;
   }
   $paramfile =~ s/\..+$// if (hasLen($paramfile));
   return $paramfile;
@@ -1576,7 +1578,7 @@ sub editConfigFile {
 
   my @infilecontents = fileContents($infile);
   unless (scalar(@infilecontents)) {
-    print "ERROR: editConfigFile($infile): Cannot read file $infile.  Exiting.\n";
+    $this->{$_LOG}->error("editConfigFile($infile): Cannot read file $infile");
     return 1;
   }
   my @outfilecontents = ();
@@ -1615,7 +1617,7 @@ sub print_study_summary {
   my $patname = "$name_last, $name_first";
 
   my $framing = $hdrdet{'Frame_definition'};
-  print "XXX framing '$framing'\n";
+  $this->{$_LOG}->info("framing '$framing'");
   $framing =~ s/,/, /g;
   my $frmstr = $hdrdet{$NFRAMES} . " frames ($framing)";
   my $patid = $hdrdet{'Patient_ID'};
@@ -1659,7 +1661,7 @@ sub print_study_summary {
       # Print a heading.
       my $headfmt = "%-4s %-16s %-10s %-9s %-9s %-9s %-9s %4s %6s %7s";
       my $headstr = sprintf($headfmt, (qw(Host Subject Ident ScanDate ScanTime ModDate ModTime LMGB DirGB Status)));
-      $this->log_msg("$headstr\n") unless ($quiet);
+      $this->{$_LOG}->info("$headstr\n") unless ($quiet);
     }
     $host =~ s/\D//g;
     my $outstr = sprintf("%-4s", $host); # node01
@@ -1672,42 +1674,28 @@ sub print_study_summary {
     $outstr .= sprintf(" %4.1f", $lmdet{$FSTAT_SIZE} / $BILL); # LM size
     $outstr .= sprintf(" %6.1f", $dirsize / $BILL); # Dir size
     $outstr .= sprintf(" %7s" , $procstr);
-    $this->log_msg("$outstr\n") unless ($quiet);
+    $this->{$_LOG}->info("$outstr\n") unless ($quiet);
   } else {
     unless ($quiet) {
-      printHash(\%summary, {'title' => "Directory: $subjdir",
-			    'keyptr' => \@titles});
+      printHash(\%summary, {
+	'title'  => "Directory: $subjdir",
+	'keyptr' => \@titles, 
+	'logger' => $this->{$_LOG},
+		});
     }
   }
 
-  if (hashElementTrue($opts, 'do_vhist') and ($this->{$O_DO_LOG})) {
+  if (hashElementTrue($opts, 'do_vhist') and ($this->{$O_DO_VHIST})) {
     $this->{$_VHIST}->print_vhist_summary(\%summary);
   }
 
   # if ($this->{$O_VERBOSE}) {
   #   foreach my $key (sort keys %{$this->{$_FNAMES}}) {
-  #     $this->log_msg(sprintf("%-22s = %s", "FNAMES{$key}", $this->{$_FNAMES}->{$key}));
+  #     $this->{$_LOG}->info(sprintf("%-22s = %s", "FNAMES{$key}", $this->{$_FNAMES}->{$key}));
   #   }
   # }
 
   return \%summary;
-}
-
-sub printLine {
-  my ($this, $msg, $retval) = @_;
-  $retval = 0 unless (hasLen($retval) and $retval);
-
-  my $equals = "============================================================";
-  my $outstr = "";
-  if (hasLen($msg)) {
-    my $eqlen = (54 - length($msg)) / 2;
-    my $subeq = substr($equals, 0, $eqlen);
-    $outstr = "$subeq   $msg   $subeq";
-  } else {
-    $outstr = $equals;
-  }
-  $this->log_msg("$outstr\n");
-  return $retval;
 }
 
 # Return fully qualified program name depending on platform and software group.
@@ -1724,14 +1712,14 @@ sub program_name {
 sub do_rebin {
   my ($this) = @_;
 
-  $this->printLine("do_rebin the begin");
+  $this->{$_LOG}->info('========== do_rebin begin ==========');
 
-  my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
-  my $listmode_file = $this->fileName($K_LISTMODE, {$K_USEDIR => 0} );
+  my $listmode_file = $this->fileName($K_LISTMODE);
   (my $s_file = $listmode_file) =~ s/\.l64/\.s/;
 
   my ($progpath, $progname, $lmhistogram) = $this->program_name($PROG_LMHISTOGRAM);
-  my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}.log";
+  my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
+  my $logfile = $this->{$_LOG_DIR} . '/lmhistogram_' . $dir . '.log';
   my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
   croak("HRRTRecon::do_rebin(): No rebinner_lut_file $rebinner_lut_file") unless (-s $rebinner_lut_file);
 
@@ -1741,24 +1729,34 @@ sub do_rebin {
   # Changed this 10/7/14 ahc
   # check_file_ok(K_TX_SUBJ) would fail when -f set, causing check for K_TX_LM
 #  unless ($this->check_file_ok($K_TX_SUBJ, '', $msg)) {
-  unless (-s $this->fileName($K_TX_SUBJ) and not $this->{$O_FORCE}) {
-    my $tx_listmode_file = $this->fileName($K_TX_LM);
+  my $tx_s_file = $this->fileName($K_TX_SUBJ, {$K_USEDIR => $DIR_CYGWIN});
+  unless ((-s $tx_s_file) and not $this->{$O_FORCE}) {
+    $this->{$_LOG}->info("Creating TX.s file $tx_s_file");
+    my $tx_listmode_file = $this->fileName($K_TX_LM, {$K_USEDIR => $DIR_CYGWIN});
     unless (-s $tx_listmode_file) {
-      # print $this->fileName($K_TX_SUBJ) . "\n";
-      # print $this->fileName($K_TX_LM) . "\n";
-      return $this->printLine("do_rebin: TX lm file $tx_listmode_file missing");
+      $this->{$_LOG}->error("TX lm file $tx_listmode_file missing");
+      return 1;
     }
     my $cmd = $lmhistogram;
-    $cmd .= ' '    . $this->fileName($K_TX_LM, {$K_USEDIR => 0});
-    $cmd .= ' -o ' . $this->fileName($K_TX_SUBJ, {$K_USEDIR => 0});
+    $cmd .= ' '    . $this->fileName($K_TX_LM);
+    $cmd .= ' -o ' . $this->fileName($K_TX_SUBJ);
     $cmd .= " -notimetag" if ($this->{$O_NOTIMETAG});
     $cmd .= " -l $logfile";
     # ahc 2/6/13 made this a required argument
     $cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_M_SW});
     $cmd = "export NUMBER_OF_PROCESSORS=1; $cmd";
-    if ($ret = $this->runit($cmd, "do_rebin subject TX")) {
-      return $this->printLine("do_transmission subject TX returning $ret", $ret);
+    $ret = $this->runit($cmd, "do_rebin subject TX");
+    if ($ret) {
+      $this->{$_LOG}->error('subject TX');
+      return 1;
     }
+
+    # Transfer TX.s file while this recon is running.
+    my $dest_dir  = $this->fileName($K_DIR_DEST, {$K_USEDIR => $DIR_CYGWIN});
+    my $recon_dir = $this->fileName($K_DIR_RECON);
+    (my $destfile = $tx_s_file) =~ s/$recon_dir/$dest_dir/;
+    $this->rsync_file($tx_s_file, $destfile);
+
   }
 
   # Check all frames to see if done.
@@ -1775,7 +1773,7 @@ sub do_rebin {
 
   # Histogram EM file
   if ($em_sino_missing) {
-    print "HRRTRecon::do_rebin(): $em_sino_missing of $nhdr frames require histogram\n";
+    $this->{$_LOG}->info("$em_sino_missing of $nhdr frames require histogram");
     my $cmd = $lmhistogram;
     $cmd .= " $listmode_file";
     $cmd .= " -o $s_file";
@@ -1789,8 +1787,10 @@ sub do_rebin {
     }
     $cmd = "export NUMBER_OF_PROCESSORS=1; $cmd";
     $ret = $this->runit($cmd, "do_rebin");
-    print "ERROR: $lmhistogram returned $ret\n" if ($ret);
-    $this->do_rebin_vhist($cmd, $logfile) if ($this->{$O_DO_LOG});
+    if ($ret) {
+      $this->{$_LOG}->error("$lmhistogram returned $ret");
+    }
+    $this->do_rebin_vhist($cmd, $logfile) if ($this->{$O_DO_VHIST});
   }
 
 
@@ -1815,7 +1815,8 @@ sub do_rebin {
     $ret += $this->do_crystalmap();
   }
 
-  return $this->printLine("do_rebin returning $ret", $ret);
+  $this->{$_LOG}->info("do_rebin returning $ret");
+  return $ret;
 }
 
 sub rebin_analyze_headers {
@@ -1868,7 +1869,6 @@ sub do_rebin_vhist {
   # VHIST embed log file.
   push(@vhist_summ, "-o $logfile");
   push(@vhist_summ, "-f optional");  
-  print "*** vhist = " . $this->{$_VHIST} . "\n";
   $this->{$_VHIST}->add_vhist_step(\@vhist_summ);
 }
 
@@ -1876,7 +1876,7 @@ sub do_rebin_vhist {
 sub do_transmission {
   my ($this) = @_;
 
-  $this->printLine("do_transmission begin");
+  $this->{$_LOG}->info('========== do_transmission begin ==========');
   my $dir = $this->fileName($K_DIR_RECON);
   my $ret = 0;
 
@@ -1898,17 +1898,19 @@ sub do_transmission {
 
   # If not running tx_tv3dreg, generate TX.i/TX.i.hdr directly.
   # Otherwise, generate TX_tmp.i and tx_tv3dreg will create TX.i.
-  my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
-  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => 0});
-  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => 0});
+  # ahc 5/19/15 separate U from M
+  my $run_txtv      = ($this->{$_USER_M_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
+#   my $run_txtv      = ($this->{$_USER_SW} and not (is_ge_phant($dir) or ($dir =~ /$CALIBRATION/i)));
+  my $tx_i_file     = $this->fileName($K_TX_I    , {$K_USEDIR => $this->{$_PATH_STYLE}});
+  my $tx_i_tmp_file = $this->fileName($K_TX_TMP_I, {$K_USEDIR => $this->{$_PATH_STYLE}});
   my $tx_outfile    = ($run_txtv) ? $tx_i_tmp_file : $tx_i_file;
 
   my $cmd = $this->program_name($PROG_E7_ATTEN);
   $cmd .= " --model 328";
   $cmd .= " --ucut";
-  $cmd .= " -b "   . $this->fileName($K_TX_BLANK);
-  $cmd .= " -t "   . $this->fileName($K_TX_SUBJ , {$K_USEDIR => 0});
-  $cmd .= " -q "   . $this->fileName($K_DIR_RECON);
+  $cmd .= " -b "   . $this->fileName($K_TX_BLANK, {$K_USEDIR => $this->{$_PATH_STYLE}});
+  $cmd .= " -t "   . $this->fileName($K_TX_SUBJ);
+  $cmd .= " -q "   . $this->fileName($K_DIR_RECON, {$K_USEDIR => $this->{$_PATH_STYLE}});
   $cmd .= " --ou $tx_outfile";
   $cmd .= " -w 128";
   $cmd .= " --force";
@@ -1936,8 +1938,8 @@ sub do_transmission {
   if ($run_txtv and not $ret) {
 
     $cmd = $this->program_name($PROG_TX_TV3DREG);
-    $cmd .= " -i " . $this->fileName($K_TX_TMP_I, {$K_USEDIR => 0});
-    $cmd .= " -o " . $this->fileName($K_TX_I    , {$K_USEDIR => 0});
+    $cmd .= " -i " . $this->fileName($K_TX_TMP_I);
+    $cmd .= " -o " . $this->fileName($K_TX_I    );
 
     $ret += $this->runit($cmd, "do_transmission tx_tv3dreg");
 
@@ -1955,14 +1957,13 @@ sub do_transmission {
     writeFile($h33_dst_file, $file_contents);
   }
 
-
-  return $this->printLine("do_transmission returning $ret", $ret);
+  $this->{$_LOG}->info('========== do_transmission returning $ret ==========');
 }
 
 sub do_attenuation {
   my ($this) = @_;
 
-  $this->printLine("do_attenuation begin");
+  $this->{$_LOG}->info('========== do_attenuation begin ==========');
   my $ret = 0;
 
   # Special condition: User s/w e7_sino_u in span 3 needs span 9 TX.a file.
@@ -1972,14 +1973,14 @@ sub do_attenuation {
   
   unless ($already_done) {
     if (scalar(@spans_to_make) > 1) {
-      print "*** do_attenuation: e7_fwd making multi spans: " . join(" ", @spans_to_make) . "\n";
+      $this->{$_LOG}->info("e7_fwd making multi spans: " . join(" ", @spans_to_make));
     }
     my $prog_e7 = $this->program_name($PROG_E7_FWD);    
     foreach my $span_to_make (@spans_to_make) {
       my $cmd = $prog_e7;
       $cmd .= " --model 328 ";
-      $cmd .= " -u "   . $this->fileName($K_TX_I, {$K_USEDIR => 0});
-      $cmd .= " --oa " . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_make, $K_USEDIR => 0} );
+      $cmd .= " -u "   . $this->fileName($K_TX_I);
+      $cmd .= " --oa " . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_make});
       $cmd .= " -w 128";
       $cmd .= " --span $span_to_make";
       $cmd .= " --mrd 67";
@@ -1991,7 +1992,7 @@ sub do_attenuation {
     }
   }
 
-  return $this->printLine("do_attenuation returning $ret", $ret);
+  $this->{$_LOG}->info('========== do_attenuation returning $ret ==========');
 }
 
 sub check_attenuation_done {
@@ -2001,7 +2002,9 @@ sub check_attenuation_done {
   # Span 3 in User S/W requires extra span 9 atten file.
   my $curr_span      = $this->{$O_SPAN};
   my @spans_to_check = ($curr_span);
-  push(@spans_to_check, $SPAN9) if ($this->{$_USER_SW} and ($curr_span == $SPAN3));
+  # ahc 5/19/15
+#  push(@spans_to_check, $SPAN9) if ($this->{$_USER_SW} and ($curr_span == $SPAN3));
+  push(@spans_to_check, $SPAN9) if ($this->{$_USER_M_SW} and ($curr_span == $SPAN3));
 
   my @spans_to_make = ();
   foreach my $span_to_check (@spans_to_check) {
@@ -2018,7 +2021,7 @@ sub check_attenuation_done {
   if ($already_done = ($nspans_to_make == 0)) {
     my $spanstr = ($nspans_to_make > 1) ? "spans complete: " : "span complete: ";
     $spanstr .= join(" ", @spans_to_check);
-    $this->log_msg("Skipping e7_fwd - $spanstr - already done (-f to force)\n");
+    $this->{$_LOG}->info("Skipping e7_fwd - $spanstr - already done (-f to force)\n");
   }
   return($already_done, \@spans_to_make);
 }
@@ -2026,44 +2029,43 @@ sub check_attenuation_done {
 sub do_scatter {
   my ($this) = @_;
   
-  $this->printLine("do_scatter begin");
+  $this->{$_LOG}->info('========== do_scatter begin ==========');
   my $nhdr      = $this->{$_HDRDET}->{$NFRAMES};
-  my $qc_path   = $this->fileName($K_DIR_RECON) . "/QC";
-  my $recon_dir = $this->fileName($K_DIR_RECON);
-  mkDir(convertDirName($qc_path)->{$DIR_CYGWIN_NEW}) or die "Can't create dir: $qc_path";
-  # Now run before every command in runit()
-  # if ($this->create_gm328_file()) {
-  #   return $this->printLine("do_scatter() returning error");
-  # }
+  my $qc_path   = $this->fileName($K_DIR_RECON, {$K_USEDIR => $this->{$_PATH_STYLE}}) . "/QC";
+  unless (mkDir(convertDirName($qc_path)->{$DIR_CYGWIN})) {
+    $this->{$_LOG}->error("Can't create dir: $qc_path");
+  }
   my $prog_e7_sino   = $this->program_name($PROG_E7_SINO);
   my $prog_gendelays = $this->program_name($PROG_GENDELAYS);
 
   # Get framing information.
   my $framing = $this->{$_HDRDET}->{$FRAMES};
   my @framing = @$framing;
-  print "*** framing ($nhdr frames): " . join(" ", @framing) . "\n";
+  $this->{$_LOG}->info("*** framing ($nhdr frames): " . join(" ", @framing));
 
   for (my $i = 0; $i < $nhdr; $i++) {
     # ---------- Part 1: e7_sino ----------
     my $qc_subdir = sprintf("%s/frame%02d", $qc_path, $i);
-    mkDir(convertDirName($qc_subdir)->{$DIR_CYGWIN_NEW}) or die "Can't create $qc_subdir";
+    mkDir(convertDirName($qc_subdir)->{$DIR_CYGWIN}) or die "Can't create $qc_subdir";
 
     # A bit messy.  Don't use dir for most calls, but it's needed for check_file_ok
     my %cf_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-      $K_USEDIR    => 0,
 	);
     my %cf_args_d = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
+      $K_USEDIR    => $this->{$_PATH_STYLE},
 	);
 
     my $msg = "Scatter processing - e7_sino - Frame $i";
     unless ($this->check_file_ok($FRAME_SC_PREFIX, \%cf_args_d, $msg)) {
       # User software in span 3 needs: span-9 tr.s file, span-9 tx.a file.
       my ($span_to_use, $normkey);
-      if ($this->{$_USER_SW}) {
+#      if ($this->{$_USER_SW}) {
+      # ahc 5/19/15.  Only use span-9 for motion (and really this should come from the SPAN option)
+      if ($this->{$_USER_M_SW}) {
 	$span_to_use = $SPAN9;
 	$normkey = $K_NORM_9;
       } else {
@@ -2074,9 +2076,9 @@ sub do_scatter {
       my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
       my $e7_sino_prog      = $prog_e7_sino;
       my $cmd               = $e7_sino_prog;
-      $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use, $K_USEDIR => 0});
+      $cmd .= " -a "   . $this->fileName($TX_A_PREFIX, {$K_SPANTOUSE => $span_to_use});
       $cmd .= " -e "   . $this->fileName($FRAME_TR_S_PREFIX, \%cf_args);
-      $cmd .= " -n "   . $this->fileName($normkey);
+      $cmd .= " -n "   . $this->fileName($normkey, {$K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " --os " . $this->fileName($FRAME_SC_PREFIX  , \%cf_args);
       $cmd .= " --force";
       $cmd .= " --gf";
@@ -2090,8 +2092,10 @@ sub do_scatter {
       # ahc 2/6/13 made this a required argument
       # ahc 2/13/13/ I think I put this in by mistake.
       # $cmd .= " -r $rebinner_lut_file";
-      if ($this->{$_USER_SW}) {
-	$cmd .= " -u " . $this->fileName($K_TX_I, {$K_USEDIR => 0});
+      # ahc 5/19/15
+#      if ($this->{$_USER_SW}) {
+      if ($this->{$_USER_M_SW}) {
+	$cmd .= " -u " . $this->fileName($K_TX_I);
 	$cmd .= " -w 128";
 	$cmd .= " --os2d";
       }
@@ -2101,18 +2105,18 @@ sub do_scatter {
 	  $cmd .= " --lber $ergratio"; # Can omit? This val edited into gm328.ini.
 	  $cmd .= " --athr 1.03,4"; # acf threshold for scatter scaling.
 	} else {
-	  return $this->log_msg("No calib_factors", 1);
+	  return $this->{$_LOG}->info("No calib_factors", 1);
 	}
       }
       
       # e7_sino_u -a $TX.a -u $TX.i -w 128 -e $EMF.tr.s -n $norm  --lber $ErgRatio --force --os $EMF"_sc.s" --os2d --gf --model 328 --skip 2 --mrd 67 --span 9 -l 73,log -q QC --ssf 0.25,2 --athr 1.03,4
       if ($this->runit($cmd, "do_scatter($i)")) {
-	$this->log_msg("ERROR: $e7_sino_prog command failed: *** NOT *** Exiting\n");
+	$this->{$_LOG}->info("ERROR: $e7_sino_prog command failed: *** NOT *** Exiting\n");
       }
       # Note that e7_sino creates TX.a and TX.h33, overwrites the TX.h33 created by e7_atten.
       # This is a problem since their dimensions are different.
     }
-    $this->log_msg("do_scatter($i) e7_sino done");
+    $this->{$_LOG}->info("do_scatter($i) e7_sino done");
 
     # ---------- Part 2: GenDelays ----------
     unless ($this->{$_USER_M_SW}) {
@@ -2120,18 +2124,23 @@ sub do_scatter {
       my $msg = "do_scatter($i) gendelays starting: frame $i ($frametime sec)";
       unless ($this->check_file_ok($FRAME_RA_SMO_PREFIX, \%cf_args_d, $msg)) {
 	my $cmd = $prog_gendelays;
-	$cmd .= " -h " . $this->fileName($K_FRAME_CH, {$K_FRAMENO => $i, $K_USEDIR => 0});
+	$cmd .= " -h " . $this->fileName($K_FRAME_CH, {$K_FRAMENO => $i});
 	$cmd .= " -O " . $this->fileName($FRAME_RA_SMO_PREFIX, \%cf_args);
 	$cmd .= " -t $frametime";
 	$cmd .= " -s $this->{$O_SPAN},67";
+
+	# ahc 5/19/15
+	my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
+	$cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_SW});
 	
 	$this->runit($cmd, "do_delays($i)");
-	$this->log_msg("do_delays($i) completed");
+	$this->{$_LOG}->info("do_delays($i) completed");
       }
     }
-    $this->log_msg("do_scatter($i) gendelays done");
+    $this->{$_LOG}->info("do_scatter($i) gendelays done");
   }
-  return $this->printLine("do_scatter returning 0", 0);
+  $this->{$_LOG}->info('========== do_scatter returning 0 ==========');
+  return 0;
 }
 
 sub create_gm328_file {
@@ -2147,21 +2156,21 @@ sub create_gm328_file {
   # Get calibration factors for date of this scan.
   my $calib_factors = undef;
   unless ($calib_factors = $this->calibrationFactors()) {
-    return $this->log_msg("No calib_factors", 1);
+    return $this->{$_LOG}->info("No calib_factors", 1);
   }
-  # printHash($calib_factors, 'calib_factors');
+  # log_hash($calib_factors, 'calib_factors', $this->{$_LOG});
   # exit;
-  return $this->log_msg("calib_factors empty") unless (hasLen($calib_factors));
+  return $this->{$_LOG}->info("calib_factors empty") unless (hasLen($calib_factors));
   my $ergratio  = $calib_factors->{$CALIB_RATIO};
   my $calibdate = $calib_factors->{$CALIB_DATE};
 
   # ahc 9/25/14 moved this to calibrationFactors()
   # if (my $param_ergratio = $this->{$O_ERGRATIO}) {
   #   $ergratio = $param_ergratio;
-  #   $this->log_msg("HRRTRecon::create_gm328_file(): Using cmd line Ergratio = $ergratio\n", 0);
+  #   $this->{$_LOG}->info("HRRTRecon::create_gm328_file(): Using cmd line Ergratio = $ergratio\n", 0);
   # } else {
   my $logmsg = "$gm_328_file ergratio = $ergratio (calibration date $calibdate)";
-  $this->log_msg("HRRTRecon::create_gm328_file(): $logmsg\n", 1);
+  $this->{$_LOG}->info("HRRTRecon::create_gm328_file(): $logmsg\n", 1);
   # }
 
   # Read correct erg ratio value from calibration factors file,
@@ -2175,22 +2184,21 @@ sub create_gm328_file {
     'outfile' => $gm_328_file,
     'edits'   => \%edits,
       );
-  printHash(\%editargs, "create_gm328_file") if ($this->{$O_VERBOSE});
-  ($this->editConfigFile(\%editargs)) and return $this->log_msg("editConfigFile($gm_328_file) failed");
+  log_hash(\%editargs, "create_gm328_file", $this->{$_LOG}) if ($this->{$O_VERBOSE});
+  ($this->editConfigFile(\%editargs)) and return $this->{$_LOG}->info("editConfigFile($gm_328_file) failed");
   return 0;
 }
 
 sub do_sensitivity {
   my ($this) = @_;
 
-  $this->printLine("do_sensitivity begin");
+  $this->{$_LOG}->info('========== do_sensitivity begin ==========');
   my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   my $span = $this->{$O_SPAN};
   my %fn_args = (
     $K_FRAMENO   => 0,
     $K_SPANTOUSE => $span,
-    $K_USEDIR    => 0,
       );
 
   # Parameter -K (sensitivity image) has undocumented behaviour:
@@ -2198,15 +2206,15 @@ sub do_sensitivity {
   # The -o option must be specified or the program will not run.
   # If the sens image is present, it is used to create the output file.  The sens image is not modified.
 
-  my $normfac_256_file = $this->fileName($K_NORMFAC_256, {$K_USEDIR => 0});
-  my $sensitivity_file = $this->fileName($K_FRAME_SENS_I, {$K_FRAMENO => 0, $K_USEDIR => 0});
+  my $normfac_256_file = $this->fileName($K_NORMFAC_256);
+  my $sensitivity_file = $this->fileName($K_FRAME_SENS_I, {$K_FRAMENO => 0});
   $this->safe_unlink($normfac_256_file);
   $this->safe_unlink($sensitivity_file);
   my $ret = 0;
   my $cmd = $this->program_name($PROG_OSEM3D);
   $cmd .= " -t " . $this->fileName($FRAME_S_PREFIX, \%fn_args);
-  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 1});
-  $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => 0});
+  $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $span, $K_USEDIR => $this->{$_PATH_STYLE}});
+  $cmd .= " -a " . $this->fileName($TX_A_PREFIX   , {$K_SPANTOUSE => $span});
   $cmd .= " -o $sensitivity_file";	    # Note: Not used.
   $cmd .= " -W $OSEM_SENS_WEIGHTING";	    # -W  weighting method
   $cmd .= " -I $OSEM_SENS_ITER";	    # -I  number of iterations
@@ -2223,7 +2231,8 @@ sub do_sensitivity {
 
   # je_hrrt_osem3d -t $em"_frame"$f.s -n $norm -a $TX.a -o "test.i" -W 2 -I 1 -S 16 -m 9,67 -B 0,0,0 -T 4 -v 8 -X 256 -K $normfac256
   $ret = $this->runit($cmd, "do_sensitivity");
-  return $this->printLine("do_sensitivity returning $ret", $ret);
+  $this->{$_LOG}->info('========== do_sensitivity returning $ret ==========');
+  return $ret;
 }
 
 # Recon-256 uses a pre-computed sensitivity file (normfac256), computed once.  It does not use -B.
@@ -2232,19 +2241,19 @@ sub do_sensitivity {
 sub do_reconstruction {
   my ($this) = @_;
 
-  my $line = "--------------------------------------------------------------------------------";
-  $this->printLine("do_reconstruction begin");
+  $this->{$_LOG}->info('========== do_reconstruction begin ==========');
   my $nhdr = $this->{$_HDRDET}->{$NFRAMES};
-  $this->log_msg("Reconstructing $nhdr frames.\n");
+  $this->{$_LOG}->info("Reconstructing $nhdr frames");
 
   my $ret = 0;
   my $logfile = $this->{$_LOG_DIR} . "/osem3d_" . convertDates(time())->{$DATES_HRRTDIR} . ".log";
   my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
   if ($this->{$_USER_M_SW}) {
-    unless ($this->check_file_ok($K_NORMFAC_256, '', "${line}\ndo_reconstrcution sensitivity")) {
+    unless ($this->check_file_ok($K_NORMFAC_256, '', "do_reconstrcution sensitivity")) {
       if ($ret = $this->do_sensitivity()) {
-	return $this->printLine("do_recon ERROR in do_sensitivity: returning $ret", $ret);
+	$this->{$_LOG}->error("do_sensitivity");
+	return $ret;
       }
     }
   }
@@ -2252,13 +2261,14 @@ sub do_reconstruction {
   my $nframes = $nhdr;
   my $prog_osem3d = $this->program_name($PROG_OSEM3D);
   for (my $i = 0; $i < $nframes; $i++) {
+    my $msg = "Reconstruction/256: Frame $i";
+    $this->{$_LOG}->info($msg);
+    
     my %fn_args = (
       $K_FRAMENO   => $i,
       $K_SPANTOUSE => $this->{$O_SPAN},
-      $K_USEDIR    => 0,
 	);
     my $niter = ($this->{$_USER_SW}) ? $ITER_USERSW : $ITER_OLDSW;
-    my $msg = "${line}\nReconstruction (dim: 256) - Frame $i";
 
     # ------------------------------------------------------------
     # 256-resolution reconstruction.
@@ -2267,17 +2277,17 @@ sub do_reconstruction {
     unless ($this->check_file_ok($K_FRAME_I, {$K_FRAMENO => $i}, $msg)) {
       # Input file for -d: 3D_flat_float_scan (smoothed un-normalized delayed)) or coinc_histogram (.ch)
       my $ra_smo_file = $this->fileName($FRAME_RA_SMO_PREFIX, \%fn_args);
-      my $ch_file     = $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i, $K_USEDIR => 0});
-      my $output_file = $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i, $K_USEDIR => 0});
+      my $ch_file     = $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
+      my $output_file = $this->fileName($K_FRAME_I          , {$K_FRAMENO => $i});
       my $d_file      = ($this->{$_USER_M_SW}) ? $ch_file : $ra_smo_file;
       
       my $cmd = $prog_osem3d;
       $cmd .= ' -p ' . $this->fileName($FRAME_S_PREFIX , \%fn_args);
       $cmd .= ' -d ' . $d_file;
       $cmd .= ' -s ' . $this->fileName($FRAME_SC_PREFIX, \%fn_args);
-      $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 0});
-      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
-      $cmd .= ' -o ' . $this->fileName($K_FRAME_I      , {$K_FRAMENO => $i, $K_USEDIR => 0});
+      $cmd .= ' -a ' . $this->fileName($TX_A_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}});
+      $cmd .= ' -n ' . $this->fileName($NORM_PREFIX    , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
+      $cmd .= ' -o ' . $this->fileName($K_FRAME_I      , {$K_FRAMENO => $i});
       $cmd .= ' -I ' . $niter;
       $cmd .= ' -S ' . $NUM_SUBSETS;
       $cmd .= ' -m ' . $this->{$O_SPAN} . ',67';
@@ -2290,30 +2300,34 @@ sub do_reconstruction {
 	$cmd .= ' -L ' . $logfile;
       }
       if ($this->{$_USER_M_SW}) {
-	$cmd .= ' -K ' . $this->fileName($K_NORMFAC_256, {$K_USEDIR => 0}); # Computed in do_sensitivity.
+	$cmd .= ' -K ' . $this->fileName($K_NORMFAC_256); # Computed in do_sensitivity.
 	$cmd .= ' -T ' . $OSEM_SENS_THREADS; # -T  number of threads
 	$cmd .= ' -X ' . 256;
 	$cmd .= ' -r ' . $rebinner_lut_file; # added 2/10/13 ahc
       }
-      $this->safe_unlink($output_file, 0) unless ($this->{$O_DUMMY});
+      # Did I really need this?
+      # $this->safe_unlink($output_file, 0) unless ($this->{$O_DUMMY});
       $ret += $this->runit($cmd, "do_reconstruction($i)");
-      return $this->printLine("do_recon ERROR: returning $ret", $ret) if ($ret);
+      if ($ret) {
+	$this->{$_LOG}->error("osem3d");
+	return $ret;
+      }
     }
 
     # ------------------------------------------------------------
     # 128-resolution reconstruction for Motion s/w.
     # ------------------------------------------------------------
 
-    $msg = "${line}\nReconstruction (s/w: M, dim: 128) - Frame $i";
+    $msg = "Reconstruction (s/w: M, dim: 128) - Frame $i";
     # Second recon for motion correcting code.
     if ($this->{$_USER_M_SW}) {
       unless ($this->check_file_ok($K_FRAME_128_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $prog_osem3d;
 	$cmd .= " -p " . $this->fileName($FRAME_S_PREFIX     , \%fn_args);
-	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
-	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i, $K_USEDIR => 0});
+	$cmd .= " -n " . $this->fileName($NORM_PREFIX        , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
+	$cmd .= " -o " . $this->fileName($K_FRAME_128_I      , {$K_FRAMENO => $i});
 	$cmd .= " -W 3";
-	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i, $K_USEDIR => 0});
+	$cmd .= " -d " . $this->fileName($K_FRAME_CH         , {$K_FRAMENO => $i});
 	$cmd .= " -I $ITER_128";
 	$cmd .= " -S $NUM_SUBSETS";
 	$cmd .= " -m $this->{$O_SPAN},67";
@@ -2327,15 +2341,18 @@ sub do_reconstruction {
 
 	# je_hrrt_osem3d without -K makes 'normfac.i' in current dir.  Silent errors if it already exists.  Horrible.
 	# Rename 'normfac.i' to 'normfac_128_frameN.i'
-	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i});
+	my $normfac_dst = $this->fileName($K_NORMFAC_128, {$K_FRAMENO => $i, $K_USEDIR => $this->{$_PATH_STYLE}});
 	my $recon_dir = $this->fileName($K_DIR_RECON);
 	my $normfac_src = "${recon_dir}/${NORMFAC_I}";
 	if ($this->{$O_DUMMY}) {
-	  $this->log_msg("move($normfac_src, $normfac_dst)") if ($i == 0);
+	  $this->{$_LOG}->info("move($normfac_src, $normfac_dst)") if ($i == 0);
 	} else {
 	  move($normfac_src, $normfac_dst);
 	}
-	return $this->printLine("do_recon ERROR in part 2: returning $ret", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("part 2");
+	  return $ret;
+	}
       }
     }
   }
@@ -2346,25 +2363,28 @@ sub do_reconstruction {
   if ($this->{$_USER_M_SW}) {
     # For user s/w, smooth .v by 2 mm now that -B option is removed from osem3d.
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_NORESL_V, {$K_USEDIR => 0});
+    $cmd .= " " . $this->fileName($K_IMAGE_NORESL_V);
     $cmd .= " 2";
     if ($ret += $this->runit($cmd, "gsmooth")) {
-      print "ERROR in gsmooth\n";
+      $this->{$_LOG}->error('gsmooth');
+      return $ret;
     }
     # Special case: Static framing, Motion software.  Copy _noresl.v file to .v
     if ($this->{$_HDRDET}->{$NFRAMES} == 1) {
-      my $v_noresl_file = $this->fileName($K_IMAGE_NORESL_V, {$K_USEDIR => 0});
-      my $v_file = $this->fileName($K_IMAGE_V, {$K_USEDIR => 0});
+      my $v_noresl_file = $this->fileName($K_IMAGE_NORESL_V);
+      my $v_file = $this->fileName($K_IMAGE_V);
       copy($v_noresl_file, $v_file);
     }
   }
   
-  return $this->printLine("do_recon returning $ret", $ret);
+  $this->{$_LOG}->info('========== do_reconstruction returning $ret ==========');
+  return $ret;
 }
 
 sub do_conversion {
   my ($this) = @_;
 
+  $this->{$_LOG}->info('========== do_conversion begin ==========');
   my %opts = (
     $CODE_SW    => $CODE_SW_GROUP{$this->{$O_SW_GROUP}},
     $CODE_SPAN  => $this->{$O_SPAN},
@@ -2383,7 +2403,10 @@ sub do_conversion {
     # 256-res is the final image.
     $ret += ($this->run_conversion($K_FRAME_I, $K_IMAGE_V, {%opts, $CODE_NOTE => ""}));
   }
-  return $this->printLine("do_conversion ERROR in run_conversion: returning $ret", $ret) if ($ret);
+  if ($ret) {
+    $this->{$_LOG}->error("run_conversion");
+    return $ret;
+  }
 }
 
 # Motion QC implemented as script
@@ -2392,31 +2415,36 @@ sub do_motion_qc_as_script {
   my ($this) = @_;
   my $ret = 0;
 
+  $this->{$_LOG}->info('========== do_motion_qc_as_script begin ==========');
   # Step 0: Identify start and reference frames.  Start frame is this->{$_FNAMES}{$_MOT_REF_FR_}
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   if ($this->identify_start_ref_frames()) {
-    return $this->printLine("do_motion_qc_as_script ERROR in identify_start-ref_frames()");
+      $this->{$_LOG}->error("do_motion_qc_as_script ERROR in identify_start-ref_frames()");
+      return 1;
   }
 
   # Step 1: Smooth 128-resolution .v file.
   unless ($this->check_file_ok($K_IMAGE_128_SM_V, '', "do_motion_qc 1: $K_IMAGE_128_SM_V")) {
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
+    $cmd .= " " . $this->fileName($K_IMAGE_128_V);
     $cmd .= " " . $SMOOTH_FWHM;
     $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V);
     $ret = $this->runit($cmd, "do_motion qc step 1: gsmooth");
-    return $this->printLine("do_motion_qc(): ERROR in PROG_GSMOOTH", $ret) if ($ret);
+    if ($ret) {
+      $this->{$_LOG}->error("PROG_GSMOOTH");
+      return $ret;
+    }
   }
 
   # Step 2: AIR_motion_qc
   my $threshold = int($MOT_QC_AIR_THRESH * 32767 / 100);
   my @mot_qc_lines = ();
   for (my $i = 0; $i < $nframes; $i++) {
-    my $frame_air = $this->fileName($K_MOTION_QC_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
+    my $frame_air = $this->fileName($K_MOTION_QC_AIR, {$K_FRAMENO => $i});
     unless ($this->check_file_ok($K_MOTION_QC_AIR, '', "do_motion_qc 2: $K_MOTION_QC_AIR")) {
       # ECAT files count frame numbers 1..N, standard is frames indexed from 0.
       my $ref_frame = $this->{$_FNAMES}{$_MOT_REF_FR_} + 1;
-      my $v_128_file = $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
+      my $v_128_file = $this->fileName($K_IMAGE_128_V);
       my $em_file_str  = sprintf("%s,%1d,1,1", $v_128_file, $i + 1);
       my $ref_file_str = sprintf("%s,%1d,1,1", $v_128_file, $ref_frame);
       my $cmd = $this->program_name($PROG_ALIGNLINEAR);
@@ -2427,7 +2455,12 @@ sub do_motion_qc_as_script {
       $cmd   .= " -t1 $threshold";
       $cmd   .= " -t2 $threshold";
       $ret = $this->runit($cmd, "do_motion qc step 2: alignlinear");
-      return $this->printLine("do_motion_qc(): ERROR in alignlinear", $ret) if ($ret);
+      if ($ret) {
+	$this->{$_LOG}->error("do_motion_qc(): ERROR in alignlinear");
+	return $ret;
+      }
+    $this->{$_LOG}->error
+
     }
 
     # Step 3a: Data file for motion QC plot.
@@ -2440,8 +2473,9 @@ sub do_motion_qc_as_script {
       my $cmd = $this->program_name($PROG_MOTION_DISTANCE);
       $cmd   .= " -a $frame_air";
       chomp(my $motion_distance_line = `$cmd`);
-      print "*** $cmd\n";
-      print "*** '$motion_distance_line'\n";
+      
+      $this->{$_LOG}->info("*** $cmd");
+      $this->{$_LOG}->info("*** '$motion_distance_line'");
       my @mot_dist_bits = split(/\s+/, $motion_distance_line);
       push(@mot_qc_lines, sprintf("%-5d %-5d %-5d %-5d %-5d %-5d", $start_time, @mot_dist_bits));
       push(@mot_qc_lines, sprintf("%-5d %-5d %-5d %-5d %-5d %-5d", $end_time  , @mot_dist_bits));
@@ -2451,7 +2485,7 @@ sub do_motion_qc_as_script {
     }
   }
 
-  print "mot_qc_lines:\n" . join("\n", @mot_qc_lines) . "\n";
+  $this->{$_LOG}->info("mot_qc_lines:\n" . join("\n", @mot_qc_lines));
 
   # Step 3b: Create motion QC plot.
   my %lmdet  = %{$this->{$_LMDET}};
@@ -2477,6 +2511,7 @@ sub do_motion_qc_as_script {
   my $gnuplot_cmd = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT) . ' ' . $plt_file;
   # my $gnuplot_cmd = $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT} . ' ' . $plt_file;
   $ret = $this->runit($gnuplot_cmd, 'do_motion_qc_as_script step 3b');
+  $this->{$_LOG}->info('========== do_motion_qc_as_script end ==========');
 }
 
 # Identify the start and reference frames.
@@ -2498,7 +2533,9 @@ sub identify_start_ref_frames {
     my $start_time = $framedet->{$HDR_IMAGE_RELATIVE_START_TIME};
     my $duration   = $framedet->{$HDR_IMAGE_DURATION};
     my $trues      = $framedet->{$HDR_TOTAL_NET_TRUES};
-    printf("Frame %2d start %4d duration %4d trues %8.1f\n", $i, $start_time, $duration, $trues / 1000000);
+    my $outstr = sprintf("Frame %2d start %4d duration %4d trues %8.1f\n", $i, $start_time, $duration, $trues / 1000000);
+    $this->{$_LOG}->info($outstr);
+    
     if (($start_time >= $MOT_QC_REF_BEGIN) and ($trues > $ref_max_trues)) {
       $this->{$_FNAMES}{$_MOT_REF_FR_} = $i;
       $ref_max_trues = $trues;
@@ -2507,7 +2544,7 @@ sub identify_start_ref_frames {
       $this->{$_FNAMES}{$_MOT_START_FR_} = $i;
     }
   }
-  print "HRRTRecon::identify_start_ref_frames: ref " . $this->{$_FNAMES}{$_MOT_REF_FR_} . ", start " . $this->{$_FNAMES}{$_MOT_START_FR_} . "\n";
+  $this->{$_LOG}->info("HRRTRecon::identify_start_ref_frames: ref " . $this->{$_FNAMES}{$_MOT_REF_FR_} . ", start " . $this->{$_FNAMES}{$_MOT_START_FR_});
   my $ret = (hasLen($this->{$_FNAMES}{$_MOT_REF_FR_}) and hasLen($this->{$_FNAMES}{$_MOT_START_FR_})) ? 0 : 1;
   return $ret;
 }
@@ -2518,66 +2555,78 @@ sub do_motion_as_script {
   my ($this)   = @_;
   my $ret      = 0;
   my $recondir = $this->fileName($K_DIR_RECON);
+  my $msg;
 
+  $this->{$_LOG}->info('========== do_motion_as_script start ==========');
   # Step 0: Identify reference frame.  Start frame is this->{$_FNAMES}{$_MOT_REF_FR_}
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   if ($this->identify_start_ref_frames()) {
-    return $this->printLine("do_motion_as_script ERROR in identify_start-ref_frames()");
+    $this->{$_LOG}->error("identify_start-ref_frames()");
+    return 1;
   }
 
   # Step 1: Smooth 128-resolution .v file.
   unless ($this->check_file_ok($K_IMAGE_128_SM_V, '', "do_motion 1a: $K_IMAGE_128_SM_V")) {
     my $cmd = $this->program_name($PROG_GSMOOTH);
-    $cmd .= " " . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
+    $cmd .= " " . $this->fileName($K_IMAGE_128_V);
     $cmd .= " " . $SMOOTH_FWHM;
-    $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V, {$K_USEDIR => 0});
+    $cmd .= " " . $this->fileName($K_IMAGE_128_SM_V);
     $ret = $this->runit($cmd, "do_motion step 1: gsmooth");
   }
-  return $this->printLine("do_motion(): ERROR in PROG_GSMOOTH", $ret) if ($ret);
+  if ($ret) {
+    $this->{$_LOG}->error("do_motion(): ERROR in PROG_GSMOOTH");
+    return $ret;
+  }
 
   # Step 2: Create mu-map frame transfromer by inverting transformer
   # created by motion_qc program from uncorrected images.
   for (my $i = 0; $i < $nframes; $i++) {
     my $mu_reslice_file_d = $this->fileName($K_TX_FRAME_I, {$K_FRAMENO => $i});
-    my $mu_reslice_file   = $this->fileName($K_TX_FRAME_I, {$K_USEDIR => 0, $K_FRAMENO => $i});
+    my $mu_reslice_file   = $this->fileName($K_TX_FRAME_I, {$K_FRAMENO => $i});
     if ($i == $this->{$_FNAMES}{$_MOT_REF_FR_}) {
       # This is the reference frame.
-      $this->log_msg("do_motion_as_script(): Frame $i is ref frame: Not resliced");
+      $this->{$_LOG}->info("do_motion_as_script(): Frame $i is ref frame: Not resliced");
       my $tx_i_file_d = $this->fileName($K_TX_I);
-      print "copy($tx_i_file_d, $mu_reslice_file_d);\n";
+      $this->{$_LOG}->info("copy(tx_i $tx_i_file_d, mu_reslice $mu_reslice_file_d);");
       copy($tx_i_file_d, $mu_reslice_file_d);
     } else {
       # Step 2a: Invert AIR file
-      my $msg = "do_motion frame $i step 2a: $K_MOTION_TX_AIR";
-      print "$msg\n";
+      $msg = "do_motion frame $i step 2a: $K_MOTION_TX_AIR";
+      $this->{$_LOG}->info($msg);
       unless ($this->check_file_ok($K_MOTION_TX_AIR, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $this->program_name($PROG_INVERT_AIR);
 	$cmd .= ' ' . $this->fileName($K_MOTION_QC_AIR, {$K_FRAMENO => $i});
 	$cmd .= ' ' . $this->fileName($K_MOTION_TX_AIR, {$K_FRAMENO => $i});
 	$cmd .= ' y';
 	$ret = $this->runit($cmd, "do_motion step 2a: invert_air");
-	return $this->printLine("do_motion(): ERROR in PROG_INVERT_AIR", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("do_motion(): ERROR in PROG_INVERT_AIR");
+	  return $ret;
+	}
       }
       
       # Step 2b: Reslice .i file
       $msg = "do_motion frame $i step 2b: $K_TX_FRAME_I";
-      print "$msg\n";
+      $this->{$_LOG}->info($msg);
       unless ($this->check_file_ok($K_TX_FRAME_I, {$K_FRAMENO => $i}, $msg)) {
 	my $cmd = $this->program_name($PROG_ECAT_RESLICE);
-	$cmd .= ' '    . $this->fileName($K_MOTION_TX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
+	$cmd .= ' '    . $this->fileName($K_MOTION_TX_AIR, {$K_FRAMENO => $i});
 	$cmd .= ' '    . $mu_reslice_file;
-	$cmd .= ' -a ' . $this->fileName($K_TX_I, {$K_USEDIR => 0});
+	$cmd .= ' -a ' . $this->fileName($K_TX_I);
 	$cmd .= ' -o';
 	$cmd .= ' -k';
 	$ret = $this->runit($cmd, "do_motion step 2b: ecat_reslice");
-	return $this->printLine("do_motion(): ERROR in PROG_ECAT_RESLICE", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("do_motion(): ERROR in PROG_ECAT_RESLICE");
+	  return $ret;
+	}
       }
     }
 
     # Step 3: Attenuation.
-    my $acf_output_file = $this->fileName($K_TX_FRAME_A   , {$K_USEDIR => 0, $K_FRAMENO => $i});
-    my $msg = "do_motion frame $i step 3: $K_TX_FRAME_A ($acf_output_file)";
-    print "$msg\n";
+    my $acf_output_file = $this->fileName($K_TX_FRAME_A   , {$K_FRAMENO => $i});
+    $msg = "do_motion frame $i step 3: $K_TX_FRAME_A ($acf_output_file)";
+    $this->{$_LOG}->info($msg);
     unless ($this->check_file_ok($K_TX_FRAME_A, {$K_FRAMENO => $i}, $msg)) {
       # Bug: e7_fwd is not obeying '--force'
       unlink($acf_output_file);
@@ -2592,18 +2641,21 @@ sub do_motion_as_script {
       $cmd .= " --force";
       $cmd .= " -l 33," . $this->{$_LOG_DIR};
       $ret = $this->runit($cmd, "do_motion step 3: e7_fwd");
-      return $this->printLine("do_motion(): ERROR in PROG_E7_FWD", $ret) if ($ret);
+      if ($ret) {
+	$this->{$_LOG}->error("do_motion(): ERROR in PROG_E7_FWD");
+	return $ret;
+      }
     }
 
     # Step 4: Scatter
     $msg = "do_motion frame $i step 4: $K_FRAME_ATX_S";
-    print "$msg\n";
+    $this->{$_LOG}->info($msg);
     unless ($this->check_file_ok($K_FRAME_ATX_S, {$K_FRAMENO => $i}, $msg)) {
       my $cmd = $this->program_name($PROG_E7_SINO);
-      $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_USEDIR => 0, $K_FRAMENO => $i});
+      $cmd .= " -e "   . $this->fileName($K_FRAME_TR_S_9, {$K_FRAMENO => $i});
       $cmd .= " -u "   . $mu_reslice_file,
-      $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
+      $cmd .= " --os " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
+      $cmd .= " -n "   . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " -w $MU_WIDTH";
       $cmd .= " -a " . $acf_output_file;
       $cmd .= " --force";
@@ -2620,7 +2672,10 @@ sub do_motion_as_script {
       $cmd .= " --athr 1.03,4";
 
       $ret = $this->runit($cmd, "do_motion step 4: e7_sino");
-      return $this->printLine("do_motion(): ERROR in PROG_E7_SINO", $ret) if ($ret);
+      if ($ret) {
+	$this->{$_LOG}->error("do_motion(): ERROR in PROG_E7_SINO");
+	return $ret;
+      }
     }
 
     # Step 5: gnuplot
@@ -2632,33 +2687,34 @@ sub do_motion_as_script {
     
     # Step 6: OSEM
     $msg = "do_motion frame $i step 6: $K_FRAME_ATX_I";
-    print "$msg\n";
+    $this->{$_LOG}->info($msg);
     unless ($this->check_file_ok($K_FRAME_ATX_I, {$K_FRAMENO => $i}, $msg)) {
       my $cmd  = $this->program_name($PROG_OSEM3D);
-      $cmd .= " -s " . $this->fileName($K_FRAME_ATX_S , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -a " . $this->fileName($K_TX_FRAME_A  , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_USEDIR => 0, $K_FRAMENO => $i});
-      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
+      $cmd .= " -s " . $this->fileName($K_FRAME_ATX_S , {$K_FRAMENO => $i});
+      $cmd .= " -a " . $this->fileName($K_TX_FRAME_A  , {$K_FRAMENO => $i});
+      $cmd .= " -p " . $this->fileName($K_FRAME_S_9   , {$K_FRAMENO => $i});
+      $cmd .= " -d " . $this->fileName($K_FRAME_CH    , {$K_FRAMENO => $i});
+      $cmd .= " -o " . $this->fileName($K_FRAME_ATX_I , {$K_FRAMENO => $i});
+      $cmd .= " -n " . $this->fileName($NORM_PREFIX   , {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
       $cmd .= " -W 3";
       $cmd .= " -I $ITER_MOTION_CORR";
       $cmd .= " -S 16";
       $cmd .= " -m 9,67";
       $cmd .= " -T 2";
       $cmd .= " -X 256";
-      # $cmd .= " -K " . $this->fileName($K_NORMFAC_256);		# See explanation below.
       $cmd .= " -K normfac.i";
       $cmd .= " -r " . $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
 
       $ret = $this->runit($cmd, "do_motion step 6: osem3d");
-      return $this->printLine("do_motion(): ERROR in PROG_OSEM3D", $ret) if ($ret);
+      if ($ret) {
+	$this->{$_LOG}->error("do_motion(): ERROR in PROG_OSEM3D");
+	return $ret;
+      }
     }
   }				# End of per-frame processing.
 
   # Step 7: if2e7
-  my $msg = "do_motion step 7: $K_IMAGE_ATX_V";
-  print "$msg\n";
+  $this->{$_LOG}->info("do_motion step 7: $K_IMAGE_ATX_V");
   unless ($this->check_file_ok($K_IMAGE_ATX_V)) {
     my $cmd = $this->program_name($PROG_IF2E7);
     $cmd .= " -g 0";
@@ -2666,15 +2722,17 @@ sub do_motion_as_script {
     $cmd .= " -v";
     $cmd .= " -e 0.0";
     $cmd .= " -s " . $this->{$_FNAMES}->{$_CALIB_};
-    $cmd .= $this->fileName($K_FRAME_ATX_I , {$K_USEDIR => 0, $K_FRAMENO => 0});
+    $cmd .= $this->fileName($K_FRAME_ATX_I , {$K_FRAMENO => 0});
 
     $ret = $this->runit($cmd, "do_motion step 7: if2e7");
-    return $this->printLine("do_motion(): ERROR in if2e7", $ret) if ($ret);
+    if ($ret) {
+      $this->{$_LOG}->error("do_motion(): ERROR in if2e7");
+      return $ret;
+    }
   }
 
   # Step 8: 
-  $msg = "do_motion 8: $K_IMAGE_ATX_RSL";
-  print "$msg\n";
+  $this->{$_LOG}->info("do_motion 8: $K_IMAGE_ATX_RSL");
   unless ($this->check_file_ok($K_IMAGE_ATX_RSL)) {
     for (my $i = 0; $i < $nframes; $i++) {
       my $iplus1 = $i + 1;
@@ -2682,34 +2740,44 @@ sub do_motion_as_script {
       if ($i == $this->{$_FNAMES}{$_MOT_REF_FR_}) {
 	# Reference frame
 	my $cmd = $this->program_name($PROG_MATCOPY);
-	$cmd .= " -i " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0}) . ",${iplus1},1,1";
-	$cmd .= " -o " . $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => 0}) . ",${iplus1},1,1";
+	$cmd .= " -i " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
+	$cmd .= " -o " . $this->fileName($K_IMAGE_ATX_RSL) . ",${iplus1},1,1";
 
 	$ret = $this->runit($cmd, "do_motion step 8: matcopy");
-	return $this->printLine("do_motion(): ERROR in matcopy", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("do_motion(): ERROR in matcopy");
+	  return $ret;
+	}
       } else {
 	# Not reference frame
 	my $cmd = $this->program_name($PROG_MAKE_AIR);
-	$cmd .= " -s " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0})   . ",${rplus1},1,1";
-	$cmd .= " -r " . $this->fileName($K_IMAGE_ATX_V  , {$K_USEDIR => 0})   . ",${iplus1},1,1";
-	$cmd .= " -i " . $this->fileName($K_FRAME_128_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
-	$cmd .= " -o " . $this->fileName($K_FRAME_ATX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
+	$cmd .= " -s " . $this->fileName($K_IMAGE_ATX_V)   . ",${rplus1},1,1";
+	$cmd .= " -r " . $this->fileName($K_IMAGE_ATX_V)   . ",${iplus1},1,1";
+	$cmd .= " -i " . $this->fileName($K_FRAME_128_AIR, {$K_FRAMENO => $i});
+	$cmd .= " -o " . $this->fileName($K_FRAME_ATX_AIR, {$K_FRAMENO => $i});
 
 	$ret = $this->runit($cmd, "do_motion step 8: make_air");
-	return $this->printLine("do_motion(): ERROR in make_air", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("do_motion(): ERROR in make_air");
+	  return $ret;
+	}
 
 	$cmd  = $this->program_name($PROG_ECAT_RESLICE);
-	$cmd .= $this->fileName($K_FRAME_ATX_AIR, {$K_USEDIR => 0, $K_FRAMENO => $i});
-	$cmd .= $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => 0}) . ",${iplus1},1,1";
+	$cmd .= $this->fileName($K_FRAME_ATX_AIR, {$K_FRAMENO => $i});
+	$cmd .= $this->fileName($K_IMAGE_ATX_RSL) . ",${iplus1},1,1";
 	$cmd .= " -k";
 	$cmd .= " -o";
 
 	$ret = $this->runit($cmd, "do_motion step 8: ecat_reslice");
-	return $this->printLine("do_motion(): ERROR in ecat_reslice", $ret) if ($ret);
+	if ($ret) {
+	  $this->{$_LOG}->error("do_motion(): ERROR in ecat_reslice");
+	  return $ret;
+	}
       }
     }
   }
 
+  $this->{$_LOG}->info('========== do_motion_as_script end ==========');
   return $ret;
 }
 
@@ -2719,11 +2787,12 @@ sub do_motion {
   my ($this) = @_;
   my $ret = 0;
 
+  $this->{$_LOG}->info('========== do_motion start ==========');
   my $bindir = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
   unless ($this->check_file_ok($K_MOTION_QC, '', "do_motion 1: $K_MOTION_QC")) {
     #  motion_qc $v_file_name_128 -v -O -R 0 #-a 1.03,4 #-r $ref_frame
     my $cmd = $this->program_name($PROG_MOTION_QC);
-    $cmd .= ' ' . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0});
+    $cmd .= ' ' . $this->fileName($K_IMAGE_128_V);
     $cmd .= ' -v ';		  # Verbose
     $cmd .= ' -O ';		  # Overwrite
     $cmd .= ' -R 0 ';		  # ecat_reslice_flag
@@ -2742,7 +2811,8 @@ sub do_motion {
   # Horrible bug in motion_correct_recon means calib factor file must be in local dir.
   # calibration factor file is created in edit_calibration_file().
   if ($this->edit_calibration_file()) {
-    return $this->log_msg('do_motion(): error in edit_calibration');
+    $this->{$_LOG}->error('do_motion(): error in edit_calibration');
+    return 1;
   }
   $this->file_must_exist($this->{$_FNAMES}->{$_CALIB_});
 
@@ -2752,10 +2822,10 @@ sub do_motion {
   unless ($this->check_file_ok($K_IMAGE_ATX_V, '', 'do_motion 2: ' . $K_IMAGE_ATX_V)) {
     $prog_name = $this->program_name($PROG_MOTION_CORR);
     my $cmd = $prog_name;
-    $cmd .= ' '    . $this->fileName($K_DYN, {$K_USEDIR => 0});
-    $cmd .= ' -n ' . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => 1});
-    $cmd .= ' -u ' . $this->fileName($K_TX_I, {$K_USEDIR => 0}); # Mu-map file
-    $cmd .= ' -E ' . $this->fileName($K_IMAGE_128_V, {$K_USEDIR => 0}); # Uncorrected Ecat file
+    $cmd .= ' '    . $this->fileName($K_DYN);
+    $cmd .= ' -n ' . $this->fileName($NORM_PREFIX, {$K_SPANTOUSE => $this->{$O_SPAN}, $K_USEDIR => $this->{$_PATH_STYLE}});
+    $cmd .= ' -u ' . $this->fileName($K_TX_I); # Mu-map file
+    $cmd .= ' -E ' . $this->fileName($K_IMAGE_128_V); # Uncorrected Ecat file
     #################### TEMP TAKEN OUT ####################
     # Leaving this out causes 'normfac.i' to be created in local dir.
     # If you want a better name but still locally generated normfac, delete K_NORMFAC_256 first.
@@ -2778,13 +2848,16 @@ sub do_motion {
 
     $ret += $this->runit($cmd, 'do_motion');
   }
-  return $this->printLine("do_motion ERROR '$ret' in $prog_name", $ret) if ($ret);
+  if ($ret) {
+    $this->{$_LOG}->error("do_motion ERROR '$ret' in $prog_name");
+    return 1;
+  }
 
   # Rename resliced motion file to standard format.
-  my $reslice_file = $this->fileName($K_IMAGE_ATX_RSL);
-  my $std_image_file = $this->fileName($K_IMAGE_V);
+  my $reslice_file   = $this->fileName($K_IMAGE_ATX_RSL, {$K_USEDIR => $this->{$_PATH_STYLE}});
+  my $std_image_file = $this->fileName($K_IMAGE_V      , {$K_USEDIR => $this->{$_PATH_STYLE}});
   copy($reslice_file, $std_image_file) unless ($this->{$O_DUMMY});
-  $this->log_msg("do_motion: copy generated file $reslice_file to standard name $std_image_file");
+  $this->{$_LOG}->info("do_motion: copy generated file $reslice_file to standard name $std_image_file");
   my %opts = (
     $CODE_SW   => $CODE_SW_GROUP{$this->{$O_SW_GROUP}},
     $CODE_SPAN => $this->{$O_SPAN},
@@ -2793,7 +2866,9 @@ sub do_motion {
   # $this->edit_ecat($this->fileName($K_IMAGE_ATX_V) , {%opts, $CODE_NOTE => "atx"}   );
   # $this->edit_ecat($this->fileName($K_IMAGE_ATX_V2), {%opts, $CODE_NOTE => "atx2mm"});
 
-  return $this->printLine("do_motion ERROR: returning $ret", $ret) if ($ret);
+  $this->{$_LOG}->error("do_motion ERROR: returning $ret", $ret) if ($ret);
+  $this->{$_LOG}->info('========== do_motion end ==========');
+  return $ret;
 }
 
 sub do_postrecon {
@@ -2806,23 +2881,24 @@ sub run_conversion {
   my ($this, $i_file_key, $v_file_key, $ecat_opts) = @_;
   my $ret = 0;
 
-  $this->printLine("run_conversion(): i_file_key = $i_file_key, v_file_key = $v_file_key, K_IMAGE_V = $K_IMAGE_V");
-  printHash($ecat_opts, "run_conversion") if (defined($ecat_opts) and $this->{$O_VERBOSE});
+  $this->{$_LOG}->info("run_conversion(): i_file_key = $i_file_key, v_file_key = $v_file_key, K_IMAGE_V = $K_IMAGE_V");
+  log_hash($ecat_opts, "run_conversion", $this->{$_LOG}) if (defined($ecat_opts) and $this->{$O_VERBOSE});
   
   if ($this->edit_calibration_file()) {
-    return $this->printLine("run_conversion returning ERROR from edit_calibration_file", 1);
+    $this->{$_LOG}->error("run_conversion returning ERROR from edit_calibration_file");
+    return 1;
   }
 
   my $recon_dir = $this->fileName($K_DIR_RECON);
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   my $lastframe = $nframes - 1;
-  my $imgfile   = $this->fileName($i_file_key, {$K_FRAMENO => $lastframe, $K_USEDIR => 0});
-  my $ecat_file = $this->fileName($v_file_key, {$K_USEDIR => 0});
-  $this->printLine("run_conversion(): ecat_file $ecat_file");
+  my $imgfile   = $this->fileName($i_file_key, {$K_FRAMENO => $lastframe});
+  my $ecat_file = $this->fileName($v_file_key);
+  $this->{$_LOG}->info("run_conversion(): ecat_file $ecat_file");
 
   my $fstat = $this->check_file($v_file_key);
   if ($fstat and $fstat->{$F_OK} and not $this->{$O_FORCE}) {
-    $this->log_msg("do_convert($imgfile, $ecat_file) - Skipping - already done (-f to force)");
+    $this->{$_LOG}->info("do_convert($imgfile, $ecat_file) - Skipping - already done (-f to force)");
   } else {
     my $kernel_width = undef;
     if ($this->{$O_WIDE_KERNEL}) {
@@ -2858,7 +2934,7 @@ sub edit_calibration_file {
   my $calib_factor = $calib_factors->{$CALIB_FACT};
   my $calib_date   = $calib_factors->{$CALIB_DATE};
 
-  # printHash($calib_factors, "HRRTRecon::edit_calibration_file()");
+  # log_hash($calib_factors, "HRRTRecon::edit_calibration_file(, $this->{$_LOG})");
 
   my %edits = (
     'calibration factor :=' => " $calib_factor",
@@ -2870,10 +2946,11 @@ sub edit_calibration_file {
     'edits'   => \%edits,
       );
   if ($this->editConfigFile(\%editargs)) {
-    printHash(\%editargs, "ERROR: editConfigFile");
-    return $this->printLine("edit_calibration_file(): returning error editConfigFile", 1);
+    log_hash(\%editargs, "ERROR: editConfigFile", $this->{$_LOG});
+    $this->{$_LOG}->error("edit_calibration_file(): returning error editConfigFile");
+    return 1;
   }
-  $this->log_msg("edit_calibration_file(): Calib factor $calib_factor date '$calib_date'");
+  $this->{$_LOG}->info("edit_calibration_file(): Calib factor $calib_factor date '$calib_date'");
   return 0;
 }
 
@@ -2896,7 +2973,7 @@ sub edit_ecat {
 	my $desc_str = "${desc_key}_${desc_val}";
 	# print STDERR "*** edit_ecat(): study_desc '$study_desc' desc_str '$desc_str'\n";
 	if ($study_desc =~ /$desc_str/) {
-	  print "*** Skip editing: string >$desc_str< already in >$study_desc<. ($STUDY_DESC in $filename).\n";
+	  $this->{$_LOG}->info("*** Skip editing: string >$desc_str< already in >$study_desc<. ($STUDY_DESC in $filename).");
 	} else {
 	  $new_desc .= "${sep}${desc_str}";
 	  $sep = '_';
@@ -2907,17 +2984,36 @@ sub edit_ecat {
   }
   if (length($new_desc) > $STUDY_LEN) {
     $new_desc = substr($new_desc, 0, $STUDY_LEN);
-    $this->log_msg("ERROR: edit_ecat: Trunc '$new_desc' to $STUDY_LEN bytes.\n");
+    $this->{$_LOG}->error("edit_ecat: Trunc '$new_desc' to $STUDY_LEN bytes.\n");
   }
   $this->set_study_description($filename, $new_desc);
+}
+
+# Return FQ path to given program in config file, if it exits. 
+# Else return undef.
+
+sub get_prog_from_conf {
+  my ($this, $prog_key) = @_;
+
+  my $fq_prog = undef;
+  my $full_prog = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$prog_key};
+  my ($name, $path, $suffix) = fileparse($full_prog);
+  print "xxx ('$name', '$path', '$suffix')\n";
+  if (-d $path) {
+    $fq_prog = abs_path($full_prog);
+  } else {
+    $this->{$_LOG}->warn("Cannot get path for '$prog_key': Tried $full_prog");
+  }
+  return $fq_prog;
 }
 
 sub get_study_description {
   my ($this, $filename) = @_;
 
   my $study_desc = '';
-  my $lmhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_LMHDR});
-  if (-f $lmhdr) {
+  my $lmhdr = $this->get_prog_from_conf($CNF_VAL_LMHDR);
+  # my $lmhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_LMHDR});
+  if ($lmhdr and -f $lmhdr) {
     my @ecatlines = `$lmhdr $filename`;
     my ($study_line) = grep(/$STUDY_DESC/, @ecatlines);
     $study_line = '' unless (hasLen($study_line));
@@ -2925,7 +3021,7 @@ sub get_study_description {
     my $study_desc = $1;
     $study_desc = '' unless (hasLen($study_desc));
   } else {
-    print "******** ERROR: Missing $lmhdr ********\n";
+    $this->{$_LOG}->error("******** Missing lmhdr ********");
   }
   return $study_desc;
 }
@@ -2933,24 +3029,25 @@ sub get_study_description {
 sub set_study_description {
   my ($this, $filename, $study_desc) = @_;
 
-  my $e7emhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_E7EMHDR});
-  if (-f $e7emhdr) {
+  my $e7emhdr = $this->get_prog_from_conf($CNF_VAL_E7EMHDR);
+  # my $e7emhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_E7EMHDR});
+  if ($e7emhdr and -f $e7emhdr) {
     my $cmdstr = "$e7emhdr $filename $STUDY_DESC := '$study_desc'";
-    $this->log_msg($cmdstr);
+    $this->{$_LOG}->info($cmdstr);
     system($cmdstr) unless ($this->{$O_DUMMY});
   } else {
-    print "******** ERROR: Missing $e7emhdr ********\n";
+    $this->{$_LOG}->error("******** Missing $e7emhdr ********");
   }
 }
 
 sub do_transfer {
   my ($this) = @_;
 
+  $this->{$_LOG}->info('========== do_transfer start ==========');
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
   my $lastframe = $nframes - 1;
   my $recon_dir = $this->fileName($K_DIR_RECON);
   my $span_dir  = $this->fileName($K_DIR_DEST);
-  print "*** do_transfer recon_dir $recon_dir span_dir $span_dir\n";
   if ($this->{$O_USESUBDIR}) {
     $span_dir .= "/span$this->{$O_SPAN}";
     $span_dir .= ($this->{$_USER_SW}) ? ($this->{$_USER_M_SW}) ? "_m" : "_u" : "_c";
@@ -2963,15 +3060,12 @@ sub do_transfer {
     }
   }
 
-  print "*** do_transfer recon_dir $recon_dir span_dir $span_dir\n";
-  if ($this->{$O_DUMMY}) {
-    print "mkDir($span_dir)\n";
-  } else {
-    my $dpath = mkDir($span_dir) or die "Can't create $span_dir";
+  $this->{$_LOG}->info("*** do_transfer recon_dir $recon_dir span_dir $span_dir");
+  unless ($this->{$O_DUMMY}) {
+    mkDir($span_dir) or $this->{$_LOG}->logdie("mkDir($span_dir)");
   }
   my $frame_dir = $span_dir . '/frames';
-  mkDir($frame_dir);
-#    my $dest_dir = ($srcfile =~ /frame/) ? $frame_dir : $span_dir;
+  mkDir($frame_dir) or $this->{$_LOG}->logdie("mkDir($frame_dir)");
 
   # ------------------------------------------------------------
   # Create hash %sendfiles of files => dest directory.
@@ -2979,30 +3073,29 @@ sub do_transfer {
   my @sendkeys = ($K_IMAGE_V, $K_TX_I, $K_TX_H33, $K_CRYSTAL_V);
   my %sendfiles = ();
   foreach my $sendkey (@sendkeys) {
-    my $sendfile = ($this->fileName($sendkey))[0];
+    my $sendfile = $this->fileName($sendkey, {$K_USEDIR => $DIR_CYGWIN});
     $sendfiles{$sendfile} = $span_dir;
   }
 
   # Include EM.i file if static (ie, phantom).
   if ($nframes == 1) {
-    my $em_ifile = $this->fileName($K_FRAME_I);
+    my $em_ifile = $this->fileName($K_FRAME_I, {$K_USEDIR => $DIR_CYGWIN});
     $sendfiles{$em_ifile} = $span_dir;
   }
 
   # Include the TX.s file in top-level dest dir
-  my $tx_s_file = $this->fileName($K_TX_SUBJ);
-  $sendfiles{$tx_s_file} = $this->fileName($K_DIR_DEST);
+  my $tx_s_file = $this->fileName($K_TX_SUBJ, {$K_USEDIR => $DIR_CYGWIN});
+  $sendfiles{$tx_s_file} = $this->fileName($K_DIR_DEST, {$K_USEDIR => $DIR_CYGWIN});
 
   for (my $i = 0; $i < $nframes; $i++) {
-    my $frame_hc_file = $this->fileName($K_FRAME_LM_HC, {$K_FRAMENO => $i});
-    my $frame_i_file  = $this->fileName($K_FRAME_I    , {$K_FRAMENO => $i});
+    my $frame_hc_file = $this->fileName($K_FRAME_LM_HC, {$K_FRAMENO => $i, $K_USEDIR => $DIR_CYGWIN});
+    my $frame_i_file  = $this->fileName($K_FRAME_I    , {$K_FRAMENO => $i, $K_USEDIR => $DIR_CYGWIN});
     $sendfiles{$frame_hc_file} = $frame_dir;
     $sendfiles{$frame_i_file . '.hdr'} = $frame_dir;
   }
 
   # Include the log file.
   $sendfiles{$this->{$_LOG_FILE}} = $span_dir;
-
 
   my %files_sent = ();
   my @log_file_str = ();
@@ -3015,52 +3108,31 @@ sub do_transfer {
       my $suffix = $1;
       unless (defined($files_sent{$suffix})) {
 	my $logstr = makeCopyMsg("Copy $nframes files:", $srcfile, $destfile);
-	$this->log_msg($logstr);
+	$this->{$_LOG}->info($logstr);
 	push(@log_file_str, $logstr);
 	$files_sent{$suffix} = 1;
       }
     } else {
       # Not a frame-numbered file, so can be logged individually.
       my $logstr = makeCopyMsg("Copy file:", $srcfile, $destfile);
-      $this->log_msg($logstr);
+      $this->{$_LOG}->info($logstr);
       push(@log_file_str, $logstr);
     }
-    unless ($this->{$O_DUMMY}) {
-      move($destfile, $destfile . '.orig') if (-f $destfile);
-      copy($srcfile, $destfile);
-    }
+    move($destfile, $destfile . '.orig') if ((-f $destfile) and not $this->{$O_DUMMY});
+    $this->rsync_file($srcfile, $destfile);
   }
-  writeFile($this->fileName($K_TRANSFER_LOG), \@log_file_str);
+  writeFile($this->fileName($K_TRANSFER_LOG, {$K_USEDIR => $DIR_CYGWIN}), \@log_file_str);
 
   # ------------------------------------------------------------
   # Copy image file to image servers.
   # ------------------------------------------------------------
   my @imagekeys = ($K_IMAGE_V, $K_CRYSTAL_V, $K_LIST_HC);
-  # push(@imagekeys, $K_IMAGE_NORESL_V) if ($this->{$_USER_M_SW});
-  print "imagekeys: @imagekeys\n";
-  # Destination system depends on PI (listed in GENERAL_DATA header line).
-  my ($key, $pi) = ('', '');
-  if (defined(my $gen_data = $this->{$_HDRDET}->{'GENERAL_DATA'})) {
-    ($key, $pi) = split(/:/, $gen_data);
-  }
-  if ($pi =~ /pomper/i) {
-    # Pomper studies go locally.
-
-  } else {
-    # Wong studies go to hal.
-    my @destsyss = ($SYS_HAL);
-
-    foreach my $imgkey (@imagekeys) {
-      my ($dosimgfile, $hkey)  = $this->fileName($imgkey);
-      my $cygimgfile = $hkey->{$DIR_CYGWIN_NEW};
-      foreach my $destsys (@destsyss) {
-	my $str = "rsync -tv $cygimgfile $destsys";
-	$this->log_msg($str);
-	unless ($this->{$O_DUMMY} or $this->{$O_NOHOST}) {
-	  `$str`;
-	}
-      }
-    }
+  $this->{$_LOG}->info("imagekeys: @imagekeys");
+  my @destsyss = ($SYS_WONGLAB);
+  
+  foreach my $imgkey (@imagekeys) {
+    my $cygimgfile = $this->fileName($imgkey, {$K_USEDIR => $DIR_CYGWIN});
+    $this->rsync_file($cygimgfile, $SYS_WONGLAB);
   }
 
   # ------------------------------------------------------------
@@ -3068,13 +3140,14 @@ sub do_transfer {
   # ------------------------------------------------------------
   # QC produces 'frame00/scatter_qc_00.plt' etc.
   # Process with gnuplot and rename output to scatter_qc_<frame>.ps
-  my $gnuplot = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
+  my $gnuplot = $this->get_prog_from_conf($CNF_VAL_GNUPLOT);
+  # my $gnuplot = $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);
   if ($this->{$O_DO_QC} and not $this->{$O_DUMMY}) {
     if (-f $gnuplot) {
       my $qc_path = $recon_dir . "/QC";
       my $qc_dest_dir = $span_dir . "/QC";
       mkdir($qc_dest_dir);
-      print "Post-processing $nframes frames (dest QC dir $qc_dest_dir)\n";
+      $this->{$_LOG}->info("Post-processing $nframes frames (dest QC dir $qc_dest_dir)");
       for (my $i = 0; $i < $nframes; $i++) {
 	my $frame     = sprintf("%02d", $i);
 	my $qc_subdir = "$qc_path/frame${frame}";
@@ -3084,15 +3157,44 @@ sub do_transfer {
 	
 	# QC destintation directory.
 	my $qcdst = "${qc_dest_dir}/scatter_qc_${frame}.ps";
-	$this->log_msg("Move $nframes frames: move($qcsrc, $qcdst)\n") if ($i == 0);
-	move($qcsrc, $qcdst) unless ($this->{$O_DUMMY});
+	$this->{$_LOG}->info("Move $nframes frames: move($qcsrc, $qcdst)\n") if ($i == 0);
+	$this->rsync_file($qcsrc, $qcdst);
       }
     } else {
-      $this->log_msg("********** No gnuplot - omit production of QC files! **********\n");
+      $this->{$_LOG}->info("********** No gnuplot - omit production of QC files! **********\n");
     }
   }
 
-  return $this->printLine("do_transfer returning 0", 0);
+  $this->{$_LOG}->info('========== do_transfer end ==========');
+  return 0;
+}
+
+sub rsync_file {
+  my ($this, $srcfile, $dstfile) = @_;
+
+  my $logstr = $this->{$O_DUMMY} ? 'Dummy: ' : '';
+  $this->{$_LOG}->info($logstr . "rsync_file($srcfile, $dstfile)");
+  my %rsopts = (
+    'times'	=> 1,
+    'src'	=> $srcfile,
+    'dest'	=> $dstfile,
+    'dry-run'   => ($this->{$O_DUMMY}) ? 1 : 0,
+#    'perms'     => 1,
+#    'chmod'     => 'ugo=rw',
+      );
+
+  my $rsync = new File::Rsync();
+  my $ret = $rsync->exec(\%rsopts);
+
+  unless ((-s $dstfile) and not $this->{$O_DUMMY}) {
+    $this->{$_LOG}->error("rsync_file($srcfile, $dstfile) failed");
+    return;
+  }
+  my $r_err = ($rsync->err() // '');
+  my $r_out = ($rsync->out() // '');
+  if (hasLen($r_err) or hasLen($r_out)) {
+    $this->{$_LOG}->warn("rsync_file(): r_err '$r_err', r_out '$r_out'");
+  }
 }
 
 # do_make_histo: Run short test histogram to ensure log file is up to date.
@@ -3102,13 +3204,12 @@ sub do_crystalmap {
   my ($this, $do_make_histo) = @_;
 
   # Run a short histograming to be sure we have a clean log file for errors.
-  my $listmode_file = $this->fileName($K_LISTMODE, {$K_USEDIR => 0});
-  my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
-  #   my $s_file = $C_TEMP_HISTO;
+  my $listmode_file = $this->fileName($K_LISTMODE);
   my $recon_dir = $this->fileName($K_DIR_RECON);
   my $s_file = "${recon_dir}/${HISTO_S}";
 
-  my $logfile = $this->{$_LOG_DIR} . "/lmhistogram_${dir}_test.log";
+  my $dir = (split(/\//, $this->fileName($K_DIR_RECON)))[-1];
+  my $logfile = $this->{$_LOG_DIR} . '/lmhistogram_' . $dir . '_test.log';
   $this->safe_unlink($logfile);
   
   # my $uses_user_sw = ($this->{$O_SW_GROUP} =~ /$SW_USER|$SW_USER_M/) ? 1 : 0;
@@ -3124,7 +3225,7 @@ sub do_crystalmap {
   $cmd = "export NUMBER_OF_PROCESSORS=1; $cmd";
 
   my $ret = $this->runit($cmd, "do_crystalmap rebin");
-  print "ERROR: $lmhistogram_prog returned $ret\n" if ($ret);
+  $this->{$_LOG}->error("$lmhistogram_prog returned $ret") if ($ret);
   
   # CrystalMap.exe does not handle missing time tags.
   # Check the lmhistogram log file for missing time tags.
@@ -3133,24 +3234,24 @@ sub do_crystalmap {
   my @loglines = fileContents($logfile);
   # 100804113954	Warning	Missing timetag : 15107-15035 = 72 msec
   my @missinglines = sort grep(/Missing timetag/, @loglines);
-  print scalar(@missinglines) . " timetag lines in log file $logfile\n";
+  $this->{$_LOG}->info(scalar(@missinglines) . " timetag lines in log file $logfile");
   my $crystal_len = $CRYSTAL_LEN;
   if (scalar(@missinglines)) {
     my $firstline = $missinglines[0];
     my @bits = split(/[\s\-]+/, $firstline);
     my $missingstart = int($bits[5] / 1000);
     $crystal_len = ($missingstart <= $CRYSTAL_LEN) ? ($missingstart - 1) : $CRYSTAL_LEN;
-    $this->log_msg("Reducing crystalmap time from $CRYSTAL_LEN to $crystal_len seconds: Missing timetags");
+    $this->{$_LOG}->info("Reducing crystalmap time from $CRYSTAL_LEN to $crystal_len seconds: Missing timetags");
   }
   # Skip this step if less than 2 seconds before first missing time tag.
   if ($crystal_len <= 2) {
-    $this->log_msg("ERROR: Missing timetags within $crystal_len sec: Skip Crystal Map step.\n");
+    $this->{$_LOG}->error("Missing timetags within $crystal_len sec: Skip Crystal Map step.\n");
     return;
   }
 
   # Create the crystalmap file.
-  my $em_file      = $this->fileName($K_LISTMODE , {$K_USEDIR => 0});
-  my $crystal_file = $this->fileName($K_CRYSTAL_V, {$K_USEDIR => 0});
+  my $em_file      = $this->fileName($K_LISTMODE );
+  my $crystal_file = $this->fileName($K_CRYSTAL_V);
 
   $cmd = $this->program_name($PROG_CRYSTALMAP);
   $cmd   .= " -i $em_file";
@@ -3177,7 +3278,7 @@ sub do_crystalmap {
   my $e7emhdr = abs_path($this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_E7EMHDR});
   foreach my $edit_string (@edit_strings) {
     $cmd = "$e7emhdr $crystal_file $edit_string";
-    $this->log_msg("$cmd\n");
+    $this->{$_LOG}->info("$cmd\n");
     `$cmd` unless ($this->{$O_DUMMY});
   }
 
@@ -3198,15 +3299,20 @@ sub runit {
   my ($this, $cmd, $comment) = @_;
   my $stars = "**********************************************************************";
 
+  $this->{$_LOG}->info('log_dir = ' . $this->{$_LOG_DIR});
+
   # Log dir is recon_dir/recon_yymmdd_hhmmss
   my $logdir = $this->{$_LOG_DIR};
   (-d $logdir) or mkdir($logdir) or die "Can't mkdir($logdir)";
 
   # Horrible bug.  e7 files will hang on ~/.ma_access.dat file.
   my $ma_access_file = $ENV{'HOME'} . '/.ma_pattern.dat';
-  unlink($ma_access_file);
+  unlink($ma_access_file) if (-s $ma_access_file);
 
-  $this->create_gm328_file() and return $this->log_msg("Error creating gm328 file", 1);
+  if ($this->create_gm328_file()) {
+    $this->{$_LOG}->error("Error creating gm328 file");
+    return 1;
+  }
 
   my $bin_dir = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_BIN};
   my $prog_path = ($this->{$O_ONUNIX}) ? $prog_path_lin : $prog_path_cyg;
@@ -3229,11 +3335,11 @@ sub runit {
   if ($this->{$O_DUMMY}) {
     my $cmt = "*****  DUMMY  $comment  *****";
     my $substars = substr($stars, 0, length($cmt));
-    $this->log_msg("$cmt\n$lcmd\n$substars\n");
+    $this->{$_LOG}->info("$cmt\n$lcmd\n$substars\n");
   } else {
-    $this->log_msg("Issuing: $lcmd");
+    $this->{$_LOG}->info("Issuing: $lcmd");
     $ret = system("env - /bin/bash -c '$cmd'");
-    $this->log_msg("Returned: $ret");
+    $this->{$_LOG}->info("Returned: $ret");
   }
   return $ret;
 }
@@ -3243,9 +3349,9 @@ sub safe_unlink {
   $verbose //= 0;
 
   if ($this->{$O_DUMMY}) {
-    print("Dummy: unlink($filename)\n") if ($verbose);
+    $this->{$_LOG}->info("Dummy: unlink($filename)") if ($verbose);
   } else {
-    unlink($filename);
+    unlink($filename) if (-s $filename);
   }
 }
 
@@ -3263,7 +3369,7 @@ sub insert_recon_record {
   return 0 unless ($this->{$O_DBRECORD});
   my $dbh;
   unless ($dbh = $this->{$_DBI_HANDLE}) {
-    $this->log_msg("ERROR: insert_recon_record(): db handle null: exiting");
+    $this->{$_LOG}->error("insert_recon_record(): db handle null: exiting");
     return 1;
   }
   
@@ -3274,7 +3380,7 @@ sub insert_recon_record {
     $lmident = $lm_det->{'ident'};
   }
   unless ($lmident) {
-    $this->log_msg("ERROR: HRRTRecon::insert_recon_record(): No file ident in DB for $listmode_file");
+    $this->{$_LOG}->error("HRRTRecon::insert_recon_record(): No file ident in DB for $listmode_file");
     return(1);
   }
   
@@ -3289,14 +3395,14 @@ sub insert_recon_record {
     'recontime' => $dates->{$DATETIME_SQL},
       );
 
-  printHash(\%recondet, "This is recondet");
+  log_hash(\%recondet, "This is recondet", $this->{$_LOG});
   my $condstr = conditionString(\%recondet, ',');
   my $sqlstr = "insert into recon set $condstr";
 
   if ($this->{$O_DUMMY}) {
-    $this->log_msg("insert_recon_record(): $sqlstr\n", 1);
+    $this->{$_LOG}->info("insert_recon_record(): $sqlstr\n", 1);
   } else {
-    $this->log_msg("insert_recon_record(): $sqlstr\n", 0);
+    $this->{$_LOG}->info("insert_recon_record(): $sqlstr\n", 0);
   }
 }
 
@@ -3307,7 +3413,7 @@ sub get_file_details {
 
   my $dbh;
   unless ($dbh = $this->{$_DBI_HANDLE}) {
-    $this->log_msg("ERROR: HRRTRecon::get_file_details(): db handle null: exiting");
+    $this->{$_LOG}->error("HRRTRecon::get_file_details(): db handle null: exiting");
     return 1;
   }
   my $fstat = fileStat($filename);
@@ -3346,11 +3452,6 @@ sub read_conf {
   # Config::Std
   read_config($conf_file, %config);
   return \%config;
-}
-
-sub print_conf {
-  my ($conf, $conf_file) = @_;
-  printHash($conf, "HRRTRecon::print_conf($conf_file)");
 }
 
 # Check all required values are filled in.
