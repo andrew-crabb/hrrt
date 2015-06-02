@@ -42,7 +42,7 @@ our $g_logger = undef;
 # ------------------------------------------------------------
 
 my %opts;
-getopts('cbtasrpYydDe:fgG:hHijKImMNnoqQuvR:S:UVz369', \%opts);
+getopts('cbtasrpYydDe:fgG:hHijJKImMNnoqQuvR:S:UVz369', \%opts);
 our $do_complete       = $opts{'c'} || 0;   # Options BTASRP, in that order.
 our $do_rebin          = $opts{'b'} || 0;   # lmhistogram (makes *EM.s)
 our $do_transmission   = $opts{'t'} || 0;   # e7_atten (makes *TX.i)
@@ -65,6 +65,7 @@ my $nohost             = $opts{'H'} || 0;   # Do not scp image files to host.
 my $dbrecord           = $opts{'i'} || 0;   # Insert database record of recon.
 my $nodbrecord         = $opts{'I'} || 0;   # Don't insert database record.
 my $usesubdir          = $opts{'j'} || 0;   # Use span-named subdirs for dest files.
+my $framebyframe       = $opts{'J'} || 0;   # Process one complete frame at a time.
 my $widekernel         = $opts{'K'} || 0;   # Use 5 mm wide kernel to if2e7
 my $frame_count        = $opts{'n'} || 0;   # Include frame count in image file name.
 my $multiline          = $opts{'z'} || 0;   # Print log commands in multiline format.

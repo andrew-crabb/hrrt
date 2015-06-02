@@ -1743,7 +1743,7 @@ sub do_rebin {
     $cmd .= " -notimetag" if ($this->{$O_NOTIMETAG});
     $cmd .= " -l $logfile";
     # ahc 2/6/13 made this a required argument
-    $cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_M_SW});
+    $cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_M_SW} or $this->{$_USER_SW});
     $cmd = "export NUMBER_OF_PROCESSORS=1; $cmd";
     $ret = $this->runit($cmd, "do_rebin subject TX");
     if ($ret) {
@@ -1782,7 +1782,7 @@ sub do_rebin {
     $cmd .= " -notimetag" if ($this->{$O_NOTIMETAG});
     $cmd .= " -l $logfile";
     # ahc 2/6/13 made this a required argument
-    if ($this->{$_USER_M_SW}) {
+    if ($this->{$_USER_M_SW} or $this->{$_USER_SW}) {
       $cmd .= " -r $rebinner_lut_file";
     }
     $cmd = "export NUMBER_OF_PROCESSORS=1; $cmd";
@@ -2027,7 +2027,8 @@ sub check_attenuation_done {
 }
 
 sub do_scatter {
-  my ($this) = @_;
+  my ($this, $frameno) = @_;
+  $frameno //= undef;
   
   $this->{$_LOG}->info('========== do_scatter begin ==========');
   my $nhdr      = $this->{$_HDRDET}->{$NFRAMES};
@@ -2043,7 +2044,8 @@ sub do_scatter {
   my @framing = @$framing;
   $this->{$_LOG}->info("*** framing ($nhdr frames): " . join(" ", @framing));
 
-  for (my $i = 0; $i < $nhdr; $i++) {
+  my ($startframe, $endframe) = $frameno ? ($frameno, $frameno) : (0, $nhdr);
+  for (my $i = $startframe; $i < $endframe; $i++) {
     # ---------- Part 1: e7_sino ----------
     my $qc_subdir = sprintf("%s/frame%02d", $qc_path, $i);
     mkDir(convertDirName($qc_subdir)->{$DIR_CYGWIN}) or die "Can't create $qc_subdir";
@@ -2131,7 +2133,7 @@ sub do_scatter {
 
 	# ahc 5/19/15
 	my $rebinner_lut_file = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${REBINNER_LUT_FILE}";
-	$cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_SW});
+	$cmd .= " -r $rebinner_lut_file" if ($this->{$_USER_SW} or $this->{$_USER_SW});
 	
 	$this->runit($cmd, "do_delays($i)");
 	$this->{$_LOG}->info("do_delays($i) completed");
@@ -2225,7 +2227,7 @@ sub do_sensitivity {
   $cmd .= " -v $OSEM_SENS_VERBOSE";	  # -v  verbosity level
   $cmd .= " -X $OSEM_SENS_IMG_DIM";	  # -X  image dimension
   $cmd .= " -K $normfac_256_file";
-  if ($this->{$_USER_M_SW}) {
+  if ($this->{$_USER_M_SW} or $this->{$_USER_SW}) {
     $cmd .= " -r $rebinner_lut_file"; # added 2/10/13 ahc
   }
 
@@ -2239,7 +2241,7 @@ sub do_sensitivity {
 # Recon-128 computes its own sensitivity file each time.  It does use -B.
 
 sub do_reconstruction {
-  my ($this) = @_;
+  my ($this, $frameno) = @_;
 
   $this->{$_LOG}->info('========== do_reconstruction begin ==========');
   my $nhdr = $this->{$_HDRDET}->{$NFRAMES};
@@ -2260,7 +2262,10 @@ sub do_reconstruction {
 
   my $nframes = $nhdr;
   my $prog_osem3d = $this->program_name($PROG_OSEM3D);
-  for (my $i = 0; $i < $nframes; $i++) {
+
+  my ($startframe, $endframe) = $frameno ? ($frameno, $frameno) : (0, $nframes);
+  for (my $i = $startframe; $i < $endframe; $i++) {
+#    for (my $i = 0; $i < $nframes; $i++) {
     my $msg = "Reconstruction/256: Frame $i";
     $this->{$_LOG}->info($msg);
     
