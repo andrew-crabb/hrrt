@@ -17,6 +17,7 @@ use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
+use File::Path qw(make_path remove_tree);
 use File::Util;
 use FindBin;
 use IO::Prompter;
@@ -125,6 +126,9 @@ my $log_category = 'hrrt_recon';
 $g_logger = Log::Log4perl->get_logger($log_category);
 $g_logger->more_logging() if ($opts->{$Opts::OPT_VERBOSE});
 
+# If no steps performed, or dummy, don't log to file.
+#  my $log_dir = $g_calib_dir . '/recon_' . $g_recon_start;
+#  make_path($log_dir) or croak("Can't make_path($log_dir)");
 
 # Find the l64 file (basis for other file names)
 do_config();
