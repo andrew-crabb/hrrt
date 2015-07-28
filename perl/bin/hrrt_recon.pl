@@ -23,10 +23,10 @@ use lib Cwd::abs_path($FindBin::Bin . '/../lib');
 use lib Cwd::abs_path($FindBin::Bin . '/../../../perl/lib');
 
 use FileUtilities;
-use Utilities_new;
-use HRRTUtilities;
 use HRRTRecon;
+use HRRTUtilities;
 use HRRT_Config;
+use Utilities_new;
 
 no strict 'refs';
 

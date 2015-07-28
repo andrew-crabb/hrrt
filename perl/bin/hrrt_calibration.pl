@@ -20,6 +20,7 @@ use File::Copy;
 use File::Util;
 use FindBin;
 use IO::Prompter;
+use POSIX;
 use Readonly;
 use Sys::Hostname;
 
@@ -29,6 +30,7 @@ use lib abs_path("$FindBin::Bin/../../../perl/lib");
 use FileUtilities;
 use HRRT;
 use HRRTRecon;
+use HRRT_Config;
 use HRRT_Utilities;
 use Opts;
 use Utilities_new;
@@ -42,12 +44,13 @@ Readonly my $RATIO_STR        => qq{avg plane};
 our $hrrt_progs  = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
 our $hrrt_consts = HRRT::read_hrrt_config($HRRT::HRRT_CONSTANTS_JSON);
 our $hrrt_files  = HRRT::read_hrrt_config($HRRT::HRRT_FILES_JSON);
-print Dumper($hrrt_progs);
-print Dumper($hrrt_consts);
-print Dumper($hrrt_files);
+# print Dumper($hrrt_progs);
+# print Dumper($hrrt_consts);
+# print Dumper($hrrt_files);
 
 # Globals
 
+our $g_logger      = undef;
 our $g_calib_dir   = undef;
 our $g_em_l64_file = undef;
 our $g_hrrt_det    = undef; # Details lf l64 file
@@ -87,18 +90,41 @@ our %allopts = (
   },
     );
 
+# ------------------------------------------------------------
+# Main
+# ------------------------------------------------------------
+
 our $opts = process_opts(\%allopts);
 if ($opts->{$Opts::OPT_HELP}) {
   usage(\%allopts);
   exit;
 }
 
-$g_calib_dir //= $opts->{$OPT_CALIBDIR};
+$g_calib_dir = ($opts->{$OPT_CALIBDIR} // '');
 unless (-d ($g_calib_dir)) {
   print "ERROR: Calibration dir not present: '$g_calib_dir'\n";
   usage(\%allopts);
   exit;
 }
+
+our $g_recon_start = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
+
+# Read configuration file
+my $conf_file = conf_file_name();
+my %config = ();
+my $config = read_config($conf_file, %config);
+
+# Get path of this executable
+my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
+$root_path = abs_path("${root_path}/../../") . '/';
+my $log4perl_conf = $root_path . $config{$CNF_SEC_BIN}{$CNF_VAL_ETC} . '/' . $HRRTRecon::LOG4PERL_FILE_CNF;
+Log::Log4perl::init($log4perl_conf);
+croak("ERROR: Cannot initialize log4perl") unless (Log::Log4perl->initialized());
+
+my $log_category = 'hrrt_recon';
+$g_logger = Log::Log4perl->get_logger($log_category);
+$g_logger->more_logging() if ($opts->{$Opts::OPT_VERBOSE});
+
 
 # Find the l64 file (basis for other file names)
 do_config();
@@ -107,7 +133,9 @@ do_name_files();
 # Get details of l64 file (dates, names)
 $g_hrrt_det = hrrt_filename_det("${g_calib_dir}/${g_em_l64_file}.hdr", 1);
 my $calib_date = $g_hrrt_det->{'date'}->{$DATES_HRRTDIR};
-print Dumper($g_hrrt_det);
+
+$g_logger->debug('g_hrrt_det');
+$g_logger->debug(sub { Dumper($g_hrrt_det)});
 
 # Details of calibration l64 file.
 my $recon = make_recon_obj();
@@ -135,17 +163,20 @@ my $json = JSON->new->allow_nonref;
 
 WHILE:
 while ($iter < 5) {
-  print "xx iter $iter\n";
+  # Important.  Need a new recon time for each recon, as the gm328.ini file
+  # in the recon dir is accepted if present, and it contains the erg ratio.
+  $g_recon_start = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
+  $g_logger->info("Iteration $iter");
   if (defined($erg_ratios) and exists($erg_ratios->{$erg_ratio})) {
     # This erg ratio and its roi ratio have been computed.
     # Assume the EM.i file is present, and calculate roi ratio from it.
     my $roi_ratio = $erg_ratios->{$erg_ratio};
     $old_er = $erg_ratio;
     $erg_ratio = $erg_ratio - int(($roi_ratio - 1.0) * 75);
-    $recon->log_msg("xx Iter $iter, ER was $old_er, roi_ratio $roi_ratio, ER now $erg_ratio");
+    $g_logger->info("Iteration $iter, ER was $old_er, roi_ratio $roi_ratio, ER now $erg_ratio");
     # Bail if we're going back on an old value.
     if (exists($erg_ratios->{$erg_ratio})) {
-      $recon->log_msg("xx Iter $iter, new ER already computed, exiting");
+      $g_logger->info("xx Iter $iter, new ER already computed, exiting");
       last WHILE;
     }
   }
@@ -153,8 +184,8 @@ while ($iter < 5) {
   $recon = make_recon_obj({$O_ERGRATIO => $erg_ratio});
   do_recon($recon, $iter);
   $erg_ratios->{$erg_ratio} = do_calc_ratio();
-  print "xx iter $iter, erg_ratios now:\n";
-  print Dumper($erg_ratios);
+  $g_logger->info("Iteration $iter, erg_ratio $erg_ratio, erg_ratios now:");
+  $g_logger->info(sub { Dumper($erg_ratios)});
   unlink $g_ergratio_file;
   my $encoded_hash = $json->pretty->encode($erg_ratios);
   write_file($g_ergratio_file, $encoded_hash);
@@ -169,7 +200,7 @@ exit;
 
 sub store_results {
   my ($calib_date, $erg_ratio, $calibration_factor) = @_;
-  print "store_results($calib_date, $erg_ratio, $calibration_factor)\n";
+  $g_logger->info("store_results($calib_date, $erg_ratio, $calibration_factor)");
 }
 
 # Read in the JSON file storing previous erg ratio - roi ratio pairs.
@@ -186,8 +217,8 @@ sub read_erg_ratios {
     my %empty_hash = ();
     $ergratio_ref = \%empty_hash;
   }
-  print "read_erg_ratios:\n";
-  print Dumper($ergratio_ref);
+  $g_logger->info("read_erg_ratios:");
+  $g_logger->info(sub{Dumper($ergratio_ref)});
   return $ergratio_ref;
 }
 
@@ -203,6 +234,8 @@ sub make_recon_obj {
     $O_MULTILINE   => 0,
     $O_SW_GROUP    => $SW_CPS,
     $O_CONF_FILE   => $opts->{$OPT_CONFFILE},
+    $O_RECON_START => $g_recon_start,
+    $O_LOG_CAT     => $log_category,
       );
 
   if (has_len($argptr)) {
@@ -212,7 +245,7 @@ sub make_recon_obj {
   my $recon = HRRTRecon->new(\%recon_opts);
 
   if ($recon->analyze_recon_dir($g_calib_dir)) {
-    print "ERROR in recon->analyze_recon_dir($g_calib_dir): Exiting\n";
+    $g_logger->info("ERROR in recon->analyze_recon_dir($g_calib_dir): Exiting");
     exit 1;
   }
   return $recon;
@@ -259,23 +292,23 @@ sub do_recon {
 
     my $proc_name = "do_${p_name}";
     unless ($$proc_name) {
-      $recon->log_msg("$proc_name not set: skipping");
+      $g_logger->info("$proc_name not set: skipping");
       next;
     }
     my $spc = "                                                  ";
     my $tstr = "Step $count: \u$p_name Process";
     my $sp1 = substr($spc, 0, (50 - length($tstr)) / 2);
     my $sp2 = substr($spc, 0, 50 - length($tstr) - length($sp1));
-    $recon->log_msg("------------------------------------------------------------");
-    $recon->log_msg("*****${sp1}${tstr}${sp2}*****");
-    $recon->log_msg("(p_name $p_name, p_done $p_done, p_ready $p_ready)");
+    $g_logger->info("------------------------------------------------------------");
+    $g_logger->info("*****${sp1}${tstr}${sp2}*****");
+    $g_logger->info("(p_name $p_name, p_done $p_done, p_ready $p_ready)");
 
     # Check that prerequisites are correct.
     $recon->analyze_recon_dir($g_calib_dir);
     $p_ready = $recon->{$_PROCESSES}{$process}->{$PROC_PREOK};
     # Check if it's been done already.
     if ($p_done and not $opts->{$OPT_FORCE}) {
-      $recon->log_msg("$proc_name skipped - Already done (-f to force)");
+      $g_logger->info("$proc_name skipped - Already done (-f to force)");
     } else {
       # Check that it has all its prerequsites.
       if ($p_ready) {
@@ -289,14 +322,14 @@ sub do_recon {
         $recon->analyze_recon_dir($g_calib_dir);
         $p_done       = $recon->{$_PROCESSES}{$process}->{$PROC_POSTOK};
         my $proc_name = $recon->{$_PROCESSES}{$process}->{$PROC_NAME};
-        $recon->log_msg("Process $count ($process): $proc_name, p_done = $p_done\n");
-	$recon->log_msg("Process step $count ($process) did not complete") unless ($p_done);
+        $g_logger->info("Process $count ($process): $proc_name, p_done = $p_done\n");
+	$g_logger->info("Process step $count ($process) did not complete") unless ($p_done);
       } else {
-	$recon->log_msg("ERROR: Prerequsites for $p_name process are missing!", 1);
+	$g_logger->info("ERROR: Prerequsites for $p_name process are missing!", 1);
 	exit(1);
       }
     }
-    $recon->log_msg("------------------------------------------------------------");
+    $g_logger->info("------------------------------------------------------------");
   }
 }
 
@@ -314,7 +347,7 @@ sub do_calc_ratio {
   if (my $ratio_lines = runit($cmd, 1)) {
     my @ratio_lines = @$ratio_lines;
     my ($ratio_line) = grep(/$RATIO_STR/, @ratio_lines);
-    print "ratio line: $ratio_line\n";
+    $g_logger->debug("ratio line: $ratio_line");
     if ($ratio_line =~ /.+(\d+\.\d+)/) {
       print "do_calc_ratio: Ratio $1\n";
       $ret = $1;
@@ -391,6 +424,12 @@ sub runit {
     log_msg("Returned: $ret");
   }
   return $ret;
+}
+
+sub logfile_name {
+  my $log_dir = $g_calib_dir . '/recon_' . $g_recon_start;
+  (-d $log_dir) or mkdir($log_dir);
+  return $log_dir . '/' . 'recon_' . $g_recon_start . '.log';
 }
 
 sub log_msg {

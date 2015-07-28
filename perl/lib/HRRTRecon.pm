@@ -777,7 +777,6 @@ sub new {
   my $class = ref($that) || $that;
   my $sw_group = $arg_ref->{$O_SW_GROUP};
 
-  print "XXX HRRTRecon log level $arg_ref->{$O_LOG_CAT}\n";
   my $logger = Log::Log4perl->get_logger($arg_ref->{$O_LOG_CAT});
   # Base (~/DEV/hrrt, ~/BIN/hrrt) comes from $0 (~/DEV/hrrt/perl/bin/foo.pl)
   my ($pname, $root_path, $psuff) = fileparse($0, qr/\.[^.]*/);
