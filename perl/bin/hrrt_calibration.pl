@@ -17,9 +17,11 @@ use Cwd qw(abs_path);
 use Data::Dumper;
 use File::Basename;
 use File::Copy;
+use File::Path qw(make_path remove_tree);
 use File::Util;
 use FindBin;
 use IO::Prompter;
+use POSIX;
 use Readonly;
 use Sys::Hostname;
 
@@ -55,6 +57,8 @@ our $g_platform = Utility::platform();
 our $g_bin_dir = hrrt_path() . '/bin/' . $g_platform;
 our $g_logfile = "hrrt_calibration_" . convertDates(time())->{$DATES_HRRTDIR};
 our $g_ergratio_file = undef;	# JSON file storing previous erg ratio - ring ratio pairs.
+our $g_recon_start = undef;
+our $g_logger = undef;
 
 print "g_platform is $g_platform\n";
 
@@ -100,6 +104,17 @@ unless (-d ($g_calib_dir)) {
   exit;
 }
 
+# Initialize recon start time, and flag on whether to create log.
+my $time_now = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
+$g_recon_start //= $time_now;
+# If no steps performed, or dummy, don't log to file.
+  my $log_dir = $g_calib_dir . '/recon_' . $g_recon_start;
+  make_path($log_dir) or croak("Can't make_path($log_dir)");
+
+my $log_category = 'hrrt_recon';
+$g_logger = Log::Log4perl->get_logger($log_category);
+$g_logger->more_logging() if ($opts->{$OPT_VERBOSE});
+
 # Find the l64 file (basis for other file names)
 do_config();
 do_name_files();
@@ -142,10 +157,10 @@ while ($iter < 5) {
     my $roi_ratio = $erg_ratios->{$erg_ratio};
     $old_er = $erg_ratio;
     $erg_ratio = $erg_ratio - int(($roi_ratio - 1.0) * 75);
-    $recon->log_msg("xx Iter $iter, ER was $old_er, roi_ratio $roi_ratio, ER now $erg_ratio");
+    $g_logger->info("xx Iter $iter, ER was $old_er, roi_ratio $roi_ratio, ER now $erg_ratio");
     # Bail if we're going back on an old value.
     if (exists($erg_ratios->{$erg_ratio})) {
-      $recon->log_msg("xx Iter $iter, new ER already computed, exiting");
+      $g_logger->info("xx Iter $iter, new ER already computed, exiting");
       last WHILE;
     }
   }
@@ -203,6 +218,8 @@ sub make_recon_obj {
     $O_MULTILINE   => 0,
     $O_SW_GROUP    => $SW_CPS,
     $O_CONF_FILE   => $opts->{$OPT_CONFFILE},
+    $O_RECON_START => $g_recon_start,
+    $O_LOG_CAT     => $log_category,
       );
 
   if (has_len($argptr)) {
@@ -259,23 +276,23 @@ sub do_recon {
 
     my $proc_name = "do_${p_name}";
     unless ($$proc_name) {
-      $recon->log_msg("$proc_name not set: skipping");
+      $g_logger->info("$proc_name not set: skipping");
       next;
     }
     my $spc = "                                                  ";
     my $tstr = "Step $count: \u$p_name Process";
     my $sp1 = substr($spc, 0, (50 - length($tstr)) / 2);
     my $sp2 = substr($spc, 0, 50 - length($tstr) - length($sp1));
-    $recon->log_msg("------------------------------------------------------------");
-    $recon->log_msg("*****${sp1}${tstr}${sp2}*****");
-    $recon->log_msg("(p_name $p_name, p_done $p_done, p_ready $p_ready)");
+    $g_logger->info("------------------------------------------------------------");
+    $g_logger->info("*****${sp1}${tstr}${sp2}*****");
+    $g_logger->info("(p_name $p_name, p_done $p_done, p_ready $p_ready)");
 
     # Check that prerequisites are correct.
     $recon->analyze_recon_dir($g_calib_dir);
     $p_ready = $recon->{$_PROCESSES}{$process}->{$PROC_PREOK};
     # Check if it's been done already.
     if ($p_done and not $opts->{$OPT_FORCE}) {
-      $recon->log_msg("$proc_name skipped - Already done (-f to force)");
+      $g_logger->info("$proc_name skipped - Already done (-f to force)");
     } else {
       # Check that it has all its prerequsites.
       if ($p_ready) {
@@ -289,14 +306,14 @@ sub do_recon {
         $recon->analyze_recon_dir($g_calib_dir);
         $p_done       = $recon->{$_PROCESSES}{$process}->{$PROC_POSTOK};
         my $proc_name = $recon->{$_PROCESSES}{$process}->{$PROC_NAME};
-        $recon->log_msg("Process $count ($process): $proc_name, p_done = $p_done\n");
-	$recon->log_msg("Process step $count ($process) did not complete") unless ($p_done);
+        $g_logger->info("Process $count ($process): $proc_name, p_done = $p_done\n");
+	$g_logger->info("Process step $count ($process) did not complete") unless ($p_done);
       } else {
-	$recon->log_msg("ERROR: Prerequsites for $p_name process are missing!", 1);
+	$g_logger->info("ERROR: Prerequsites for $p_name process are missing!", 1);
 	exit(1);
       }
     }
-    $recon->log_msg("------------------------------------------------------------");
+    $g_logger->info("------------------------------------------------------------");
   }
 }
 
