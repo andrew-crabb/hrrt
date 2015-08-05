@@ -187,8 +187,8 @@ sub wanted {
 	touch($flagfile);
       $find_files_count += 1;
       $find_files_size += (stat($fname))[7];
-	print "$CHECKSUMDB $PASS $File::Find::name\n";
-	fileWrite($logfile, "$CHECKSUMDB $PASS $File::Find::name\n", 1);
+#	print "$CHECKSUMDB $PASS $File::Find::name\n";
+#	fileWrite($logfile, "$CHECKSUMDB $PASS $File::Find::name\n", 1);
       my $ret = `$CHECKSUMDB $PASS $File::Find::name`;
 	unlink($flagfile);
       # print "Processing $_: $CHECKSUMDB $PASS $File::Find::name: '$ret'\n";
