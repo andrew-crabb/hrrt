@@ -147,12 +147,6 @@ if ($usersw_m and $usersw) {
 my $sw_group = ($usersw_m) ? $SW_USER_M : ($usersw) ? $SW_USER : $SW_CPS;
 my $spanno = (hasLen($span9) and $span9) ? $HRRTRecon::SPAN9 : $HRRTRecon::SPAN3;
 
-# Record to database if do_complete or dbrecord set, but not if 'no dbrecord'.
-# This allows do_complete to run if you don't have a network or DB connection.
-# $dbrecord |= $do_complete;
-# $dbrecord = 0 if ($nodbrecord);
-# print "*** dbrecord = $dbrecord ***\n";
-
 # First things first.  If 'Copy to Node' selected, copy from /f/recon to /e/recon
 if ($docopy) {
   $g_logger->info("****************   subj_dir $subj_dir");
