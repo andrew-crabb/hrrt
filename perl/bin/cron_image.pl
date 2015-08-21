@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # Cron job for hrrt-image.
 # Had initially hoped to run locally through Net::SSH2, but need local file access.

@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # calibration_process.pl
 # Perform HRRT calibration processing, after norm_process.pl creates new norm.

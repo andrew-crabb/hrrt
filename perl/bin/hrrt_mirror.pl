@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # Mirrors data on HRRT acquisition PC onto appropriate external disk as mounted.
 # Note: Does not checksum the copies, does not handle duplicates (use hrrt_checkdb)

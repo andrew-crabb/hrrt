@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # HRRT_DB.pm
 # Utilities to support the 'filesys' database.

@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # hrrt_assemble_study.pl
 # Gather together from archive disk files for a given study.

@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # This came from ~/DEV/perl/lib/t
 # Lots of good code, but want to make it more flexible.

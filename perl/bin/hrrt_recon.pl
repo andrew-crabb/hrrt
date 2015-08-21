@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # hrrt_recon_new.pl
 # Use HRRTRecon in OO form to analyze an HRRT recon directory.

@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # Perform lmhistogram on Windows node on given l64 file.
 

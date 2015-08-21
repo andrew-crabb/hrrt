@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # HRRTRecon.pm
 # Models a complete HRRT reconstruction (process and directory).

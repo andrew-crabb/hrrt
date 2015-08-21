@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 package HRRT_Data;
 

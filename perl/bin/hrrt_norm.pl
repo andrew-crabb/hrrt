@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+use warnings;
 
 # 1. Histogram .l64 into span3
 # 2. Run standard compute_norm to generate intermediate .dat files
