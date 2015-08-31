@@ -3179,17 +3179,17 @@ sub rsync_file {
 
   my $logstr = $this->{$O_DUMMY} ? 'Dummy: ' : '';
   $this->{$_LOG}->info($logstr . "rsync_file($srcfile, $dstfile)");
-  my %rsopts = (
+  my @rsopts = (
     'times'	=> 1,
-    'src'	=> $srcfile,
-    'dest'	=> $dstfile,
     'dry-run'   => ($this->{$O_DUMMY}) ? 1 : 0,
+    'source'	=> $srcfile,
+    'dest'	=> $dstfile,
 #    'perms'     => 1,
 #    'chmod'     => 'ugo=rw',
       );
 
   my $rsync = new File::Rsync();
-  my $ret = $rsync->exec(\%rsopts);
+  my $ret = $rsync->exec(@rsopts);
 
   unless ((-s $dstfile) and not $this->{$O_DUMMY}) {
     $this->{$_LOG}->error("rsync_file($srcfile, $dstfile) failed");
