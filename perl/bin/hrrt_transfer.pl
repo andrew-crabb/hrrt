@@ -12,6 +12,7 @@ use File::Basename;
 use File::Copy;
 use File::Find;
 use File::Rsync;
+use File::Spec;
 use FindBin;
 use IO::Prompter;
 use Readonly;
@@ -35,9 +36,9 @@ no strict "refs";
 Readonly my $DATA_DIR_LOCAL => $ENV{'HOME'} . "/data/hrrt_transfer";
 Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/';
 # Readonly my $DATA_DIR_PRODN => '/mnt/hrrt/SCS_SCANS/GIBBS_DONNA/';
-Readonly our $EM_MIN_SIZE   => 100000000;
-Readonly our $EM_MIN_LOCAL  => 1000000;
-Readonly our $BILLION       => 1000000000;
+Readonly our $EM_MIN_SIZE   => 10**8;
+Readonly our $EM_MIN_LOCAL  => 10**6;
+Readonly our $BILLION       => 10**9;
 # Readonly our $RSYNC_HOST    => 'hrrt-image.rad.jhmi.edu';
 Readonly our $RSYNC_DIR     => '/data/recon';
 Readonly our $KEY_DESTDIR   => 'destdir';
@@ -131,6 +132,7 @@ find({
 
 # Create hash of scan details, by date.
 my $scans_by_date = make_scans_by_date();
+check_scans_transferred($scans_by_date);
 make_blank_scans_by_date();
 # Select EM and TX scan times.
 my $scans_to_send = select_scan($scans_by_date);
@@ -205,7 +207,7 @@ sub edit_framing {
 }
 
 sub all_files_subj {
-  my $dir_exclude = qq{${data_dir}\$|/log/|/log\$|QC_Daily\$};
+  my $dir_exclude  = qq{${data_dir}\$|/log/|/log\$|QC_Daily\$};
   my $file_exclude = qq{\.bh\$|\.log\$};
   my $file_include = qq{\.l64\$|\.l64.hdr\$|\.hc\$};
 
@@ -237,15 +239,18 @@ sub transfer_files {
 
   foreach my $filetype ( @FILE_TYPES ) {
     if (exists($xfer_files{$filetype})) {
-    my $filename = $xfer_files{$filetype};
-    # print Dumper($filename);
-    my @stat = stat($filename);
-    if (scalar(@stat)) {
-      $totsize += $stat[7];
+      my $filename = $xfer_files{$filetype};
+      # print Dumper($filename);
+      my @stat = stat($filename);
+      if (scalar(@stat)) {
+	$totsize += $stat[7];
+      }
     }
   }
-  }
-  foreach my $filetype ( sort keys %xfer_files ) {
+
+  # Use FILE_TYPES to ensure that .hdr files are done first to get history number.
+  #  foreach my $filetype ( sort keys %xfer_files ) {
+  foreach my $filetype ( @FILE_TYPES ) {
     next if ( $filetype =~ /$KEY_DESTDIR/ );
     transfer_file( $xfer_files{$filetype}, $dirname );
   }
@@ -280,10 +285,8 @@ sub delete_found_files {
 
 sub transfer_file {
   my ( $filename, $dirname ) = @_;
-  my ( $name, $path, $suffix ) = fileparse($filename);
-  my $std_name = make_std_name($name);
-  # my $destfile = "${RSYNC_HOST}:${dirname}/${std_name}";
-  my $destfile = "${dirname}/${std_name}";
+
+  my $destfile = make_dest_name($filename, $dirname);
   print "transfer_file:\n$filename\n$destfile\n";
   my %rsopts = (
     'times'   => 1,
@@ -298,6 +301,15 @@ sub transfer_file {
   $rsync->defopts( 'verbose' => 1 );
   my $ret   = $rsync->exec( \%rsopts );
   chmod(0644, $destfile);
+}
+
+sub make_dest_name {
+  my ( $filename, $dirname ) = @_;
+
+  my ( $name, $path, $suffix ) = fileparse($filename);
+  my $std_name = make_std_name($name);
+  my $destfile = "${dirname}/${std_name}";
+  return $destfile;
 }
 
 # Return hash of TX details for this EM.
@@ -345,8 +357,7 @@ sub make_xfer_files {
   printHash(\%xfer_files, "xxx xfer_files");
 
   # Create destination directory name.
-  my $dirname = "$em_rec->{'name_last'}_$em_rec->{'name_first'}_";
-  $dirname .= $em_rec->{'date'}->{'hrrtdir'};
+  my $dirname = make_destdir_name($em_rec);
   # Append TX time if requested.
   if ($scan_times->{$USE_TX_SUFFIX}) {
     my ($tx_date, $tx_time) = split(/_/, $scan_times->{'TX'});
@@ -356,6 +367,37 @@ sub make_xfer_files {
   # printHash(\%xfer_files, "make_xfer_files()");
 
   return \%xfer_files;
+}
+
+sub make_destdir_name {
+  my ($em_rec) = @_;
+
+  my $dirname = $em_rec->{'name_last'} . '_' . $em_rec->{'name_first'};
+  $dirname   .= '_' . $em_rec->{'date'}->{'hrrtdir'};
+  return $dirname;
+}
+
+# Return array of directories in RSYNC_DIR starting with given pattern.
+
+sub find_destdirs {
+  my ($destdir_base) = @_;
+
+  opendir (DIR, $RSYNC_DIR) or die "Unable to open $RSYNC_DIR: $!\n";
+  my @dirs = grep{/^$destdir_base/}readdir DIR;
+  my %found_dirs = ();
+  my @tx_dirs = grep(/_TX_/, @dirs);
+  if (scalar(@tx_dirs)) {
+    $found_dirs{'tx'} = [];
+    foreach my $tx_dir (@tx_dirs) {
+      $tx_dir =~ /.+_TX_(\d{6})$/;
+      push(@{$found_dirs{"tx"}}, $1);
+    }
+  } else {
+    $found_dirs{'std'} = 1;
+  }
+#  print "find_destdirs: found_dirs:\n";
+#  print Dumper(\%found_dirs);
+  return \%found_dirs;
 }
 
 sub make_scans_by_date {
@@ -496,12 +538,16 @@ sub select_scan {
   my ( $em_time, $tx_time ) = ( undef, undef );
   foreach my $scan_time ( sort keys %scans_by_date ) {
     my $scan_rec = $scans_by_date->{$scan_time};
+    # print Dumper($scan_rec);
     # printHash( $scan_rec, "select_scan $scan_time" );
+    # my $scan_is_transferred = scan_is_transferred($scan_rec);
     my $em_rec = $scans_by_date{$scan_time}{'EM'};
     my %em_rec = %$em_rec;
     my ( $name_last, $name_first, $size ) = @em_rec{qw(name_last name_first size)};
-    my $gb = sprintf("%3.1f", ($size / $BILLION));
-    $menu_det{"$scan_time $name_last, $name_first ($gb)"} = $scan_time;
+    my $is_ok    = ($scans_by_date{$scan_time}{'EM'}{'all_files_ok'}) ? 'OK' : '  ';
+    my $tx_times = '  ' . ($scans_by_date{$scan_time}{'EM'}{'tx_times'});
+    my $menu_item = sprintf("%-14s %-4s %-12s %-12s %3.1f %s", $scan_time, $is_ok, $name_last, $name_first, ($size / $BILLION), $tx_times);
+    $menu_det{$menu_item} = $scan_time;
   }
   # printHash( \%menu_det );
   $em_time = prompt 'Select Emission Scan', -verb,
@@ -511,9 +557,6 @@ sub select_scan {
   print "Emission scan time: $em_time\n";
   $ret{'EM'} = $em_time;
 
-
-  my $is_norm_scan = is_norm_scan($scans_by_date->{$em_time}{'EM'});
-
   # Select transmission scan for emission scan, if multiple.
   my @tx_times = ();
   my $tx_scan_recs = undef;
@@ -522,6 +565,7 @@ sub select_scan {
     @tx_times     = sort keys %tx_scan_recs;
   }
 
+  my $is_norm_scan = is_norm_scan($scans_by_date->{$em_time}{'EM'});
   if ( scalar(@tx_times) == 1 ) {
     $tx_time = $tx_scan_recs->{ $tx_times[0] }->{'date'}->{'hrrtdir'};
   } elsif ( scalar(@tx_times) > 1 ) {
@@ -543,6 +587,83 @@ sub select_scan {
     $ret{'TX'} = $tx_time;
   }
   return \%ret;
+}
+
+sub check_scans_transferred {
+  my ($scans_by_date) = @_;
+
+  my %scans_by_date = %$scans_by_date;
+  foreach my $scantime (sort keys %scans_by_date) {
+    my $scanrec = $scans_by_date{$scantime};
+
+    # dest_dirs holds dirs matching this pattern.  dir_suffixes is empty for single TX, else holds all _TX_xxx suffixes to test.
+    my $dest_dir_base = make_destdir_name($scans_by_date{$scantime}{'EM'});
+    my $dest_dirs = find_destdirs($dest_dir_base);
+    my @dir_suffixes = (defined($dest_dirs->{'tx'})) ? @{$dest_dirs->{'tx'}} : ('');
+
+    # Check standard directory, or each _TX_ directory, for l64 and l64.hdr files (EM and TX).
+    my $scandate = $scanrec->{'EM'}{'date'}{'YYMMDD'};
+    my %files_ok = ();
+    foreach my $dir_suffix (@dir_suffixes) {
+      my $tx_suffix = (length($dir_suffix)) ? '_TX_' . $dir_suffix : '';
+      print "-------------------- $dest_dir_base: dir_suffix $dir_suffix\n";
+      foreach my $type (qw{EM TX}) {
+	next unless $scanrec->{$type};
+	# If multiple scans in same day, accept either matching TX scan.
+	my @records = ();
+	if ($type =~ /TX/) {
+	  # tx_datetime comes from dir_suffix (if multiple TX), or one or multiple keys.
+	  if (length($dir_suffix)) {
+	    push(@records, $scanrec->{'TX'}{"${scandate}_${dir_suffix}"});
+	  } else {
+	    foreach my $key (keys(%{$scanrec->{'TX'}})) {
+	      push(@records, $scanrec->{'TX'}{$key});
+	    }
+	  }
+	} else {
+	  push(@records, $scanrec->{$type});
+	}
+
+	foreach my $extn ('', '.hdr') {
+	  # print Dumper($record);
+	  my $matching_record = 0;
+	  foreach my $record (@records) {
+	    my $srcfile = $record->{'_fullname'} . $extn;
+	    my $std_name = make_std_name($record->{'filename'});
+	    my $destfile = File::Spec->catfile($RSYNC_DIR, "${dest_dir_base}${tx_suffix}", "${std_name}${extn}");
+	    $matching_record += files_are_same($srcfile, $destfile);
+	  }
+	  $files_ok{"${type}${extn}"} = ($matching_record) ? 1 : 0;
+	}
+      }
+    }
+    $scans_by_date{$scantime}{'EM'}{'all_files_ok'} = all_files_ok(\%files_ok);
+    $scans_by_date{$scantime}{'EM'}{'tx_times'} = join(' ', @dir_suffixes);
+  }
+}
+
+sub files_are_same {
+  my ($srcfile, $destfile) = @_;
+
+  my $is_ok = 0;
+  if (-s $srcfile and -s $destfile) {
+    $is_ok = ($srcfile =~ /hdr$/) ? 1 : (-s $srcfile == -s $destfile);
+  }
+  unless ($is_ok) {
+    print "$destfile\n";
+  }
+  return $is_ok;
+}
+
+sub all_files_ok {
+  my ($files_ok) = @_;
+
+  # print Dumper($files_ok);
+  my $all_files_ok = 1;
+  foreach my $key (keys %$files_ok) {
+    $all_files_ok *= $files_ok->{$key};
+  }
+  return $all_files_ok;
 }
 
 sub is_norm_scan {
