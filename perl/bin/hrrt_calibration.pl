@@ -41,6 +41,8 @@ use Utility;
 # String constants
 
 Readonly my $RATIO_STR        => qq{avg plane};
+Readonly my $ERG_RATIO_MIN    => 4;
+Readonly my $ERG_RATIO_MAX    => 25;
 
 # Read config.
 our $hrrt_progs  = HRRT::read_hrrt_config($HRRT::HRRT_PROGRAMS_JSON);
@@ -68,6 +70,7 @@ print "g_platform is $g_platform\n";
 my $OPT_CALIBDIR     = 'c';
 my $OPT_CONFFILE     = 'g';
 my $OPT_VALUES_FILE  = 'l';
+my $OPT_NITER        = 'n';
 
 our %allopts = (
   $OPT_CALIBDIR => {
@@ -90,6 +93,13 @@ our %allopts = (
     $Opts::OPTS_DFLT => abs_path("$FindBin::Bin/../../calibration/calibration_values.txt"),
     $Opts::OPTS_OPTN => 1,
   },
+  $OPT_NITER => {
+    $Opts::OPTS_DFLT => 5,
+    $Opts::OPTS_NAME => 'n_iter',
+    $Opts::OPTS_TYPE => $Opts::OPTS_INT,
+    $Opts::OPTS_TEXT => 'Maximum iterations to perform',
+    $Opts::OPTS_OPTN => 1,
+  },
     );
 
 # ------------------------------------------------------------
@@ -104,7 +114,7 @@ if ($opts->{$Opts::OPT_HELP}) {
 
 $g_calib_dir = ($opts->{$OPT_CALIBDIR} // '');
 unless (-d ($g_calib_dir)) {
-  print "ERROR: Calibration dir not present: '$g_calib_dir'\n";
+  $g_logger->info("ERROR: Calibration dir not present: '$g_calib_dir'");
   usage(\%allopts);
   exit;
 }
@@ -156,6 +166,8 @@ my $erg_ratios = read_erg_ratios();
 # ER change of 2 gives roi_ratio change of 0.015
 # New ratio = (roi_ratio - 1) * 100 / 0.75
 my $calib_factors = $recon->calibrationFactors();
+$g_logger->info("calib_factors:");
+$g_logger->info(Dumper($calib_factors));
 my $erg_ratio = $calib_factors->{$CALIB_RATIO};
 my $old_er = undef;
 
@@ -167,7 +179,7 @@ my $iter = 0;
 my $json = JSON->new->allow_nonref;
 
 WHILE:
-while ($iter < 5) {
+while ($iter < $opts->{$OPT_NITER}) {
   # Important.  Need a new recon time for each recon, as the gm328.ini file
   # in the recon dir is accepted if present, and it contains the erg ratio.
   $g_recon_start = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
@@ -178,6 +190,10 @@ while ($iter < 5) {
     my $roi_ratio = $erg_ratios->{$erg_ratio};
     $old_er = $erg_ratio;
     $erg_ratio = $erg_ratio - int(($roi_ratio - 1.0) * 75);
+    if (($erg_ratio < $ERG_RATIO_MIN) or ($erg_ratio > $ERG_RATIO_MAX)) {
+      $g_logger->fatal("erg_ratio $erg_ratio not between $ERG_RATIO_MIN and $ERG_RATIO_MAX: Exiting");
+      exit 1;
+    }
     $g_logger->info("Iteration $iter, ER was $old_er, roi_ratio $roi_ratio, ER now $erg_ratio");
     # Bail if we're going back on an old value.
     if (exists($erg_ratios->{$erg_ratio})) {
@@ -262,7 +278,7 @@ sub do_name_files {
   my @l64_files = grep(/_EM.l64$/, @calib_files);
   # print "l64 files: @l64_files\n";
   if (scalar(@l64_files) != 1) {
-    print "Error: " . scalar(@l64_files) . " EM.l64 files found (not 1)\n";
+    $g_logger->info("Error: " . scalar(@l64_files) . " EM.l64 files found (not 1)");
     exit 1;
   }
   $g_em_l64_file = $l64_files[0];
@@ -275,11 +291,8 @@ sub do_recon {
   our ($do_rebin, $do_transmission, $do_attenuation, $do_scatter, $do_reconstruction, $do_postrecon) = (1, 1, 1, 1, 1, 1);
   if ($is_repeat) {
     ($do_rebin, $do_transmission) = (0, 0);
-    my $ff = $recon->setopt($O_FORCE);
     $recon->setopt($O_FORCE, 1);
     $opts->{$OPT_FORCE} = 1;
-    my $gg = $recon->setopt($O_FORCE);
-    print "do_recon(): o_force was $ff, now $gg\n";
   }
 
   my $count = 0;
@@ -289,9 +302,11 @@ sub do_recon {
  FORE:
   foreach my $process (@processes_to_run) {
     $count++;
-
     my $popt = $recon->{$_PROCESSES}{$process};
-    printHash($popt, "hrrt_recon: recon->{$_PROCESSES}{$process}") if ($opts->{$OPT_VERBOSE});
+    if ($opts->{$OPT_VERBOSE}) {
+      $g_logger->info("hrrt_recon: recon->{$_PROCESSES}{$process}");
+      $g_logger->info(Dumper($popt));
+    }
     my %popt = %$popt;
     my ($p_name, $p_prer, $p_cond, $p_ready, $p_done) = @popt{($PROC_NAME, $PROC_PREREQ, $PROC_POSTREQ, $PROC_PREOK, $PROC_POSTOK)};
 
@@ -320,7 +335,7 @@ sub do_recon {
 	# Call process and check it completed successfully.
 	my $procsumm = $recon->{$_PROCESS_SUMM}->{$process};
 	my ($pname, $pinit, $proc_iter) = @{$procsumm};
-	print "***************  ($pname, $pinit, $proc_iter)\n";
+	$g_logger->info("***************  ($pname, $pinit, $proc_iter)");
 
         my $retval = $recon->$proc_name();
         # Check that post-requisites are correct.
@@ -354,7 +369,7 @@ sub do_calc_ratio {
     my ($ratio_line) = grep(/$RATIO_STR/, @ratio_lines);
     $g_logger->debug("ratio line: $ratio_line");
     if ($ratio_line =~ /.+(\d+\.\d+)/) {
-      print "do_calc_ratio: Ratio $1\n";
+      $g_logger->info("do_calc_ratio: Ratio $1");
       $ret = $1;
     }
   }
@@ -368,7 +383,7 @@ sub do_calibration_factor {
   (my $em_i_file = $g_em_l64_file) =~ s/\.l64/\.i/;
 
   my $cmd  = $hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform};
-  print "$cmd  = hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform}\n";
+  $g_logger->info("$cmd  = hrrt_progs->{$PROG_CALC_CALIB}->{$g_platform}");
   $cmd .= " -a $concentration_Bq_cc";
   $cmd .= " -e 6.67e-6";
   $cmd .= " -p 66";
@@ -399,6 +414,7 @@ sub read_calibration_factor {
       $calibration_factor = $1;
     }
   }
+  $g_logger->info("calibration_factor $calibration_factor");
   return $calibration_factor;
 }
 
@@ -417,19 +433,21 @@ sub runit {
   my @ret = ();
   if ($opts->{$Opts::OPT_DUMMY}) {
     my $cmt = "*****  DUMMY  *****";
-    log_msg("$cmt\n$cmd\n\n");
+    $g_logger->info("$cmt\n$cmd");
   } else {
-    log_msg("Issuing: $cmd");
+    $g_logger->info("Issuing: $cmd");
     if ($capture_output) {
       @ret = `$cmd`;
       $ret = \@ret;
     } else {
       $ret = system("env - /bin/bash -c '$cmd'");
     }
-    log_msg("Returned: $ret");
+    $g_logger->info("Returned: $ret");
   }
   return $ret;
 }
+
+# Required by Log::Log4perl
 
 sub logfile_name {
   my $log_dir = $g_calib_dir . '/recon_' . $g_recon_start;
@@ -437,18 +455,10 @@ sub logfile_name {
   return $log_dir . '/' . 'recon_' . $g_recon_start . '.log';
 }
 
-sub log_msg {
-  my ($msg, $is_err) = @_;
-  $is_err //= 0;
-
-  $msg = hostname() . '  ' . (timeNow())[0] . "  $msg";
-  return error_log($msg, 1, "${g_calib_dir}/${g_logfile}", 0, 3);
-}
-
 sub do_config {
   my $conf_file = $opts->{$OPT_CONFFILE};
   my $config = read_conf($conf_file);
-  # print_conf($config, $conf_file);
+  print_conf($config, $conf_file);
   return $config;
 }
 
@@ -464,7 +474,8 @@ sub read_conf {
 
 sub print_conf {
   my ($conf, $conf_file) = @_;
-  printHash($conf, "HRRTRecon::print_conf($conf_file)");
+  $g_logger->info("HRRTRecon::print_conf($conf_file)");
+  $g_logger->info($conf);
 }
 
 ## Matlab code:
@@ -480,10 +491,9 @@ sub print_conf {
 
 sub do_activity_concentration {
   my $calib_values = read_values_file($opts->{$OPT_VALUES_FILE});
-  # print Dumper($calib_values);
   my $calib_date = select_calibration_date($calib_values);
   my $conc_bq_cc = calculate_concentration($calib_values->{$calib_date});
-  print "Concentration (Bq/cc): $conc_bq_cc\n";
+  $g_logger->info("Concentration (Bq/cc): $conc_bq_cc");
   return $conc_bq_cc
 }
 
@@ -499,14 +509,12 @@ sub read_values_file {
       q|\s+(\d{6})|     .	# residual_time
       q|\s+(\d{6})|;		# emission_time
 
-  print "activity values file $values_file\n";
+  $g_logger->info("activity values file $values_file");
   my %values = ();
   my @lines = read_file($values_file);
   foreach my $line (@lines) {
     next if ($line =~ m{^#});
-    # print $line;
     if ($line =~ m{$LINE_PATTERN}) {
-      # print "$1\t$2\t$3\t$4\t$5\t$6\n";
       $values{$1} = ([$1, $2, $3, $4, $5, $6]);
     }
   }
@@ -521,7 +529,7 @@ sub calculate_concentration {
   my $bq_per_uci        = $hrrt_consts->{$CONST_BQ_PER_UCI};
 
   my ($date, $dose_uci, $dose_time, $resid_uci, $resid_time, $scan_time) = @$argref;
-  print "calculate_concentration(date $date, dose $dose_uci, dosetime $dose_time, resid $resid_uci, residtime $resid_time, scantime $scan_time)\n";
+  $g_logger->info("calculate_concentration(date $date, dose $dose_uci, dosetime $dose_time, resid $resid_uci, residtime $resid_time, scantime $scan_time)");
   my $secs_dose_to_scan  = hrmnsc_to_sec($scan_time)  - hrmnsc_to_sec($dose_time);
   my $secs_dose_to_resid = hrmnsc_to_sec($resid_time) - hrmnsc_to_sec($dose_time);
   my $dose_t0  = $dose_uci  * 2 ** (-$secs_dose_to_scan / $halflife_f18_secs);
@@ -539,7 +547,7 @@ sub select_calibration_date {
 
   # Get date of scan from EM file.
   my $calibdate = $g_hrrt_det->{'date'}->{'YYYYMMDD'};
-  print "date from header: $calibdate\n";
+  $g_logger->info("date from header: $calibdate");
   unless (defined($calibdate)) {
     $calibdate = prompt(
       'Select Calibration Date:',
@@ -548,7 +556,7 @@ sub select_calibration_date {
       '>'
 	);
   }
-  print "select_calibration_date(): returning $calibdate\n";
+  $g_logger->info("select_calibration_date(): returning $calibdate");
   return $calibdate;
 }
 
@@ -558,12 +566,12 @@ sub do_activity_concentration_old {
   my $dose_time  = prompt -number, 'Dose Time HHMM: ';
   my $resid_time = prompt -number, 'Residual Time HHMM: ';
   my $scan_time  = prompt -number, 'Scan Time HHMM: ';
-  print "$dose_val $resid_val $dose_time $resid_time $scan_time\n";
+  $g_logger->info("$dose_val $resid_val $dose_time $resid_time $scan_time");
 
   my $mins_to_resid = hrmn_to_min($resid_time) - hrmn_to_min($dose_time);
   my $mins_to_scan  = hrmn_to_min($scan_time)  - hrmn_to_min($dose_time);
 
-  print "mins_to_resid $mins_to_resid, mins_to_scan $mins_to_scan\n";
+  $g_logger->info("mins_to_resid $mins_to_resid, mins_to_scan $mins_to_scan");
   my $halflife_f18   = $hrrt_consts->{$CONST_HALFLIFE_F18};
   my $phantom_volume = $hrrt_consts->{$CONST_PHANTOM_VOLUME};
   my $bq_per_uci     = $hrrt_consts->{$CONST_BQ_PER_UCI};
