@@ -11,7 +11,7 @@ package HRRTRecon;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw($O_DO_VHIST $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USESUBDIR  $O_USE64 $O_MULTILINE $O_BIGDUMMY $O_NOHOST $O_CRYSTAL);
+our @EXPORT = qw($O_DO_VHIST $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USESUBDIR  $O_USE64 $O_MULTILINE $O_BIGDUMMY $O_NOHOST $O_CRYSTAL $O_TEST_NORM);
 @EXPORT = (@EXPORT, qw($_PROCESSES $_PROCESS_SUMM %SUBROUTINES));
 @EXPORT = (@EXPORT, qw($PROC_NAME $PROC_PREREQ $PROC_POSTREQ $PROC_PREOK $PROC_POSTOK $PROC_INIT));
 @EXPORT = (@EXPORT, qw($FPATH $EPATH));
@@ -82,6 +82,8 @@ our $O_DO_QC        = 'opt_do_qc';
 our $O_CONF_FILE  = 'opt_conf_file';
 our $O_WIDE_KERNEL = 'opt_wide_kernel'; # Use 5 mm wide kernel in if2e7
 our $O_LOG_CAT     = 'opt_log_cat'; # Log level for log4perl
+our $O_TEST_NORM   = 'opt_test_norm';
+
 # String constants: Software to use.
 our $SW_CPS      = "sw_cps";    # CPS software
 our $SW_USER     = "sw_user";   # User software 2010
@@ -530,6 +532,7 @@ our $K_TX_BLANK       = 'tx_blank';
 our $K_TX_SUBJ        = 'tx_subj';
 our $K_TX_LM          = 'tx_lm';
 our $K_NORM           = 'norm';
+our $K_TEST           = 'test';
 our $K_NORM_3         = 'norm3';
 our $K_NORM_9         = 'norm9';
 our $K_CALIB          = 'calib';
@@ -1499,7 +1502,7 @@ sub identify_norm_file {
   my $normdir = $this->{$_CNF}{$CNF_SEC_DATA}{$CNF_VAL_NORM};
   my %paramargs = (
     $PFILE_DIR   => $normdir,
-    $PFILE_KEY   => $K_NORM,
+    $PFILE_KEY   => $this->{$O_TEST_NORM} ? $K_TEST : $K_NORM,
     $PFILE_SPAN  => $span,
       );
   my $normfile = $this->identifyParamFile(\%paramargs);
