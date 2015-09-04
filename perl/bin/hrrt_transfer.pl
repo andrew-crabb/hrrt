@@ -26,7 +26,7 @@ use Opts;
 use HRRTRecon;
 use HRRT_Utilities;
 use HRRT;
-use HRRT_Data_old;
+# use HRRT_Data_old;
 use API_Utilities;
 use FileUtilities;
 
@@ -232,10 +232,8 @@ sub transfer_files {
   # Create remote directory.
   my $dirname = $xfer_files->{$KEY_DESTDIR};
   $dirname = "${RSYNC_DIR}/${dirname}";
-  printHash($xfer_files, "transfer_files ($comment): $dirname");
-
-  # my $sftp = $ssh->sftp();
   create_dest_dir($dirname );
+  printHash($xfer_files, "transfer_files ($comment): $dirname");
 
   foreach my $filetype ( @FILE_TYPES ) {
     if (exists($xfer_files{$filetype})) {
@@ -248,9 +246,11 @@ sub transfer_files {
     }
   }
 
-  # Use FILE_TYPES to ensure that .hdr files are done first to get history number.
+  # Ensure that .hdr files are done first to get history number.
   #  foreach my $filetype ( sort keys %xfer_files ) {
-  foreach my $filetype ( @FILE_TYPES ) {
+  my @xfer_keys = keys %xfer_files;
+  my @sort_keys = (grep(/em_hdr/, @xfer_keys), grep(!/em_hdr/, @xfer_keys));
+  foreach my $filetype ( @sort_keys ) {
     next if ( $filetype =~ /$KEY_DESTDIR/ );
     transfer_file( $xfer_files{$filetype}, $dirname );
   }
@@ -304,9 +304,9 @@ sub transfer_file {
 }
 
 sub make_dest_name {
-  my ( $filename, $dirname ) = @_;
+  my ($filename, $dirname) = @_;
 
-  my ( $name, $path, $suffix ) = fileparse($filename);
+  my ($name, $path, $suffix) = fileparse($filename);
   my $std_name = make_std_name($name);
   my $destfile = "${dirname}/${std_name}";
   return $destfile;
@@ -354,7 +354,7 @@ sub make_xfer_files {
     }
   }
 
-  printHash(\%xfer_files, "xxx xfer_files");
+  printHash(\%xfer_files, "xfer_files");
 
   # Create destination directory name.
   my $dirname = make_destdir_name($em_rec);
@@ -672,22 +672,8 @@ sub is_norm_scan {
   my $name_first = $rec->{'name_first'};
   my $name_last  = $rec->{'name_last'};
   my $is_norm_scan = (($name_first =~ /NORM|SCAN/i) and ($name_last =~ /NORM|SCAN/i)) ? 1 : 0;
-  # print "XXX is_norm_scan($name_first, $name_last) returning $is_norm_scan\n";
   if ($is_norm_scan) {
     print "is_norm_scan($name_first, $name_last) returning $is_norm_scan\n";
   }
   return $is_norm_scan;
 }
-
-# sub make_ssh_connection {
-#   my $ssh2 = Net::SSH2->new();
-
-#   my $ssh_chan = undef;
-#   if ( $ssh2->connect($RSYNC_HOST) ) {
-#     if ( $ssh2->auth_publickey( $ENV{'USER'}, $ENV{'HOME'} . "/.ssh/id_rsa.pub", $ENV{'HOME'} . "/.ssh/id_rsa", ) ) {
-
-#       # Success.
-#     }
-#   }
-#   return $ssh2;
-# }
