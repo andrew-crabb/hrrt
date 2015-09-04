@@ -148,9 +148,10 @@ printHash($scans_to_send, "scans_to_send");
 # Send files.
 my $xfer_files = make_xfer_files( $scans_by_date, $scans_to_send);
 
+transfer_hdr($xfer_files, 'Scan files');
+edit_framing($xfer_files, $framing);
 transfer_files($xfer_files, 'Scan files');
 transfer_files($blank_scan, 'Blank files');
-edit_framing($xfer_files, $framing);
 
 # ------------------------------------------------------------
 # Subroutines
@@ -223,6 +224,14 @@ sub all_files_subj {
   }
 }
 
+sub transfer_hdr {
+  my ($xfer_files, $comment) = @_;
+
+  my $dirname = "${RSYNC_DIR}/" . $xfer_files->{$KEY_DESTDIR};
+  create_dest_dir($dirname );
+  transfer_file( $xfer_files->{'em_hdr'}, $dirname );
+}
+
 sub transfer_files {
   my ($xfer_files, $comment) = @_;
 
@@ -249,7 +258,9 @@ sub transfer_files {
   # Ensure that .hdr files are done first to get history number.
   #  foreach my $filetype ( sort keys %xfer_files ) {
   my @xfer_keys = keys %xfer_files;
-  my @sort_keys = (grep(/em_hdr/, @xfer_keys), grep(!/em_hdr/, @xfer_keys));
+  # Now do this first in transfer_hdr()
+#  my @sort_keys = (grep(/em_hdr/, @xfer_keys), grep(!/em_hdr/, @xfer_keys));
+  my @sort_keys = (grep(!/em_hdr/, @xfer_keys));
   foreach my $filetype ( @sort_keys ) {
     next if ( $filetype =~ /$KEY_DESTDIR/ );
     transfer_file( $xfer_files{$filetype}, $dirname );
