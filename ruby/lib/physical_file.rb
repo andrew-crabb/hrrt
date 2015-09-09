@@ -64,6 +64,7 @@ module PhysicalFile
         szr.add_file(@file_name)
       end
     end
+    raise StandardError, outfile unless present_in_archive_compressed(outfile)
   end
 
   def same_modification_as(other_file)

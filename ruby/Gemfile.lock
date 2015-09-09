@@ -10,6 +10,3 @@ PLATFORMS
 DEPENDENCIES
   rsync
   seven_zip_ruby
-
-BUNDLED WITH
-   1.10.6

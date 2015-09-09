@@ -48,6 +48,10 @@ class HRRTFile
     @archive_format = FORMAT_NATIVE
   end
 
+  # Extract subject name and date/time from file name
+  #
+  # @param filename [String]
+
   def parse_filename(filename)
     if (match = matches_hrrt_name(filename))
       @date  = match.names.include?('date') ? match[:date] : make_date(match)
