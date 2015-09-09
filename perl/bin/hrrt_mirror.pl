@@ -174,7 +174,9 @@ sub copy_file_to_this_disk {
     $r_out = ($rsync->out() // '');
     print "r_err '$r_err', r_out '$r_out'\n" if ($opts->{$Opts::OPT_VERBOSE});
     if ($opts->{$OPT_EXPUNGE} and $ret) {
-      my $ret = unlink($infile);
+      # my $ret = unlink($infile);
+      my %delopts = (%rsopts, ('delete-source-files' => 1));
+      $ret = $rsync->exec(\%delopts);
       print "ERROR: Could not unlink $infile\n" unless ($ret);
     }
   }
