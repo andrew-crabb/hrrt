@@ -1,0 +1,9 @@
+{
+	"folders":
+	[
+		{
+	      "path": "/Users/ahc/DEV/hrrt/ruby/",
+    	  "folder_exclude_patterns": ["doc",".yardoc"]
+		}
+	]
+}

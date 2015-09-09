@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rsync (1.0.9)
+    seven_zip_ruby (1.2.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rsync
+  seven_zip_ruby
+
+BUNDLED WITH
+   1.10.6
