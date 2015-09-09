@@ -87,7 +87,7 @@ if ($opts->{$OPT_NAME}) {
 }
 
 my $disks = list_backup_disks();
-print Dumper($disks);
+# print Dumper($disks);
 
 # Do the header files first, to ensure database is filled in.
 my @hdrfiles  = grep( /\.hdr$/, @allfiles);
@@ -174,9 +174,10 @@ sub copy_file_to_this_disk {
     $r_out = ($rsync->out() // '');
     print "r_err '$r_err', r_out '$r_out'\n" if ($opts->{$Opts::OPT_VERBOSE});
     if ($opts->{$OPT_EXPUNGE} and $ret) {
-      # my $ret = unlink($infile);
-      my %delopts = (%rsopts, ('remove-source-files' => 1));
-      $ret = $rsync->exec(\%delopts);
+      my $ret = unlink($infile);
+      # my %delopts = (%rsopts, ('remove-sent-files' => 1));
+      # print Dumper(\%delopts);
+      # $ret = $rsync->exec(\%delopts);
       print "ERROR: Could not unlink $infile\n" unless ($ret);
     }
   }
