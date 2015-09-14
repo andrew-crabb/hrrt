@@ -3,20 +3,31 @@
 require_relative './my_logging'
 require_relative './physical_file'
 require_relative './HRRT_Utility'
-
-include MyLogging
-include HRRTUtility
-include PhysicalFile
+require_relative './hrrt_database'
 
 # Class representing an HRRT file in its various forms.
 
 class HRRTFile
 
+  include MyLogging
+  include HRRTUtility
+  include PhysicalFile
+  include HRRTDatabase
+
   # ------------------------------------------------------------
   # Definitions
   # ------------------------------------------------------------
 
+  # Map from database field to object variable name.
 
+  DB_MAP = {
+    :name     => 'file_name',
+    :path     => 'file_path',
+    :size     => 'file_size',
+    :modified => 'file_modified',
+    :host     => 'hostname',
+    :crc32 => 'file_crc32',   # Optional for query, required for add.
+  }
 
   # ------------------------------------------------------------
   # Accssors
@@ -46,6 +57,16 @@ class HRRTFile
     parse_filename(filename)
     read_physical(filename)
     @archive_format = FORMAT_NATIVE
+    @hostname = hostname
+  end
+
+  # Return database field name corresponding to class variable name
+  #
+  # @return field_name [String]
+
+  def db_field_name(var_name)
+    raise("db_field_name: Bad var_name #{var_name}") unless DB_MAP.has_key?(var_name)
+    DB_MAP[var_name]
   end
 
   # Extract subject name and date/time from file name
@@ -109,22 +130,24 @@ class HRRTFile
     write_physical_uncompressed(outfile)
   end
 
-  def calculate_checksum
-    @@options[:local] ? make_db_connection_local : make_db_connection_remote
-    unless present_in_database?
-      add_to_database
-    end
-  end
-
-  def present_in_database?
-    ds = db[:files]
-    ds2 = ds.where(:name => @file_name, :path => @file_path, :size => @file_size, :modified => @file_modified)
-    ds2.all.length > 0 ? true : false
+  def ensure_in_database
+    # Search database without crc32 field, since we may not have calculated it
+    # Any matching record will have crc32 (required)
+    add_to_database unless present_in_database?
   end
 
   def add_to_database
-    ds = db[:files].insert(:name => @file_name, :path => @file_path, :size => @file_size, :modified => @file_modified)
+    calculate_crc32 unless @crc32
+    puts "add_to_database(#{@file_name}): crc32 = #{@crc32}"
+    add_record_to_database(:name, :path, :size, :modified, :host, :crc32)
+  end
 
+  # Search for required fields including any given as parameters.
+  # Need to be able to search without crc for quick search using mod time.
+
+  def find_in_database(*fields)
+    required_fields = [:name, :path, :size, :modified, :host] + fields
+    find_records_in_database(*required_fields)
   end
 
 end

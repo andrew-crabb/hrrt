@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 
 require_relative '../lib/my_logging'
+require 'socket'
 
 include MyLogging
 
@@ -113,6 +114,14 @@ module HRRTUtility
 
   def parse_date(datestr)
     HRRT_DATE_PATTERN.match(datestr)
+  end
+
+  # Return standardized host name
+  #
+  # @return hostname [String]
+
+  def hostname
+    Socket.gethostname    
   end
 
 end

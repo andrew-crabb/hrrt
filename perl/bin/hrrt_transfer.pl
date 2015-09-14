@@ -556,7 +556,7 @@ sub select_scan {
     my %em_rec = %$em_rec;
     my ( $name_last, $name_first, $size ) = @em_rec{qw(name_last name_first size)};
     my $is_ok    = ($scans_by_date{$scan_time}{'EM'}{'all_files_ok'}) ? 'OK' : '  ';
-    print Dumper $scans_by_date{$scan_time} if ($opts->{$Opts::OPT_VERBOSE} and not $is_ok);
+#    print Dumper $scans_by_date{$scan_time} if ($opts->{$Opts::OPT_VERBOSE} and not $scans_by_date{$scan_time}{'EM'}{'all_files_ok'});
     my $tx_times = '  ' . ($scans_by_date{$scan_time}{'EM'}{'tx_times'});
     my $menu_item = sprintf("%-14s %-4s %-12s %-12s %3.1f %s", $scan_time, $is_ok, $name_last, $name_first, ($size / $BILLION), $tx_times);
     $menu_det{$menu_item} = $scan_time;

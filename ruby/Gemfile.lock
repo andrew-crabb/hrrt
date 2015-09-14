@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     digest (0.0.1)
+    digest-crc (0.4.1)
     mysql (2.9.1)
     rsync (1.0.9)
     sequel (4.26.0)
@@ -13,6 +14,7 @@ PLATFORMS
 
 DEPENDENCIES
   digest
+  digest-crc
   mysql
   rsync
   sequel

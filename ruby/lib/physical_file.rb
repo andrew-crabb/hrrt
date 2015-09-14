@@ -2,7 +2,8 @@
 
 require_relative './my_logging'
 
-require("seven_zip_ruby")
+require 'seven_zip_ruby'
+require 'digest/crc32'
 
 include MyLogging
 
@@ -25,6 +26,7 @@ module PhysicalFile
   attr_reader :file_path
   attr_reader :file_size
   attr_reader :file_modified
+  attr_reader :file_crc32
 
   # ------------------------------------------------------------
   # Methods
@@ -102,6 +104,11 @@ module PhysicalFile
     end
     mylogger.debug("present_in_archive_compressed(#{archive_file}): #{present}")
     present
+  end
+
+  def calculate_crc32
+    @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
+    mylogger.debug("calculate_crc32(#{@file_name}): #{@crc32}")
   end
 
 end
