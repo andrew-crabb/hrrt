@@ -37,16 +37,6 @@ class HRRTACSDir
     end
   end
 
-  def create_hrrt_file(infile)
-    hrrt_file = nil
-    if (match = matches_hrrt_name(infile))
-      if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
-        hrrt_file = Object.const_get(classtype).new(File.join(@indir, infile))
-      end
-    end
-    hrrt_file
-  end
-
   # Combine this object's files_by_datetime with the incoming list.  Return combined list.
 
   def combine_files!(infiles)

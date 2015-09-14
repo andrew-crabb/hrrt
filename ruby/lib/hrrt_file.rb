@@ -109,4 +109,22 @@ class HRRTFile
     write_physical_uncompressed(outfile)
   end
 
+  def calculate_checksum
+    @@options[:local] ? make_db_connection_local : make_db_connection_remote
+    unless present_in_database?
+      add_to_database
+    end
+  end
+
+  def present_in_database?
+    ds = db[:files]
+    ds2 = ds.where(:name => @file_name, :path => @file_path, :size => @file_size, :modified => @file_modified)
+    ds2.all.length > 0 ? true : false
+  end
+
+  def add_to_database
+    ds = db[:files].insert(:name => @file_name, :path => @file_path, :size => @file_size, :modified => @file_modified)
+
+  end
+
 end

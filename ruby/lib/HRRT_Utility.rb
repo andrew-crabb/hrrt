@@ -41,6 +41,12 @@ module HRRTUtility
   }
 
   # ------------------------------------------------------------
+  # Module variables
+  # ------------------------------------------------------------
+
+  @@options = nil
+
+  # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
@@ -54,6 +60,23 @@ module HRRTUtility
       m = NAME_PATTERN_ACS.match(infile)
     end
     m
+  end
+
+  # Create an HRRTFile-derived object from the input file.
+  #
+  # @param infile [String] Input file
+  # @return [HRRTFile]
+
+  def create_hrrt_file(infile)
+    hrrt_file = nil
+    if (match = matches_hrrt_name(infile))
+      if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
+        hrrt_file = Object.const_get(classtype).new(File.join(@indir, infile))
+        mylogger.info("create_hrrt_file(#{infile}): New #{classtype}")
+      end
+    end
+    mylogger.error("create_hrrt_file(#{infile}): Unmatched #{classtype}") unless hrrt_file
+    hrrt_file
   end
 
   # Create date in standard format YYMMDD from MatchData object

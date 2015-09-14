@@ -11,8 +11,13 @@ include MyLogging
 
 class HRRTACS
 
-  def initialize(options)
-    @options = options
+  attr_reader :files_by_datetime
+  attr_reader :scans_by_datetime
+
+  def initialize()
+#    @options = options
+  mylogger.error("initialize: here are @@options")
+  pp @@options
   end
 
   # @!attribute [r] scans_by_datetime
@@ -28,6 +33,13 @@ class HRRTACS
     combine_acs_files
     make_scans_by_datetime
     process_scans
+  end
+
+  def checksum_dirs
+    mylogger.fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
+    @files_by_datetime.each do |dtime, files|
+        mylogger.info("checksum_dirs(#{dtime}): #{files.size} files")
+    end
   end
 
   # Create HRRTACSDir objects from contents of ACS directory

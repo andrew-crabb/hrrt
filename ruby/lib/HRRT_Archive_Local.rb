@@ -46,7 +46,7 @@ class HRRTArchiveLocal < HRRTArchive
 
   def path_in_archive(f)
     if m = parse_date(f.date)
-      path = sprintf(ARCHIVE_PATH_FMT, root: ARCHIVE_ROOT, yr: m[:yr], mo: m[:mo])
+      path = sprintf(ARCHIVE_PATH_FMT, root: ARCHIVE_ROOT, yr: m[:yr].to_i, mo: m[:mo].to_i)
     else
       raise
     end
@@ -72,7 +72,7 @@ class HRRTArchiveLocal < HRRTArchive
   # @param f [HRRTFile] The file to store
 
   def store_file(f)
-    if @options[:dummy]
+    if @@options[:dummy]
       mylogger.info("store_file(#{f.full_name}, #{full_archive_name(f)}")
     else
       FileUtils.mkdir_p(path_in_archive(f))

@@ -37,7 +37,7 @@ module PhysicalFile
     @file_name = File.basename(infile)
     @file_path = File.dirname(infile)
     @file_size = stat.size
-    @file_modified = stat.mtime
+    @file_modified = stat.mtime.to_i
   end
 
   # Fully qualified name of this file
@@ -77,19 +77,21 @@ module PhysicalFile
 
   # Test this file against given archive
   # Native format: compare file size and modification time
+  #
+  # @param archive_file [String] File to test against
+  # @todo Add database integration for storing CRC checksums
+
+  def present_in_archive_uncompressed?(archive_file)
+    same_size_as(archive_file) && same_modification_as(archive_file)
+  end
+
+  # Test this file against given archive
   # Compressed format: Test CRC checksum against that stored in archive file
   #
-  # @param archive_file_name [String] File to test against
-  # @todo Add database integration.
-  # @todo Add case for AWS archive
-
-  def present_in_archive_uncompressed?(archive_file_name)
-    same_size_as(archive_file_name) && same_modification_as(archive_file_name)
-  end
+  # @param archive_file [String] File to test against
 
   def present_in_archive_compressed?(archive_file)
     present = false
-    mylogger.debug("present_in_archive_compressed(#{archive_file})")
     if File.exist?(archive_file)
       File.open(archive_file, "rb") do |file|
         SevenZipRuby::Reader.open(file) do |szr|
@@ -98,6 +100,7 @@ module PhysicalFile
         end
       end
     end
+    mylogger.debug("present_in_archive_compressed(#{archive_file}): #{present}")
     present
   end
 

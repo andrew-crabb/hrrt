@@ -14,8 +14,8 @@ include HRRTUtility
 
 class HRRTArchive
 
-  def initialize(options)
-    @options = options
+  def initialize
+#    @options = options
   end
 
   # Archive all files in the ACS.
