@@ -12,7 +12,6 @@ include MyLogging
 class HRRTACS
 
   attr_reader :files_by_datetime
-  attr_reader :scans_by_datetime
 
   def initialize()
 #    @options = options
@@ -20,19 +19,12 @@ class HRRTACS
   pp @@options
   end
 
-  # @!attribute [r] scans_by_datetime
-  # Return array of all HRRTScan objects.
-  # @return [Array<HRRTScan>]
-  attr_reader :scans_by_datetime
-
   # Perform all steps related to scanning the input directories
 
   def read_dirs(indir)
     mylogger.info("read_dirs(#{indir})")
     scan_dirs(indir)
     combine_acs_files
-    make_scans_by_datetime
-    process_scans
   end
 
   def checksum_dirs
@@ -59,34 +51,11 @@ class HRRTACS
 
   # Combine all files from the ACS directories
   #
-  # @return [Hash<Array<HRRTFile>>] indexed by dtime of HRRTFile
+  # @return file_by_datetime [Hash<Array<HRRTFile>>] indexed by dtime of HRRTFile
 
   def combine_acs_files
     @files_by_datetime = {}
     @acs_dirs.each { |dir_name, acs_dir| acs_dir.combine_files!(@files_by_datetime) }
-  end
-
-  # Create a Scan object from the files for each datetime
-  #
-  # @todo Scan concept doesn't belong here.  ACS should only go as far as the files.
-
-  def make_scans_by_datetime
-    @scans_by_datetime = {}
-    @files_by_datetime.each { |dtime, files| @scans_by_datetime[dtime] = HRRTScan.new(files) }
-  end
-
-  # Process each Scan object.
-  #
-  # @todo Scan concept doesn't belong here.  ACS should only go as far as the files.
-
-  def process_scans
-    @scans_by_datetime.each do |dtime, scan|
-      scan.create_subject
-    end
-  end
-
-  def print_summary
-    @scans_by_datetime.each { |dtime, scan| puts scan.summary }
   end
 
 end
