@@ -59,22 +59,35 @@ module PhysicalFile
   end
 
   def write_physical_compressed(outfile)
-    mylogger.debug("write_physical_compressed(#{@file_name}, #{outfile})")
+    log_debug("#{@file_name}, #{outfile}")
     Dir.chdir(@file_path)
     File.open(outfile, "wb") do |file|
       SevenZipRuby::Writer.open(file) do |szr|
         szr.add_file(@file_name)
       end
     end
-    raise StandardError, outfile unless present_in_archive_compressed(outfile)
+    raise StandardError, outfile unless matches_file_comp?(outfile)
   end
 
   def same_modification_as(other_file)
-    File.exist?(other_file) && @file_modified == File.stat(other_file).mtime
+    same = File.exist?(other_file) && @file_modified == File.stat(other_file).mtime.to_i
   end
 
   def same_size_as(other_file)
     File.exist?(other_file) && @file_size == File.stat(other_file).size
+  end
+
+  # Test this physical file against another.
+  # Switch on file format (un)compressed here to keep HRRTFile independent of physical.
+  # The alternative was to have HRRTFile test against physical file.
+
+  def matches_file?(other_file)
+  	case @archive_format
+  	when FORMAT_NATIVE
+  		matches_file_uncomp?(other_file)
+  	when FORMAT_COMPRESSED
+  		matches_file_comp?(other_file)
+  	end
   end
 
   # Test this file against given archive
@@ -83,8 +96,8 @@ module PhysicalFile
   # @param archive_file [String] File to test against
   # @todo Add database integration for storing CRC checksums
 
-  def present_in_archive_uncompressed?(archive_file)
-    same_size_as(archive_file) && same_modification_as(archive_file)
+  def matches_file_uncomp?(archive_file)
+    matches = same_size_as(archive_file) && same_modification_as(archive_file)
   end
 
   # Test this file against given archive
@@ -92,7 +105,7 @@ module PhysicalFile
   #
   # @param archive_file [String] File to test against
 
-  def present_in_archive_compressed?(archive_file)
+  def matches_file_comp?(archive_file)
     present = false
     if File.exist?(archive_file)
       File.open(archive_file, "rb") do |file|
@@ -102,13 +115,12 @@ module PhysicalFile
         end
       end
     end
-    mylogger.debug("present_in_archive_compressed(#{archive_file}): #{present}")
     present
   end
 
   def calculate_crc32
     @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
-    mylogger.debug("calculate_crc32(#{@file_name}): #{@crc32}")
+    log_debug("#{@file_name}: #{@crc32}")
   end
 
 end

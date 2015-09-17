@@ -2,7 +2,7 @@
 
 require_relative './my_logging'
 require_relative './physical_file'
-require_relative './HRRT_Utility'
+require_relative './hrrt_utility'
 require_relative './hrrt_database'
 
 # Class representing an HRRT file in its various forms.
@@ -26,7 +26,7 @@ class HRRTFile
     :size     => 'file_size',
     :modified => 'file_modified',
     :host     => 'hostname',
-    :crc32 => 'file_crc32',   # Optional for query, required for add.
+    :crc32    => 'file_crc32',   # Optional for query, required for add.
   }
 
   # ------------------------------------------------------------
@@ -53,7 +53,7 @@ class HRRTFile
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
   def initialize(filename)
-    mylogger.debug("initialize(#{File.basename(filename)})");
+    log_debug("#{File.basename(filename)}");
     parse_filename(filename)
     read_physical(filename)
     @archive_format = FORMAT_NATIVE
@@ -97,7 +97,9 @@ class HRRTFile
   end
 
   def print_summary(short = false)
-    puts "HRRT_File::print_summary: #{standard_name}"
+  	outstr = sprintf("%-50s %10d", @file_name, @file_size)
+#	 log_info("print_summary: #{outstr}")
+    log_info(outstr)
   end
 
   # Name to be used for this HRRTFile object in archive.
@@ -115,9 +117,9 @@ class HRRTFile
   # @todo Add database integration.
   # @todo Add case for AWS archive
 
-  def present_in_archive?(archive_file_name)
-    present_in_archive_uncompressed?(archive_file_name)
-  end
+#  def is_in_archive?(archive_file_name)
+#    is_in_archive_uncomp?(archive_file_name)
+#  end
 
   # Write this file to disk.
   # By default, write uncompressed.
@@ -126,7 +128,7 @@ class HRRTFile
   # @note overload this method to write compressed file
 
   def write_physical(outfile)
-    mylogger.debug("write_physical_compressed(#{full_name}, #{outfile})")
+    log_debug("#{full_name}, #{outfile}")
     write_physical_uncompressed(outfile)
   end
 

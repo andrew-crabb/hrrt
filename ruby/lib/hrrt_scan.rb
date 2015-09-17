@@ -3,7 +3,7 @@
 require 'pp'
 
 require_relative '../lib/my_logging'
-require_relative '../lib/HRRT_Subject'
+require_relative '../lib/hrrt_subject'
 
 include MyLogging
 
@@ -32,7 +32,7 @@ class HRRTScan
 
   def initialize(scanfiles)
     @files = scanfiles
-    mylogger.debug("initialize(#{datetime})")
+    log_debug("#{datetime}")
   end
 
   def has_all_files
@@ -59,8 +59,12 @@ class HRRTScan
   	@files.map { |name, f| f.file_size }.inject(:+)
   end
 
+  def print_summary
+    log_info(summary)
+  end
+
   def summary
-    "#{self.class.name}: #{datetime} #{@subject.summary} #{file_size}"
+    "#{datetime} #{@subject.summary} #{file_size}"
   end
 
 end

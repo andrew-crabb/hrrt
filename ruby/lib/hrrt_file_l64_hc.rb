@@ -24,7 +24,7 @@ class HRRTFileL64Hc < HRRTFile
 
   def initialize(filename)
     super
-    mylogger.debug("initialize(#{File.basename(filename)})")
+    log_debug("#{File.basename(filename)}")
   end
 
 end

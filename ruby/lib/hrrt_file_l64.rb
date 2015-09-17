@@ -51,8 +51,8 @@ class HRRTFileL64 < HRRTFile
   # @param archive_file_name [String] File to test against
   # @todo Add database integration.
 
-  def present_in_archive?(archive_file_name)
-    present_in_archive_compressed?(archive_file_name)
-  end
+#  def is_in_archive?(archive_file_name)
+#    is_in_archive_comp?(archive_file_name)
+#  end
 
 end

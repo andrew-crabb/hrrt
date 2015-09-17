@@ -2,10 +2,12 @@
 
 require 'pp'
 require_relative '../lib/my_logging'
-require_relative '../lib/HRRT_ACS_Dir'
-require_relative '../lib/HRRT_Scan'
+require_relative '../lib/my_opts'
+require_relative '../lib/hrrt_acs_dir'
+require_relative '../lib/hrrt_scan'
 
 include MyLogging
+include MyOpts
 
 # Class representing the HRRT ACS
 
@@ -14,23 +16,21 @@ class HRRTACS
   attr_reader :files_by_datetime
 
   def initialize()
-#    @options = options
-  mylogger.error("initialize: here are @@options")
-  pp @@options
   end
 
   # Perform all steps related to scanning the input directories
 
   def read_dirs(indir)
-    mylogger.info("read_dirs(#{indir})")
+    log_info("(#{indir})")
     scan_dirs(indir)
     combine_acs_files
+    print_summary if MyOpts.get(:verbose)
   end
 
   def checksum_dirs
     mylogger.fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
     @files_by_datetime.each do |dtime, files|
-        mylogger.info("checksum_dirs(#{dtime}): #{files.size} files")
+      log_info("(#{dtime}): #{files.size} files")
     end
   end
 
@@ -56,6 +56,10 @@ class HRRTACS
   def combine_acs_files
     @files_by_datetime = {}
     @acs_dirs.each { |dir_name, acs_dir| acs_dir.combine_files!(@files_by_datetime) }
+  end
+
+  def print_summary
+    log_info
   end
 
 end

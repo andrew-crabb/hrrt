@@ -2,7 +2,7 @@
 
 require 'pp'
 require_relative '../lib/my_logging'
-require_relative './HRRT_Utility'
+require_relative './hrrt_utility'
 require_relative './hrrt_file'
 require_relative './hrrt_file_l64'
 require_relative './hrrt_file_l64_hdr'
@@ -20,7 +20,7 @@ class HRRTACSDir
   # @param indir [String] directory to analyze
 
   def initialize(indir)
-    mylogger.debug("initialize(#{indir})")
+    log_debug("#{indir}")
     @indir = indir
     Dir.chdir(indir)
     @all_files = Dir.glob("**/*").select { |f| File.file? f }

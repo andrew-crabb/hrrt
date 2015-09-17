@@ -5,10 +5,12 @@ require 'sequel'
 require 'logger'
 
 require_relative '../lib/my_logging'
-require_relative '../lib/HRRT_ACS_Dir'
-require_relative '../lib/HRRT_Scan'
+require_relative '../lib/my_opts'
+require_relative '../lib/hrrt_acs_dir'
+require_relative '../lib/hrrt_scan'
 
 include MyLogging
+include MyOpts
 
 # Provide access to the HRRT database
 
@@ -32,7 +34,8 @@ module HRRTDatabase
   # Methods
   # ------------------------------------------------------------
 
-  def make_db_connection(host)
+  def make_db_connection
+    host = MyOpts.get(:local) ? LOCALHOST : WONGLAB
     unless @@db
       begin
         @@db = Sequel.connect(
@@ -48,10 +51,10 @@ module HRRTDatabase
         puts e.message
         puts e.backtrace.inspect
       end
-      mylogger.info("make_db_connection(#{host})")
+      log_info("#{host}")
     end
     if @@db.test_connection
-      mylogger.info("make_db_connection(#{host}): OK")
+      log_info("#{host}: OK")
     end
   end
 
@@ -62,7 +65,7 @@ module HRRTDatabase
   def present_in_database?(*fields)
     ds = find_in_database(*fields)
     present = ds.all.length > 0 ? true : false
-    mylogger.info("present_in_database(#{@file_name}: #{present}")
+    log_info("#{@file_name}: #{present}")
     present
   end
 

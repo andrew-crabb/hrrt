@@ -31,7 +31,7 @@ class HRRTSubject
       @name_last  = match[:last].upcase
       @name_first = match[:first].upcase
       @history    = match[:hist].upcase
-      mylogger.debug("initialize(#{hdrfile.file_name})")
+      log_debug("#{hdrfile.file_name}")
     else
       raise
     end

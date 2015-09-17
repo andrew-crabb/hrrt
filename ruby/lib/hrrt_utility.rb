@@ -42,12 +42,6 @@ module HRRTUtility
   }
 
   # ------------------------------------------------------------
-  # Module variables
-  # ------------------------------------------------------------
-
-  @@options = nil
-
-  # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
@@ -73,10 +67,10 @@ module HRRTUtility
     if (match = matches_hrrt_name(infile))
       if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
         hrrt_file = Object.const_get(classtype).new(File.join(@indir, infile))
-        mylogger.info("create_hrrt_file(#{infile}): New #{classtype}")
+        log_debug("#{infile}: New #{classtype}")
       end
     end
-    mylogger.error("create_hrrt_file(#{infile}): Unmatched #{classtype}") unless hrrt_file
+    log_debug("#{infile}: Unmatched #{classtype}")
     hrrt_file
   end
 

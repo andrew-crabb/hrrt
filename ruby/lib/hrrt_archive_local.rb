@@ -3,7 +3,7 @@
 require 'fileutils'
 require 'rsync'
 
-require_relative './HRRT_Archive'
+require_relative './hrrt_archive'
 
 # Class representing the HRRT local (hrrt-recon) file archive
 class HRRTArchiveLocal < HRRTArchive
@@ -32,8 +32,8 @@ class HRRTArchiveLocal < HRRTArchive
   def present?(f)
     present = false
     if (fqn = full_archive_name(f))
-      present = f.present_in_archive?(fqn)
-      mylogger.debug("present(#{fqn}): #{present}")
+      present = f.matches_file?(fqn)
+      log_debug("#{present}: #{fqn}")
     end
     present
   end
@@ -72,8 +72,8 @@ class HRRTArchiveLocal < HRRTArchive
   # @param f [HRRTFile] The file to store
 
   def store_file(f)
-    if @@options[:dummy]
-      mylogger.info("store_file(#{f.full_name}, #{full_archive_name(f)}")
+    if MyOpts.get(:dummy)
+      log_info("(#{f.full_name}, #{full_archive_name(f)}")
     else
       FileUtils.mkdir_p(path_in_archive(f))
       f.write_physical(full_archive_name(f))

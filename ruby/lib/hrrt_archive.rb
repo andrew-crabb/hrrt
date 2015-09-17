@@ -4,8 +4,8 @@ require 'pp'
 require 'rsync'
 
 require_relative './my_logging'
-require_relative './HRRT_Scan'
-require_relative './HRRT_Utility'
+require_relative './hrrt_scan'
+require_relative './hrrt_utility'
 
 include MyLogging
 include HRRTUtility
@@ -15,14 +15,16 @@ include HRRTUtility
 class HRRTArchive
 
   def initialize
-#    @options = options
+    #    @options = options
   end
 
   # Archive all files in the ACS.
 
-  def archive_files(acs)
-    acs.scans_by_datetime.each do |datetime, scan|
-      scan.files.each { |extn, f| archive_file(f) }
+  def archive_files(files_by_datetime)
+    files_by_datetime.each do |datetime, files|
+      files.each do |datetime, file|
+        archive_file(file)
+      end
     end
   end
 
@@ -61,8 +63,6 @@ class HRRTArchive
   # @raise [NotImplementedError]
 
   def store_file(f)
-#    fqn = full_archive_name(f)
-#    mylogger.info("store_file(#{fqn}")
     fail NotImplementedError, "Method store_file must be implemented"
   end
 
