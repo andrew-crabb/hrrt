@@ -25,9 +25,11 @@ class HRRTRecon < Thor
   class_option :dummy   , :aliases => :d, :type => :boolean, :desc => "Don't make any changes on disk"
   class_option :debug   , :aliases => :g, :type => :boolean, :desc => "Print debug messages"
   class_option :local   , :aliases => :l, :type => :boolean, :desc => "Run locally (database and archive)"
+  class_option :test    , :aliases => :t, :type => :boolean, :desc => "Use test data, archive, and database"
 
-  DIR_SCS_SCANS = "/mnt/hrrt/SCS_SCANS"
-  DIR_ARCHIVE   = "/data/archive"
+  DIR_SCS_SCANS    = "/mnt/hrrt/SCS_SCANS"
+  DIR_ARCHIVE      = "/data/archive"
+  DIR_ARCHIVE_TEST = "/data/archive_test"
 
   dir_options = [:directory, :desc => 'Input directory', :default => DIR_SCS_SCANS]
 
@@ -64,6 +66,15 @@ class HRRTRecon < Thor
   def checksum(directory = DIR_SCS_SCANS)
     parse(directory)
     @hrrt.checksum
+  end
+
+  desc "makedata", "Make test data (Requires option 't' for 'test')"
+  def makedata
+  	unless MyOpts.get(:test)
+  		puts "Please run option t (test) with function makedata"
+  		exit 1
+  	end
+  	@hrrt.makedata
   end
 
   no_commands do

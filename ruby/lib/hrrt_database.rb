@@ -20,9 +20,13 @@ module HRRTDatabase
   # Definitions
   # ------------------------------------------------------------
 
-  WONGLAB = 'wonglab.rad.jhmi.edu'
-  LOCALHOST = 'localhost'
-  DB_NAME = 'hrrt_recon'
+  # Database hosts
+  WONGLAB      = 'wonglab.rad.jhmi.edu'
+  LOCALHOST    = 'localhost'
+
+  # Database names
+  DB_NAME      = 'hrrt_recon'
+  DB_NAME_TEST = 'hrrt_recon_test'
 
   # ------------------------------------------------------------
   # Module variables
@@ -41,7 +45,7 @@ module HRRTDatabase
         @@db = Sequel.connect(
           :adapter  => 'mysql',
           :host     => host,
-          :database => DB_NAME,
+          :database => MyOpts.get(:test) ? DB_NAME_TEST : DB_NAME,
           :user     =>'_www',
           :password =>'PETimage',
           :loggers  => [Logger.new($stdout)],
@@ -86,6 +90,10 @@ module HRRTDatabase
   def find_records_in_database(*fields)
     db_params = make_database_params(*fields)
     ds = db[:files].where(db_params)
+  end
+
+  def clear_test_database
+  	log_info("Delete contents of #{DB_NAME_TEST} (hard coded name)")
   end
 
 end

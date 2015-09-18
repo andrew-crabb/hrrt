@@ -90,4 +90,10 @@ class HRRT
     end
   end
 
+  # Create test data
+
+  def makedata
+  	test_subjects = HRRTSubject::make_test_subjects
+  end
+
 end

@@ -42,7 +42,7 @@ class HRRTACSDir
   def combine_files!(infiles)
     make_files_by_datetime
     infiles.merge!(@files_by_datetime) do |key, oldval, newval|
-      mylogger.error("Key collision: #{key}, #{oldval}, #{newval}")
+      log_error("Key collision: #{key}, #{oldval}, #{newval}")
       raise
     end
   end

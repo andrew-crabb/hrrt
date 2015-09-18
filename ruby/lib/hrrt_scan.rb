@@ -43,7 +43,9 @@ class HRRTScan
   # Store a pointer to the Subject object in each File object
 
   def create_subject
-    @subject = HRRTSubject.new(@files[HRRTUtility::EXTN_L64_HDR])
+    infile = @files[HRRTUtility::EXTN_L64_HDR]
+    subject_details = HRRTSubject.parse_file_name(infile)
+    @subject = HRRTSubject.new(subject_details)
     @files.each { |extn, file| file.subject = @subject }
   end
 

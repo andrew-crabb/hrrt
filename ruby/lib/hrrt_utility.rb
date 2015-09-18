@@ -28,6 +28,8 @@ module HRRTUtility
   NEEDED_NAMES_DATE = %w(yr mo dy)
   NEEDED_NAMES_TIME = %w(hr mn sc)
 
+  DIGITS = %w(zero one two three four five six seven eight nine)
+
   # File extensions
   EXTN_L64     = 'l64'
   EXTN_L64_HDR = 'l64.hdr'
@@ -51,10 +53,8 @@ module HRRTUtility
   # @return [MatchData] object of name parts if match, else nil.
 
   def matches_hrrt_name(infile)
-    unless m = NAME_PATTERN_STD.match(infile)
-      m = NAME_PATTERN_ACS.match(infile)
-    end
-    m
+    filename = File.basename(infile)
+    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
   end
 
   # Create an HRRTFile-derived object from the input file.

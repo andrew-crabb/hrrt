@@ -28,7 +28,7 @@ class HRRTACS
   end
 
   def checksum_dirs
-    mylogger.fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
+    log_fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
     @files_by_datetime.each do |dtime, files|
       log_info("(#{dtime}): #{files.size} files")
     end
