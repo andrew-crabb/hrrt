@@ -16,6 +16,9 @@ class HRRTSubject
   SUMMARY_FMT        = "%<name_last>-12s, %<name_first>-12s %<history>s"
   TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects.json")
 
+  SUMM_FMT_SHORT    = :summ_fmt_short
+  SUMM_FMT_FILENAME = :summ_fmt_filename
+
   # ------------------------------------------------------------
   # Accessors
   # ------------------------------------------------------------
@@ -68,21 +71,21 @@ class HRRTSubject
     end
   end
 
-  def print_summary
-    puts "#{self.class.name}: #{summary}"
+  def print_summary(format = :summ_fmt_short)
+    puts "#{self.class.name}: #{summary(format)}"
   end
 
   def self.make_test_subjects
     subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON))
-  end
-
-  # Create HRRTSubject object based on subject number.
-  #   name_last TESTONE, TESTTWO etc
-  #   name_first FIRSTONE, FIRSTTWO etc
-  #   history 1000001, 1000002 etc
-
-  def make_test_subject(subj_num)
-
+    subjects = []
+    subject_data['name_last'].each do |last_in, last_out|
+      subject_data['name_first'].each do |first_in, first_out|
+        subject_data['history'].each do |hist_in, hist_out|
+          subjects << HRRTSubject.new(name_last: last_in, name_first: first_in, history: hist_in)
+        end
+      end
+    end
+    subjects
   end
 
 end

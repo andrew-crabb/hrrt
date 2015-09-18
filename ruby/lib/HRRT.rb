@@ -62,8 +62,6 @@ class HRRT
   end
 
   # Process each Scan object.
-  #
-  # @todo Scan concept doesn't belong here.  ACS should only go as far as the files.
 
   def process_scans
     @scans_by_datetime.each do |dtime, scan|
@@ -93,7 +91,11 @@ class HRRT
   # Create test data
 
   def makedata
-  	test_subjects = HRRTSubject::make_test_subjects
+    test_subjects = HRRTSubject::make_test_subjects
+    test_subjects.each do |test_subject|
+      test_subject.print_summary(HRRTSubject::SUMM_FMT_FILENAME)
+      files = HRRTFile.make_test_files(test_subject)
+    end
   end
 
 end

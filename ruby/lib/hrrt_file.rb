@@ -46,8 +46,22 @@ class HRRTFile
   # Class methods
   # ------------------------------------------------------------
 
+  def self.make_test_files(test_subject)
+  	CLASSES.each do |theclass|
+  		log_debug("#{theclass}")
+  	end
+  end
+
+  # Return the file extension of this class
+  # 
+  # @abstract
+
+  def self.extn
+  	raise
+  end
+
   # ------------------------------------------------------------
-  # Methods
+  # Object methods
   # ------------------------------------------------------------
 
   # Create a new HRRT_File object from a MatchData object from a previous name match
@@ -58,6 +72,15 @@ class HRRTFile
     read_physical(filename)
     @archive_format = FORMAT_NATIVE
     @hostname = hostname
+  end
+
+  # Return extension of this object's class
+  # Calls derived class method extn()
+  #
+  # @return extn [String]
+
+  def extn
+  	self.class.extn
   end
 
   # Return database field name corresponding to class variable name
@@ -98,7 +121,6 @@ class HRRTFile
 
   def print_summary(short = false)
   	outstr = sprintf("%-50s %10d", @file_name, @file_size)
-#	 log_info("print_summary: #{outstr}")
     log_info(outstr)
   end
 
@@ -109,17 +131,6 @@ class HRRTFile
   def name_in_archive
     standard_name
   end
-
-  # Test this file against given archive
-  # Default is native format: compare file size and modification time
-  #
-  # @param archive_file_name [String] File to test against
-  # @todo Add database integration.
-  # @todo Add case for AWS archive
-
-#  def is_in_archive?(archive_file_name)
-#    is_in_archive_uncomp?(archive_file_name)
-#  end
 
   # Write this file to disk.
   # By default, write uncompressed.

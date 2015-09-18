@@ -10,6 +10,7 @@ class HRRTFileL64 < HRRTFile
   # Definitions
   # ------------------------------------------------------------
 
+  SUFFIX = 'l64'
   ARCHIVE_SUFFIX = '7z'
 
   # ------------------------------------------------------------
@@ -19,6 +20,14 @@ class HRRTFileL64 < HRRTFile
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
+
+  # Return the file extension of this class
+  # 
+  # @return extn [String]
+
+  def self.extn
+    SUFFIX
+  end
 
   # ------------------------------------------------------------
   # Methods

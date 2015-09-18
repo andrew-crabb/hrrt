@@ -36,21 +36,21 @@ class HRRTScan
   end
 
   def has_all_files
-    (@files.keys & HRRTFile::NEEDED_EXTNS_ACS).sort.eql?(HRRTFile::NEEDED_EXTNS_ACS.sort)
+    (@files.keys & HRRTFile::CLASSES).sort.eql?(HRRTFile::CLASSES.sort)
   end
 
   # Create and initialize an HRRTSubject object from the files in this scan
   # Store a pointer to the Subject object in each File object
 
   def create_subject
-    infile = @files[HRRTUtility::EXTN_L64_HDR]
+    infile = @files[HRRTUtility::CLASS_L64_HDR]
     subject_details = HRRTSubject.parse_file_name(infile)
     @subject = HRRTSubject.new(subject_details)
     @files.each { |extn, file| file.subject = @subject }
   end
 
   def datetime
-    @files[HRRTFile::EXTN_L64_HDR].datetime if defined? @files
+    @files[HRRTFile::CLASS_L64_HDR].datetime if defined? @files
   end
 
   # Return total size of this scan

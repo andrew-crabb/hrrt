@@ -28,27 +28,31 @@ module HRRTUtility
   NEEDED_NAMES_DATE = %w(yr mo dy)
   NEEDED_NAMES_TIME = %w(hr mn sc)
 
-  DIGITS = %w(zero one two three four five six seven eight nine)
+  CLASS_L64     = 'HRRTFileL64'
+  CLASS_L64_HDR = 'HRRTFileL64Hdr'
+  CLASS_L64_HC  = 'HRRTFileL64Hc'
 
-  # File extensions
-  EXTN_L64     = 'l64'
-  EXTN_L64_HDR = 'l64.hdr'
-  EXTN_HC      = 'hc'
-  NEEDED_EXTNS_ACS = [EXTN_L64, EXTN_L64_HDR, EXTN_HC]
+  CLASSES = [CLASS_L64, CLASS_L64_HDR, CLASS_L64_HC]
 
-  # Class to create for each file extension
-  HRRT_CLASSES = {
-    EXTN_L64     => 'HRRTFileL64',
-    EXTN_L64_HDR => 'HRRTFileL64Hdr',
-    EXTN_HC      => 'HRRTFileL64Hc',
-  }
+  #  # File extensions
+  #  EXTN_L64         = 'l64'
+  #  EXTN_L64_HDR     = 'l64.hdr'
+  #  EXTN_HC          = 'hc'
+  #  NEEDED_EXTNS_ACS = [EXTN_L64, EXTN_L64_HDR, EXTN_HC]
+  #
+  #  # Class to create for each file extension
+  #  HRRT_CLASSES = {
+  #    EXTN_L64     => 'HRRTFileL64',
+  #    EXTN_L64_HDR => 'HRRTFileL64Hdr',
+  #    EXTN_HC      => 'HRRTFileL64Hc',
+  #  }
 
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
   # Analyze infile name for HRRT pattern.
-  # 
+  #
   # @param infile [String] input file name
   # @return [MatchData] object of name parts if match, else nil.
 
@@ -75,7 +79,7 @@ module HRRTUtility
   end
 
   # Create date in standard format YYMMDD from MatchData object
-  # 
+  #
   # @param match [MatchData] result of regex match against file name patterns.
   #   Must contain the labels _yr_, *mo*, __dy__
   # @raise [foo] if the required labels are not present.
@@ -115,7 +119,7 @@ module HRRTUtility
   # @return hostname [String]
 
   def hostname
-    Socket.gethostname    
+    Socket.gethostname
   end
 
 end
