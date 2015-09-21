@@ -18,20 +18,33 @@ class HRRTACS
   def initialize()
   end
 
-  # Perform all steps related to scanning the input directories
+  # Gather names of all input files on ACS
 
   def read_dirs(indir)
+    @all_files = []
+    Dir.chdir(indir)
+        @all_files = Dir.glob("**/*").select { |f| File.file? f }
+        pp @all_files
+    puts "#{@all_files.count} files in #{indir}"
+    exit
+
+    all_dirs = Dir.glob('*').select { |f| File.directory? f }
+    all_dirs.each do |subdir|
+      read_dir(subdir)
+    end
+  end
+
+  def read_dir(subdir)
+    @all_files = Dir.glob("**/*").select { |f| File.file? f }
+  end
+
+  # Perform all steps related to scanning the input directories
+
+  def read_dirs_old(indir)
     log_info("(#{indir})")
     scan_dirs(indir)
     combine_acs_files
     print_summary if MyOpts.get(:verbose)
-  end
-
-  def checksum_dirs
-    log_fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
-    @files_by_datetime.each do |dtime, files|
-      log_info("(#{dtime}): #{files.size} files")
-    end
   end
 
   # Create HRRTACSDir objects from contents of ACS directory
@@ -46,6 +59,13 @@ class HRRTACS
     all_dirs.each do |subdir|
       @acs_dirs[subdir] = HRRTACSDir.new(File.join(indir, subdir))
       @acs_dirs[subdir].create_hrrt_files
+    end
+  end
+
+  def checksum_dirs
+    log_fatal("files_by_datetime not unitialized") unless @files_by_datetime.size > 0
+    @files_by_datetime.each do |dtime, files|
+      log_info("(#{dtime}): #{files.size} files")
     end
   end
 

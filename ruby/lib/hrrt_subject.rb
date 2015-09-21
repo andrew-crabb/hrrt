@@ -47,7 +47,7 @@ class HRRTSubject
   # @param filename [String] Name of file
   # @return subject_details [Hash] Hash of :name_last, :name_first, :history
 
-  def self.parse_file_name(infile)
+  def self.parse_file(infile)
     details = {}
     if match = matches_hrrt_name(infile.file_name)
       details[:name_last]  = match[:last].upcase

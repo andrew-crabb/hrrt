@@ -33,7 +33,7 @@ class HRRTFileL64 < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize(filename)
+  def initialize
     super
     @archive_format = FORMAT_COMPRESSED
   end

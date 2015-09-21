@@ -28,9 +28,9 @@ class HRRTFileL64Hdr < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize(filename)
+  def initialize
     super
-    log_debug("#{File.basename(filename)}")
+    log_debug
   end
 
 end

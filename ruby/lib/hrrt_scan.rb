@@ -21,8 +21,8 @@ class HRRTScan
   # Accessors
   # ------------------------------------------------------------
 
-  attr_reader :files
-  attr_reader :subject
+  attr_accessor :files
+  attr_accessor :subject
 
   # ------------------------------------------------------------
   # Methods
@@ -30,8 +30,8 @@ class HRRTScan
 
   # Create new Scan and fill in its files
 
-  def initialize(scanfiles)
-    @files = scanfiles
+  def initialize(datetime)
+    @datetime = datetime
     log_debug("#{datetime}")
   end
 
@@ -49,9 +49,9 @@ class HRRTScan
     @files.each { |extn, file| file.subject = @subject }
   end
 
-  def datetime
-    @files[HRRTFile::CLASS_L64_HDR].datetime if defined? @files
-  end
+#  def datetime
+#    @files[HRRTFile::CLASS_L64_HDR].datetime if defined? @files
+#  end
 
   # Return total size of this scan
   #
@@ -66,7 +66,7 @@ class HRRTScan
   end
 
   def summary
-    "#{datetime} #{@subject.summary} #{file_size}"
+    "#{@datetime} #{@subject.summary} #{file_size}"
   end
 
 end

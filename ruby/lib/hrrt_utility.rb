@@ -34,19 +34,6 @@ module HRRTUtility
 
   CLASSES = [CLASS_L64, CLASS_L64_HDR, CLASS_L64_HC]
 
-  #  # File extensions
-  #  EXTN_L64         = 'l64'
-  #  EXTN_L64_HDR     = 'l64.hdr'
-  #  EXTN_HC          = 'hc'
-  #  NEEDED_EXTNS_ACS = [EXTN_L64, EXTN_L64_HDR, EXTN_HC]
-  #
-  #  # Class to create for each file extension
-  #  HRRT_CLASSES = {
-  #    EXTN_L64     => 'HRRTFileL64',
-  #    EXTN_L64_HDR => 'HRRTFileL64Hdr',
-  #    EXTN_HC      => 'HRRTFileL64Hc',
-  #  }
-
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
@@ -69,13 +56,26 @@ module HRRTUtility
   def create_hrrt_file(infile)
     hrrt_file = nil
     if (match = matches_hrrt_name(infile))
-      if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
-        hrrt_file = Object.const_get(classtype).new(File.join(@indir, infile))
-        log_debug("#{infile}: New #{classtype}")
+      # if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
+      CLASSES.each do |classtype|
+        if match[:extn] == Object.const_get(classtype).extn
+          hrrt_file = Object.const_get(classtype).new
+          hrrt_file.read_file(infile)
+          log_debug("#{File.basename(infile)}: New #{classtype}")
+        end
       end
     end
-    log_debug("#{infile}: Unmatched #{classtype}")
     hrrt_file
+  end
+
+  def create_hrrt_subject(hrrt_file)
+    subject = nil
+    if (match = HRRTSubject.parse_file(hrrt_file))
+      subject = HRRTSubject.new(match)
+    else
+      raise
+    end
+    subject
   end
 
   # Create date in standard format YYMMDD from MatchData object

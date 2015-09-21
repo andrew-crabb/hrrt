@@ -11,39 +11,70 @@ class HRRT
   include MyLogging
   include MyOpts
 
-  # @!attribute [r] scans_by_datetime
+  # @!attribute [r] scans
   # Return array of all HRRTScan objects.
   # @return [Array<HRRTScan>]
-  attr_reader :scans_by_datetime
+  attr_reader :scans
 
   def initialize
     log_debug("initialize")
+    @hrrt_files = {}
+    @scans = {}
+    @subjects = {}
   end
 
   def parse(input_dir)
-    log_debug
-    @acs = HRRTACS.new()
-    @acs.read_dirs(input_dir)
-    @files_by_datetime = @acs.files_by_datetime
-    print_summary if MyOpts.get(:verbose)
+    @input_dir = input_dir
+    Dir.chdir(@input_dir)
+    @all_files = Dir.glob("**/*").select { |f| File.file? f }
+    log_debug("#{@input_dir}: #{@all_files.count} files")
+    process_files
+    process_scans
+    process_subjects
+    print_summary #      if MyOpts.get(:verbose)
     print_files_summary if MyOpts.get(:vverbose)
+    exit
   end
 
   def process_files
-    log_debug
-    make_scans
-    process_scans
-    print_summary if MyOpts.get(:verbose)
+    @all_files.each do |infile|
+      if hrrt_file = create_hrrt_file(infile)
+        @hrrt_files[hrrt_file.datetime] ||= {}
+        @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
+      end
+    end
   end
 
+  def process_scans
+    log_debug
+    @hrrt_files.each do |datetime, files|
+      scan = HRRTScan.new(datetime)
+      scan.files = files
+      files.each { |extn, file| file.scan = scan }
+      @scans[datetime] = scan
+      log_debug("finished #{datetime}")
+    end
+  end
+
+  def process_subjects
+    log_debug
+    @hrrt_files.each do |datetime, files|
+#      subject = HRRTSubject.new(files[HRRTFileL64Hdr])
+		subject = create_hrrt_subject(files[HRRTFileL64Hdr])
+      @subjects[subject.summary] = subject
+      @scans[datetime].subject = subject
+    end
+  end
+
+
   def archive
-    log_debug("#{@files_by_datetime.length} files")
+    log_debug("#{@hrrt_files.length} files")
     @archive_local = HRRTArchiveLocal.new
-    @archive_local.archive_files(@files_by_datetime)
+    @archive_local.archive_files(@hrrt_files)
   end
 
   def checksum
-    @files_by_datetime.each do |dtime, files|
+    @hrrt_files.each do |dtime, files|
       log_debug(dtime)
       files.each do |type, file|
         file.ensure_in_database
@@ -51,27 +82,9 @@ class HRRT
     end
   end
 
-  # Create a Scan object from the files for each datetime
-
-  def make_scans
-    log_debug
-    @scans_by_datetime = {}
-    @files_by_datetime.each do |dtime, files|
-      @scans_by_datetime[dtime] = HRRTScan.new(files)
-    end
-  end
-
-  # Process each Scan object.
-
-  def process_scans
-    @scans_by_datetime.each do |dtime, scan|
-      scan.create_subject
-    end
-  end
-
   def print_files_summary
     log_info('==== File Summary ====')
-    @files_by_datetime.each do |datetime, files|
+    @hrrt_files.each do |datetime, files|
       log_info("#{datetime}, #{files.class}")
       files.each do |extn, file|
         file.print_summary
@@ -81,10 +94,8 @@ class HRRT
 
   def print_summary
     log_info('==== Scan Summary ====')
-    if @scans_by_datetime
-      @scans_by_datetime.each do |dtime, scan|
-        scan.print_summary
-      end
+    @scans.each do |datetime, scan|
+      scan.print_summary
     end
   end
 

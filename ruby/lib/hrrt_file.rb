@@ -40,6 +40,7 @@ class HRRTFile
   attr_reader :datetime
 
   attr_accessor :subject
+  attr_accessor :scan
   attr_accessor :archive_format
 
   # ------------------------------------------------------------
@@ -47,17 +48,22 @@ class HRRTFile
   # ------------------------------------------------------------
 
   def self.make_test_files(test_subject)
-  	CLASSES.each do |theclass|
-  		log_debug("#{theclass}")
-  	end
+    test_files = {}
+    CLASSES.each do |theclass|
+      #     log_debug("#{theclass}")
+      newfile = Object.const_get(theclass).new
+      newfile.set_subject(subject)
+      newfile.set_scan(scan_times_go_here)
+      test_files[theclass] = newfile
+    end
   end
 
   # Return the file extension of this class
-  # 
+  #
   # @abstract
 
   def self.extn
-  	raise
+    raise
   end
 
   # ------------------------------------------------------------
@@ -66,21 +72,27 @@ class HRRTFile
 
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
-  def initialize(filename)
-    log_debug("#{File.basename(filename)}");
-    parse_filename(filename)
-    read_physical(filename)
+  def initialize
     @archive_format = FORMAT_NATIVE
     @hostname = hostname
   end
 
+  # Read scan and subject details from file name, and file physical characteristics.
+  #
+  # @param infile [String]
+
+  def read_file(filename)
+#    log_debug("#{File.basename(filename)}");
+    parse_filename(filename)
+    read_physical(filename)
+  end
+
   # Return extension of this object's class
-  # Calls derived class method extn()
   #
   # @return extn [String]
 
   def extn
-  	self.class.extn
+    self.class.extn
   end
 
   # Return database field name corresponding to class variable name
@@ -120,7 +132,7 @@ class HRRTFile
   end
 
   def print_summary(short = false)
-  	outstr = sprintf("%-50s %10d", @file_name, @file_size)
+    outstr = sprintf("%-50s %10d", @file_name, @file_size)
     log_info(outstr)
   end
 

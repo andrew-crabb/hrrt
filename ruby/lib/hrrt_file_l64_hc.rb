@@ -10,7 +10,7 @@ class HRRTFileL64Hc < HRRTFile
   # Definitions
   # ------------------------------------------------------------
 
-  SUFFIX = 'l64.hc'
+  SUFFIX = 'hc'
 
   # ------------------------------------------------------------
   # Accssors
@@ -28,9 +28,9 @@ class HRRTFileL64Hc < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize(filename)
+  def initialize
     super
-    log_debug("#{File.basename(filename)}")
+    log_debug
   end
 
 end
