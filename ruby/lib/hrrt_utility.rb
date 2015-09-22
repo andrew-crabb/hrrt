@@ -53,29 +53,40 @@ module HRRTUtility
   # @param infile [String] Input file
   # @return [HRRTFile]
 
-  def create_hrrt_file(infile)
+  def create_hrrt_file(details, infile)
     hrrt_file = nil
-    if (match = matches_hrrt_name(infile))
-      # if classtype =  HRRTUtility::HRRT_CLASSES[match[:extn]]
-      CLASSES.each do |classtype|
-        if match[:extn] == Object.const_get(classtype).extn
-          hrrt_file = Object.const_get(classtype).new
-          hrrt_file.read_file(infile)
-          log_debug("#{File.basename(infile)}: New #{classtype}")
-        end
+    CLASSES.each do |classtype|
+      if details[:extn] == Object.const_get(classtype).extn
+        hrrt_file = Object.const_get(classtype).new
+        hrrt_file.read_physical(infile)
+        log_debug("#{File.basename(infile)}: New #{classtype}")
       end
     end
     hrrt_file
   end
 
-  def create_hrrt_subject(hrrt_file)
-    subject = nil
-    if (match = HRRTSubject.parse_file(hrrt_file))
-      subject = HRRTSubject.new(match)
-    else
-      raise
+  # Extract subject name and date/time from file name
+  #
+  # @param filename [String]
+
+  def parse_filename(filename)
+    details = nil
+    if match = matches_hrrt_name(File.basename(filename))
+      details = {
+        date:     match.names.include?('date') ? match[:date] : make_date(match),
+        time:     match.names.include?('time') ? match[:time] : make_time(match),
+        type:     match[:type].upcase,
+        extn:     match[:extn].downcase,
+        last:     match[:last].upcase,
+        first:    match[:first].upcase,
+        hist:     match[:hist].upcase,
+      }
+      # Derived fields
+      details[:scan_summary]    = details.values_at(:date, :time).join('_')
+      details[:subject_summary] = details.values_at(:last, :first, :hist).join('_')
     end
-    subject
+#    pp details
+    details
   end
 
   # Create date in standard format YYMMDD from MatchData object

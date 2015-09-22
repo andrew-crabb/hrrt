@@ -12,6 +12,7 @@ class HRRTFileL64 < HRRTFile
 
   SUFFIX = 'l64'
   ARCHIVE_SUFFIX = '7z'
+  ARCHIVE_FORMAT = FORMAT_COMPRESSED
 
   # ------------------------------------------------------------
   # Accssors
@@ -29,13 +30,16 @@ class HRRTFileL64 < HRRTFile
     SUFFIX
   end
 
+  def self.archive_format
+    ARCHIVE_FORMAT
+  end
+
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
   def initialize
     super
-    @archive_format = FORMAT_COMPRESSED
   end
 
   # Name to be used for this HRRTFile object in archive.
@@ -53,15 +57,5 @@ class HRRTFileL64 < HRRTFile
   def write_physical(outfile)
     write_physical_compressed(outfile)
   end
-
-  # Test this file against given archive
-  # Test CRC checksum against that stored in archive file
-  #
-  # @param archive_file_name [String] File to test against
-  # @todo Add database integration.
-
-#  def is_in_archive?(archive_file_name)
-#    is_in_archive_comp?(archive_file_name)
-#  end
 
 end

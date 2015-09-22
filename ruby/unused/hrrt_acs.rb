@@ -3,7 +3,6 @@
 require 'pp'
 require_relative '../lib/my_logging'
 require_relative '../lib/my_opts'
-require_relative '../lib/hrrt_acs_dir'
 require_relative '../lib/hrrt_scan'
 
 include MyLogging
@@ -23,6 +22,8 @@ class HRRTACS
   def read_dirs(indir)
     @all_files = []
     Dir.chdir(indir)
+    all_dirs = Dir.glob('*').select { |f| File.directory? f }
+    
         @all_files = Dir.glob("**/*").select { |f| File.file? f }
         pp @all_files
     puts "#{@all_files.count} files in #{indir}"

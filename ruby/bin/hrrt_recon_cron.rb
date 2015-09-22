@@ -7,7 +7,6 @@
 require 'optparse'
 require 'pp'
 
-require_relative '../lib/hrrt_acs'
 require_relative '../lib/my_logging'
 require_relative '../lib/hrrt_archive_local'
 

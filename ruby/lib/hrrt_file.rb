@@ -50,7 +50,6 @@ class HRRTFile
   def self.make_test_files(test_subject)
     test_files = {}
     CLASSES.each do |theclass|
-      #     log_debug("#{theclass}")
       newfile = Object.const_get(theclass).new
       newfile.set_subject(subject)
       newfile.set_scan(scan_times_go_here)
@@ -66,6 +65,14 @@ class HRRTFile
     raise
   end
 
+  # Return the archive format of this class
+  #
+  # @abstract
+
+  def self.archive_format
+    raise
+  end
+
   # ------------------------------------------------------------
   # Object methods
   # ------------------------------------------------------------
@@ -73,18 +80,6 @@ class HRRTFile
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
   def initialize
-    @archive_format = FORMAT_NATIVE
-    @hostname = hostname
-  end
-
-  # Read scan and subject details from file name, and file physical characteristics.
-  #
-  # @param infile [String]
-
-  def read_file(filename)
-#    log_debug("#{File.basename(filename)}");
-    parse_filename(filename)
-    read_physical(filename)
   end
 
   # Return extension of this object's class
@@ -93,6 +88,15 @@ class HRRTFile
 
   def extn
     self.class.extn
+  end
+
+  # Return archive format of this object's class
+  # This base class works in all derived classes
+  #
+  # @return archive_format [String]
+
+  def archive_format
+    self.class.archive_format
   end
 
   # Return database field name corresponding to class variable name
@@ -104,21 +108,6 @@ class HRRTFile
     DB_MAP[var_name]
   end
 
-  # Extract subject name and date/time from file name
-  #
-  # @param filename [String]
-
-  def parse_filename(filename)
-    if (match = matches_hrrt_name(filename))
-      @date  = match.names.include?('date') ? match[:date] : make_date(match)
-      @time  = match.names.include?('time') ? match[:time] : make_time(match)
-      @type  = match[:type].upcase
-      @extn  = match[:extn].downcase
-    else
-      raise
-    end
-  end
-
   # Return name of this file in standard format
   #
   # @return [String]
@@ -128,12 +117,15 @@ class HRRTFile
   end
 
   def datetime
-    @date + '_' + @time
+    @scan.datetime
   end
 
-  def print_summary(short = false)
-    outstr = sprintf("%-50s %10d", @file_name, @file_size)
-    log_info(outstr)
+  def print_summary(short = true)
+    log_info(sprintf("%-50s %10d", @file_name, @file_size))
+    if !short
+      log_info("Subject: #{@subject.summary}")
+      log_info("Scan: #{@scan.summary}")
+    end
   end
 
   # Name to be used for this HRRTFile object in archive.

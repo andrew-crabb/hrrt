@@ -7,7 +7,6 @@ require 'optparse'
 require 'pp'
 require 'thor'
 
-require_relative '../lib/hrrt_acs'
 require_relative '../lib/hrrt'
 require_relative '../lib/my_logging'
 require_relative '../lib/hrrt_archive_local'
@@ -34,7 +33,7 @@ class HRRTRecon < Thor
   dir_options = [:directory, :desc => 'Input directory', :default => DIR_SCS_SCANS]
 
   def initialize(args, options, config)
-	options << '-v' if options.include?('-V')
+    options << '-v' if options.include?('-V')
     super(args, options, config)
     MyOpts.init(self.options)
     MyOpts.printoptions
@@ -50,14 +49,13 @@ class HRRTRecon < Thor
     input_dir = directory || get_input_directory
     @logger.fatal("No such directory: #{input_dir}") unless Dir.exist?(input_dir)
     @hrrt.parse(input_dir)
-    @hrrt.process_files
   end
 
   desc "archive DIRECTORY", "Archive given directory of HRRT studies"
   method_option *dir_options
   def archive(directory = DIR_SCS_SCANS)
     parse(directory)
-#	invoke :parse
+    # invoke :parse
     @hrrt.archive
   end
 
@@ -70,11 +68,11 @@ class HRRTRecon < Thor
 
   desc "makedata", "Make test data (Requires option 't' for 'test')"
   def makedata
-  	unless MyOpts.get(:test)
-  		puts "Please run option t (test) with function makedata"
-  		exit 1
-  	end
-  	@hrrt.makedata
+    unless MyOpts.get(:test)
+      puts "Please run option t (test) with function makedata"
+      exit 1
+    end
+    @hrrt.makedata
   end
 
   no_commands do

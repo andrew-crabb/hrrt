@@ -6,7 +6,6 @@ require 'logger'
 
 require_relative '../lib/my_logging'
 require_relative '../lib/my_opts'
-require_relative '../lib/hrrt_acs_dir'
 require_relative '../lib/hrrt_scan'
 
 include MyLogging

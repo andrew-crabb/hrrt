@@ -7,7 +7,7 @@ require_relative '../lib/hrrt_subject'
 
 include MyLogging
 
-# Class representing one HRRT scan 
+# Class representing one HRRT scan
 class HRRTScan
 
   # ------------------------------------------------------------
@@ -21,17 +21,28 @@ class HRRTScan
   # Accessors
   # ------------------------------------------------------------
 
+  attr_reader :date
+  attr_reader :time
+  attr_reader :type
+
   attr_accessor :files
   attr_accessor :subject
 
   # ------------------------------------------------------------
-  # Methods
+  # Class methods
+  # ------------------------------------------------------------
+
+  # ------------------------------------------------------------
+  # Instance methods
   # ------------------------------------------------------------
 
   # Create new Scan and fill in its files
 
-  def initialize(datetime)
-    @datetime = datetime
+  def initialize(details, subject)
+    @date = details[:date]
+    @time = details[:time]
+    @type = details[:type]
+    @subject = subject
     log_debug("#{datetime}")
   end
 
@@ -39,26 +50,16 @@ class HRRTScan
     (@files.keys & HRRTFile::CLASSES).sort.eql?(HRRTFile::CLASSES.sort)
   end
 
-  # Create and initialize an HRRTSubject object from the files in this scan
-  # Store a pointer to the Subject object in each File object
-
-  def create_subject
-    infile = @files[HRRTUtility::CLASS_L64_HDR]
-    subject_details = HRRTSubject.parse_file_name(infile)
-    @subject = HRRTSubject.new(subject_details)
-    @files.each { |extn, file| file.subject = @subject }
+  def datetime
+    @date + '_' + @time
   end
-
-#  def datetime
-#    @files[HRRTFile::CLASS_L64_HDR].datetime if defined? @files
-#  end
 
   # Return total size of this scan
   #
   # @return [Fixnum] total bytes of all files making up this scan
 
   def file_size
-  	@files.map { |name, f| f.file_size }.inject(:+)
+    @files.map { |name, f| f.file_size }.inject(:+)
   end
 
   def print_summary
@@ -66,7 +67,7 @@ class HRRTScan
   end
 
   def summary
-    "#{@datetime} #{@subject.summary} #{file_size}"
+    "#{datetime} #{@subject.summary} #{file_size}"
   end
 
 end
