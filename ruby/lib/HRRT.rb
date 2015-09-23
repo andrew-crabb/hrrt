@@ -83,7 +83,7 @@ class HRRT
   end
 
   def archive
-    log_debug("#{@hrrt_files.length} files")
+    log_info("#{@hrrt_files.length} files")
     @archive_local = HRRTArchiveLocal.new
     @archive_local.archive_files(@hrrt_files)
   end
@@ -117,10 +117,18 @@ class HRRT
   # Create test data
 
   def makedata
+    log_info
     test_subjects = HRRTSubject::make_test_subjects
     test_subjects.each do |test_subject|
-      test_subject.print_summary(HRRTSubject::SUMM_FMT_FILENAME)
-      files = HRRTFile.make_test_files(test_subject)
+      log_info("******* #{test_subject.summary}")
+      test_scans = HRRTScan::make_test_scans(test_subject)
+      test_scans.each do |modality, scan|
+        test_files = HRRTFile::make_test_files(modality, scan)
+        test_files.each do |theclass, test_file|
+          test_file.write_test_data
+          # test_file.read_physical
+        end
+      end
     end
   end
 

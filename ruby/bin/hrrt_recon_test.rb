@@ -86,6 +86,8 @@ class HRRTRecon < Thor
 
 end
 
+puts "one"
+
 HRRTRecon.start(ARGV)
 
 exit

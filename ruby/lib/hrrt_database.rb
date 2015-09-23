@@ -83,12 +83,12 @@ module HRRTDatabase
 
   def add_record_to_database(*fields)
     db_params = make_database_params(*fields)
-    ds = db[:files].insert(db_params)
+    db[:files].insert(db_params)
   end
 
   def find_records_in_database(*fields)
     db_params = make_database_params(*fields)
-    ds = db[:files].where(db_params)
+    db[:files].where(db_params)
   end
 
   def clear_test_database

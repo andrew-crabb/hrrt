@@ -55,7 +55,7 @@ class HRRTFileL64 < HRRTFile
   # @param outfile [String] File name to write to
 
   def write_physical(outfile)
-    write_physical_compressed(outfile)
+    write_comp(outfile)
   end
 
 end

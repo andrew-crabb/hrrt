@@ -25,7 +25,7 @@ class HRRTFileL64Hdr < HRRTFile
     SUFFIX
   end
 
-    def self.archive_format
+  def self.archive_format
     ARCHIVE_FORMAT
   end
 

@@ -18,6 +18,9 @@ module PhysicalFile
   FORMAT_NATIVE     = :format_native
   FORMAT_COMPRESSED = :format_compressed
 
+  # Move these to a config file later.
+  TEST_DATA_PATH = '/home/ahc/data/hrrt_acs'
+
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
@@ -37,7 +40,7 @@ module PhysicalFile
   def read_physical(infile)
     stat = File.stat(infile)
     @file_name = File.basename(infile)
-    @file_path = File.dirname(infile)
+    @file_path = File.dirname(File.absolute_path(infile))
     @file_size = stat.size
     @file_modified = stat.mtime.to_i
   end
@@ -50,7 +53,8 @@ module PhysicalFile
     File.join(@file_path, @file_name)
   end
 
-  def write_physical_uncompressed(outfile)
+  def write_uncomp(outfile)
+    log_debug("#{full_name}, #{outfile}")
     result = Rsync.run(full_name, outfile, '--times')
     unless result.success?
       puts result.error
@@ -58,8 +62,8 @@ module PhysicalFile
     end
   end
 
-  def write_physical_compressed(outfile)
-    log_debug("#{@file_name}, #{outfile}")
+  def write_comp(outfile)
+    log_debug("#{full_name}, #{outfile}")
     Dir.chdir(@file_path)
     File.open(outfile, "wb") do |file|
       SevenZipRuby::Writer.open(file) do |szr|
@@ -70,7 +74,7 @@ module PhysicalFile
   end
 
   def same_modification_as(other_file)
-    same = File.exist?(other_file) && @file_modified == File.stat(other_file).mtime.to_i
+    File.exist?(other_file) && @file_modified == File.stat(other_file).mtime.to_i
   end
 
   def same_size_as(other_file)
@@ -97,7 +101,7 @@ module PhysicalFile
   # @todo Add database integration for storing CRC checksums
 
   def matches_file_uncomp?(archive_file)
-    matches = same_size_as(archive_file) && same_modification_as(archive_file)
+    same_size_as(archive_file) && same_modification_as(archive_file)
   end
 
   # Test this file against given archive

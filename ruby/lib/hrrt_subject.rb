@@ -23,9 +23,10 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
-  attr_reader :name_last
-  attr_reader :name_first
-  attr_reader :history
+  attr_reader :details
+  # attr_reader :name_last
+  # attr_reader :name_first
+  # attr_reader :history
 
   # ------------------------------------------------------------
   # Class methods
@@ -37,7 +38,7 @@ class HRRTSubject
     subject_data['name_last'].each do |last_in, last_out|
       subject_data['name_first'].each do |first_in, first_out|
         subject_data['history'].each do |hist_in, hist_out|
-          subjects << HRRTSubject.new(last: last_in, first: first_in, history: hist_in)
+          subjects << HRRTSubject.new(last: last_in, first: first_in, hist: hist_in)
         end
       end
     end
@@ -53,18 +54,31 @@ class HRRTSubject
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(details)
-    log_debug("#{details[:last]} #{details[:first]} #{details[:hist]}")
-    @name_last  = details[:last]
-    @name_first = details[:first]
-    @history    = details[:hist]
+    log_debug("last #{details[:last]} first #{details[:first]} hist #{details[:hist]}")
+    @details = details
+    # @name_last  = details[:last]
+    # @name_first = details[:first]
+    # @history    = details[:hist]
+  end
+
+  def name_last
+    @details[:last]
+  end
+
+  def name_first
+    @details[:first]
+  end
+
+  def history
+    @details[:hist]
   end
 
   def summary(format = :summ_fmt_short)
     case format
     when :summ_fmt_short
-      sprintf("%-12s %-12s %-12s", @name_last, @name_first, @history)
+      sprintf("%-12s %-12s %-12s", name_last, name_first, history)
     when :summ_fmt_filename
-      sprintf("%s_%s_%s", @name_last, @name_first, @history)
+      sprintf("%s_%s_%s", name_last, name_first, history)
     else
       raise
     end

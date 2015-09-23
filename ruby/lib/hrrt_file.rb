@@ -33,12 +33,6 @@ class HRRTFile
   # Accssors
   # ------------------------------------------------------------
 
-  attr_reader :date
-  attr_reader :time
-  attr_reader :type
-  attr_reader :extn
-  attr_reader :datetime
-
   attr_accessor :subject
   attr_accessor :scan
   attr_accessor :archive_format
@@ -47,14 +41,15 @@ class HRRTFile
   # Class methods
   # ------------------------------------------------------------
 
-  def self.make_test_files(test_subject)
+  def self.make_test_files(modality, scan)
     test_files = {}
     CLASSES.each do |theclass|
       newfile = Object.const_get(theclass).new
-      newfile.set_subject(subject)
-      newfile.set_scan(scan_times_go_here)
+      newfile.scan = scan
+      newfile.subject = scan.subject
       test_files[theclass] = newfile
     end
+    test_files
   end
 
   # Return the file extension of this class
@@ -110,14 +105,47 @@ class HRRTFile
 
   # Return name of this file in standard format
   #
-  # @return [String]
+  # @return filename [String]
 
   def standard_name
-    "#{@subject.summary(:summ_fmt_filename)}_PET_#{datetime}_#{@type}\.#{@extn}"
+    sprintf(NAME_FORMAT_STD, get_details)
+  end
+
+  # Return name of this file in ACS format
+  #
+  # @return filename [String]
+
+  def acs_name
+    details = get_details
+    details[:yr] += 2000 if details[:yr] < 100
+    sprintf(NAME_FORMAT_ACS, details)
+  end
+
+  # Return a hash of details relevant to this File.
+  # From self: extn()
+  # From subject: :last, :first, :hist
+  # From scan: :date, :time, :type
+  #
+  # @return details [Hash]
+
+  def get_details
+    subject.details.merge(scan.details).merge(details)
+  end
+
+  # Return hash of details stored in this File object
+  #
+  # @return details [Hash]
+
+  def details
+    {extn: extn}
   end
 
   def datetime
     @scan.datetime
+  end
+
+  def date
+    @scan.date
   end
 
   def print_summary(short = true)
@@ -143,8 +171,7 @@ class HRRTFile
   # @note overload this method to write compressed file
 
   def write_physical(outfile)
-    log_debug("#{full_name}, #{outfile}")
-    write_physical_uncompressed(outfile)
+    write_uncomp(outfile)
   end
 
   def ensure_in_database
@@ -165,6 +192,11 @@ class HRRTFile
   def find_in_database(*fields)
     required_fields = [:name, :path, :size, :modified, :host] + fields
     find_records_in_database(*required_fields)
+  end
+
+  def write_test_data
+    log_info(standard_name)
+    log_info(acs_name)
   end
 
 end
