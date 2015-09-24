@@ -18,6 +18,13 @@ class HRRTFile
   # Definitions
   # ------------------------------------------------------------
 
+  SUFFIX = nil
+  ARCHIVE_FORMAT = FORMAT_NATIVE
+  TEST_DATA_SIZE = 10**3
+  # Move these to a config file later.
+  TEST_DATA_PATH = File.join(Dir.home, 'data/hrrt_acs')
+  TRANSMISSION = 'Transmission'
+
   # Map from database field to object variable name.
 
   DB_MAP = {
@@ -41,23 +48,31 @@ class HRRTFile
   # Class methods
   # ------------------------------------------------------------
 
-  def self.make_test_files(modality, scan)
-    test_files = {}
+  def self.make_test_files(scan)
+    test_files = {scan.datetime => {}}
     CLASSES.each do |theclass|
       newfile = Object.const_get(theclass).new
       newfile.scan = scan
       newfile.subject = scan.subject
-      test_files[theclass] = newfile
+      test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
   end
 
   # Return the file extension of this class
   #
-  # @abstract
+  # @return extn [String]
 
   def self.extn
-    raise
+    self::SUFFIX
+  end
+
+  # Return the archive format of this class
+  #
+  # @return format [String]
+
+  def self.archive_format
+    self::ARCHIVE_FORMAT
   end
 
   # Return the archive format of this class
@@ -117,7 +132,7 @@ class HRRTFile
 
   def acs_name
     details = get_details
-    details[:yr] += 2000 if details[:yr] < 100
+#    details[:yr] += 2000 if details[:yr] < 100
     sprintf(NAME_FORMAT_ACS, details)
   end
 
@@ -194,9 +209,31 @@ class HRRTFile
     find_records_in_database(*required_fields)
   end
 
-  def write_test_data
-    log_info(standard_name)
-    log_info(acs_name)
+  def create_test_data
+    create_test_file_names
+    write_test_data
+    log_info(File.join(@file_path, @file_name))
+  end
+
+  # Fill in @file_path and @file_name for this File object
+
+  def create_test_file_names
+    @file_path = test_data_path
+    @file_name = acs_name
+  end
+
+  # Return path to test data file for this File object
+  #
+  # @return path [String]
+
+  def test_data_path
+    file_path = File.join(TEST_DATA_PATH, @subject.summary(:summ_fmt_name))
+    file_path = File.join(file_path, TRANSMISSION) if @scan.type == HRRTScan::TYPE_TX
+    file_path
+  end
+
+  def test_data_contents
+    '0' * self.class::TEST_DATA_SIZE
   end
 
 end

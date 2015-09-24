@@ -16,17 +16,36 @@ module HRRTUtility
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = /(?<last>\w+)_(?<first>\w*)_(?<hist>\w*)_(?<mod>PET)_(?<date>\d{6})_(?<time>\d{6})_(?<type>\w{2})\.(?<extn>[\w\.]+)/
-  NAME_PATTERN_ACS = /(?<last>\w+)-(?<first>\w*)-(?<hist>\w*)-(?<yr>\d{4})\.(?<mo>\d{1,2})\.(?<dy>\d{1,2})\.(?<hr>\d{1,2})\.(?<mn>\d{1,2})\.(?<sc>\d{1,2})_(?<type>\w{2})\.(?<extn>[\w\.]+)/
+  NAME_PATTERN_ACS = %r{
+    \s*
+#    (?<last>\w+)
+    (?<last>[^-]+)
+    \s*-\s*
+#    (?<first>\w*)
+    (?<first>[^-]*)
+    \s*-\s*
+    (?<hist>\w*)
+    \s*-
+    (?<yr>\d{4})\.(?<mo>\d{1,2})\.(?<dy>\d{1,2})
+    \.
+    (?<hr>\d{1,2})\.(?<mn>\d{1,2})\.(?<sc>\d{1,2})
+    _
+    (?<type>\w{2})
+    \.
+    (?<extn>[\w\.]+)
+  }x
 
   # printf formatting strings for file names in standard and ACS format.
   NAME_FORMAT_STD = "%<last>s_%<first>s_%<hist>s_%<date>s_%<time>s_%<type>s.%<extn>s"
-  NAME_FORMAT_ACS = "%<last>s-%<first>s-%<hist>s-%<yr>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<type>s.%<extn>s"
+  NAME_FORMAT_ACS = "%<last>s-%<first>s-%<hist>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<type>s.%<extn>s"
 
   HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
   HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
 
   HRRT_DATE_FMT = "%<yr>02d%<mo>02d%<dy>02d"  # 150824
   HRRT_TIME_FMT = "%<hr>02d%<mn>02d%<sc>02d"  # 083500
+  HDR_DATE_FMT  = "%<dy>02d:%<mo>02d:%<yr4>d" # 24:08:2015
+  HDR_TIME_FMT  = "%<hr>02d:%<mn>02d:%<sc>02d"  # 08:35:00
 
   # Required fields in NAME_PATTERN_xxx
   NEEDED_NAMES_DATE = %w(yr mo dy)
@@ -75,6 +94,7 @@ module HRRTUtility
 
   def parse_filename(filename)
     details = nil
+#    log_debug(filename)
     if match = matches_hrrt_name(File.basename(filename))
       details = {
         date:     match.names.include?('date') ? match[:date] : make_date(match),
@@ -88,8 +108,10 @@ module HRRTUtility
       # Derived fields
       details[:scan_summary]    = details.values_at(:date, :time).join('_')
       details[:subject_summary] = details.values_at(:last, :first, :hist).join('_')
+    else
+      log_debug("No match: '#{File.basename(filename)}'")
     end
-    #    pp details
+#    pp details
     details
   end
 
@@ -126,11 +148,9 @@ module HRRTUtility
   # @return [MatchData] of :yr, :mo, :dy if match; else nil.
 
   def parse_date(datestr)
-    parse_datetime(HRRT_DATE_PATTERN, datestr)
-    # match = HRRT_DATE_PATTERN.match(datestr)
-    # name_symbols = match.names.map { |name| name.to_sym }
-    # capture_ints = match.captures.map { |val| val.to_i }
-    # Hash[name_symbols.zip(capture_ints)]
+    details = parse_datetime(HRRT_DATE_PATTERN, datestr)
+    details[:yr4] = details[:yr] + 2000
+    details
   end
 
   # Return a MatchData object of time components of given time string.
@@ -140,9 +160,6 @@ module HRRTUtility
 
   def parse_time(timestr)
     parse_datetime(HRRT_TIME_PATTERN, timestr)
-    # match = HRRT_TIME_PATTERN.match(timestr)
-    # name_symbols = match.names.map { |name| name.to_sym }
-    # Hash[name_symbols.zip(match.captures)]
   end
 
   # Return a Hash of date or time symbols and their integer values

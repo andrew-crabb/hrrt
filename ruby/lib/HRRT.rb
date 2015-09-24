@@ -31,7 +31,6 @@ class HRRT
     read_files
     process_files
     process_scans
-    #    process_subjects
     print_summary #      if MyOpts.get(:verbose)
     print_files_summary if MyOpts.get(:vverbose)
   end
@@ -54,19 +53,24 @@ class HRRT
 
   def process_files
     @all_files.each do |infile|
-      details = parse_filename(infile)
-      subject = subject_for(details)
-      scan = scan_for(details, subject)
-      add_hrrt_file(details, subject, scan, infile)
+      if details = parse_filename(infile)
+        subject = subject_for(details)
+        scan = scan_for(details, subject)
+        add_hrrt_file(details, subject, scan, infile)
+      end
     end
   end
 
   def subject_for(details)
-    @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
+    if details
+      @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
+    end
   end
 
   def scan_for(details, subject)
-    @scans[details[:scan_summary]] ||= HRRTScan.new(details, subject)
+    if details
+      @scans[details[:scan_summary]] ||= HRRTScan.new(details, subject)
+    end
   end
 
   # Create new HRRTFile and store in hash with files from same datetime
@@ -116,20 +120,44 @@ class HRRT
 
   # Create test data
 
-  def makedata
+  def make_data
     log_info
-    test_subjects = HRRTSubject::make_test_subjects
-    test_subjects.each do |test_subject|
-      log_info("******* #{test_subject.summary}")
-      test_scans = HRRTScan::make_test_scans(test_subject)
-      test_scans.each do |modality, scan|
-        test_files = HRRTFile::make_test_files(modality, scan)
-        test_files.each do |theclass, test_file|
-          test_file.write_test_data
-          # test_file.read_physical
-        end
+    @subjects = HRRTSubject::make_test_subjects
+    @subjects.each do |summ, test_subject|
+      delete_subject_directory(test_subject)
+      @scans = HRRTScan::make_test_scans(test_subject)
+      @scans.each do |datetime, scan|
+        make_data_for_scan(scan)
       end
     end
   end
+
+  def make_data_for_scan(scan)
+    test_files_bydate = HRRTFile::make_test_files(scan)
+    test_files_bydate.each do |datetime, test_files|
+      test_files.each do |theclass, test_file|
+        # test_file.delete_test_data
+        test_file.create_test_data
+      end
+    end
+  end
+
+
+  # Delete this file from disk, and its containing directory if possible
+
+  def delete_subject_directory(subject)
+    file_path = File.join(HRRTFile::TEST_DATA_PATH, subject.summary(:summ_fmt_name))
+    if Dir.exists? file_path
+      Dir.chdir file_path
+      files = Dir.glob("**/*").select { |f| File.file? f }
+      files.each { |f| File.unlink(File.join(file_path, f)) }
+      [HRRTFile::TRANSMISSION, ''].each do |subdir|
+        fullpath = File.join(file_path, subdir)
+        log_info("unlink #{fullpath}")
+        Dir.unlink("#{fullpath}") if Dir.exists? fullpath
+      end
+    end
+  end
+
 
 end

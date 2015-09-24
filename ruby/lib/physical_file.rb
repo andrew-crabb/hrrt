@@ -18,9 +18,6 @@ module PhysicalFile
   FORMAT_NATIVE     = :format_native
   FORMAT_COMPRESSED = :format_compressed
 
-  # Move these to a config file later.
-  TEST_DATA_PATH = '/home/ahc/data/hrrt_acs'
-
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
@@ -86,12 +83,12 @@ module PhysicalFile
   # The alternative was to have HRRTFile test against physical file.
 
   def matches_file?(other_file)
-  	case @archive_format
-  	when FORMAT_NATIVE
-  		matches_file_uncomp?(other_file)
-  	when FORMAT_COMPRESSED
-  		matches_file_comp?(other_file)
-  	end
+    case @archive_format
+    when FORMAT_NATIVE
+      matches_file_uncomp?(other_file)
+    when FORMAT_COMPRESSED
+      matches_file_comp?(other_file)
+    end
   end
 
   # Test this file against given archive
@@ -125,6 +122,21 @@ module PhysicalFile
   def calculate_crc32
     @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
     log_debug("#{@file_name}: #{@crc32}")
+  end
+
+  def write_test_data
+    log_info(File.join(@file_path, @file_name))
+    FileUtils.mkdir_p(@file_path)
+    f = File.new(File.join(@file_path, @file_name),  "w")
+    f.write(test_data_contents)
+    f.close
+  end
+
+  def file_contents(filename)
+    file = File.open(filename)
+    contents = file.read
+    file.close
+    contents
   end
 
 end

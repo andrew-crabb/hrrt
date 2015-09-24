@@ -19,6 +19,11 @@ class HRRTScan
   TYPE_EM = 'EM'
   TYPE_TX = 'TX'
 
+  SCAN_TYPES = {
+    TYPE_EM => 'emission',
+    TYPE_TX => 'transmission',
+  }
+
   # ------------------------------------------------------------
   # Accessors
   # ------------------------------------------------------------
@@ -35,9 +40,11 @@ class HRRTScan
 
   def self.make_test_scans(subject)
     emdate = Faker::Time.between(2.days.ago, Time.now, :day)
+    em_scan = self.make_test_scan(subject, 'EM', emdate)
+    tx_scan = self.make_test_scan(subject, 'TX', emdate - 3600)
     scans = {
-      'EM': self.make_test_scan(subject, 'EM', emdate),
-      'TX': self.make_test_scan(subject, 'TX', emdate - 3600),
+      em_scan.datetime => em_scan,
+      tx_scan.datetime => tx_scan,
     }
     scans
   end
@@ -60,9 +67,6 @@ class HRRTScan
 
   def initialize(details, subject)
     @details = details
-    # @date = details[:date]
-    # @time = details[:time]
-    # @type = details[:type]
     @subject = subject
     log_debug("#{datetime} #{subject.summary}")
   end
@@ -101,7 +105,7 @@ class HRRTScan
   # @return [Fixnum] total bytes of all files making up this scan
 
   def file_size
-    @files.map { |name, f| f.file_size }.inject(:+)
+    @files ? @files.map { |name, f| f.file_size }.inject(:+) : 0
   end
 
   def print_summary

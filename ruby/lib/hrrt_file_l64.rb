@@ -13,6 +13,7 @@ class HRRTFileL64 < HRRTFile
   SUFFIX = 'l64'
   ARCHIVE_SUFFIX = '7z'
   ARCHIVE_FORMAT = FORMAT_COMPRESSED
+  TEST_DATA_SIZE = 10**6
 
   # ------------------------------------------------------------
   # Accssors
@@ -21,18 +22,6 @@ class HRRTFileL64 < HRRTFile
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
-
-  # Return the file extension of this class
-  # 
-  # @return extn [String]
-
-  def self.extn
-    SUFFIX
-  end
-
-  def self.archive_format
-    ARCHIVE_FORMAT
-  end
 
   # ------------------------------------------------------------
   # Methods
@@ -57,5 +46,7 @@ class HRRTFileL64 < HRRTFile
   def write_physical(outfile)
     write_comp(outfile)
   end
+
+
 
 end

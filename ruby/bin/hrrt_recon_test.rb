@@ -38,7 +38,6 @@ class HRRTRecon < Thor
     MyOpts.init(self.options)
     MyOpts.printoptions
     setup_logging
-    make_db_connection
     @hrrt = HRRT.new
   end
 
@@ -46,6 +45,7 @@ class HRRTRecon < Thor
   method_option *dir_options
   method_option :print_summary, :aliases => :p, :desc => 'Print summary', :default => true
   def parse(directory = DIR_SCS_SCANS)
+    make_db_connection
     input_dir = directory || get_input_directory
     @logger.fatal("No such directory: #{input_dir}") unless Dir.exist?(input_dir)
     @hrrt.parse(input_dir)
@@ -72,7 +72,7 @@ class HRRTRecon < Thor
       puts "Please run option t (test) with function makedata"
       exit 1
     end
-    @hrrt.makedata
+    @hrrt.make_data
   end
 
   no_commands do
@@ -85,8 +85,6 @@ class HRRTRecon < Thor
   end
 
 end
-
-puts "one"
 
 HRRTRecon.start(ARGV)
 

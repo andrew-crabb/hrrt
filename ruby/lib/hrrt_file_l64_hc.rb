@@ -12,6 +12,7 @@ class HRRTFileL64Hc < HRRTFile
 
   SUFFIX = 'hc'
   ARCHIVE_FORMAT = FORMAT_NATIVE
+  TEST_DATA_SIZE = 10**3
 
   # ------------------------------------------------------------
   # Accssors
@@ -20,14 +21,6 @@ class HRRTFileL64Hc < HRRTFile
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
-
-  def self.extn
-    SUFFIX
-  end
-
-  def self.archive_format
-    ARCHIVE_FORMAT
-  end
 
   # ------------------------------------------------------------
   # Methods

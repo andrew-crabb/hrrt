@@ -24,9 +24,6 @@ class HRRTSubject
   # ------------------------------------------------------------
 
   attr_reader :details
-  # attr_reader :name_last
-  # attr_reader :name_first
-  # attr_reader :history
 
   # ------------------------------------------------------------
   # Class methods
@@ -34,11 +31,12 @@ class HRRTSubject
 
   def self.make_test_subjects
     subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON))
-    subjects = []
+    subjects = {}
     subject_data['name_last'].each do |last_in, last_out|
       subject_data['name_first'].each do |first_in, first_out|
         subject_data['history'].each do |hist_in, hist_out|
-          subjects << HRRTSubject.new(last: last_in, first: first_in, hist: hist_in)
+          subj = HRRTSubject.new(last: last_in, first: first_in, hist: hist_in)
+          subjects[subj.summary(:summ_fmt_filename)] = subj
         end
       end
     end
@@ -79,6 +77,10 @@ class HRRTSubject
       sprintf("%-12s %-12s %-12s", name_last, name_first, history)
     when :summ_fmt_filename
       sprintf("%s_%s_%s", name_last, name_first, history)
+    when :summ_fmt_name
+      sprintf("%s_%s", name_last, name_first)
+    when :summ_fmt_names
+      sprintf("%s, %s", name_last, name_first)
     else
       raise
     end
