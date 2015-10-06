@@ -15,29 +15,33 @@ module HRRTUtility
 
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
-  NAME_PATTERN_STD = /(?<last>\w+)_(?<first>\w*)_(?<hist>\w*)_(?<mod>PET)_(?<date>\d{6})_(?<time>\d{6})_(?<type>\w{2})\.(?<extn>[\w\.]+)/
+  NAME_PATTERN_STD = %r{
+    (?<name_last>\w+)
+    _(?<name_first>\w*)
+    _(?<history>\w*)
+    _(?<mod>PET)
+    _(?<date>\d{6})
+    _(?<time>\d{6})
+    _(?<type>\w{2})
+    \.(?<extn>[\w\.]+)
+  }x
   NAME_PATTERN_ACS = %r{
-    \s*
-#    (?<last>\w+)
-    (?<last>[^-]+)
-    \s*-\s*
-#    (?<first>\w*)
-    (?<first>[^-]*)
-    \s*-\s*
-    (?<hist>\w*)
-    \s*-
-    (?<yr>\d{4})\.(?<mo>\d{1,2})\.(?<dy>\d{1,2})
-    \.
-    (?<hr>\d{1,2})\.(?<mn>\d{1,2})\.(?<sc>\d{1,2})
-    _
-    (?<type>\w{2})
-    \.
-    (?<extn>[\w\.]+)
+    (?<name_last>[^-]+\s*)
+    -(?<name_first>\s*[^-]*\s*)
+    -(?<history>\s*[^-]*\s*)
+    -(?<yr>\d{4}\s*)
+    \.(?<mo>\d{1,2})
+    \.(?<dy>\d{1,2})
+    \.(?<hr>\d{1,2})
+    \.(?<mn>\d{1,2})
+    \.(?<sc>\d{1,2})
+    _(?<type>\w{2})
+    \.(?<extn>[\w\.]+)
   }x
 
   # printf formatting strings for file names in standard and ACS format.
-  NAME_FORMAT_STD = "%<last>s_%<first>s_%<hist>s_%<date>s_%<time>s_%<type>s.%<extn>s"
-  NAME_FORMAT_ACS = "%<last>s-%<first>s-%<hist>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<type>s.%<extn>s"
+  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_%<date>s_%<time>s_%<type>s.%<extn>s"
+  NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<type>s.%<extn>s"
 
   HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
   HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
@@ -94,24 +98,25 @@ module HRRTUtility
 
   def parse_filename(filename)
     details = nil
-#    log_debug(filename)
+    #    log_debug(filename)
     if match = matches_hrrt_name(File.basename(filename))
       details = {
-        date:     match.names.include?('date') ? match[:date] : make_date(match),
-        time:     match.names.include?('time') ? match[:time] : make_time(match),
-        type:     match[:type].upcase,
-        extn:     match[:extn].downcase,
-        last:     match[:last].upcase,
-        first:    match[:first].upcase,
-        hist:     match[:hist].upcase,
+        date:       match.names.include?('date') ? match[:date] : make_date(match),
+        time:       match.names.include?('time') ? match[:time] : make_time(match),
+        type:       match[:type].upcase,
+        extn:       match[:extn].downcase,
+        name_last:  match[:name_last].upcase,
+        name_first: match[:name_first].upcase,
+        history:    match[:history].upcase,
       }
+      log_debug("'#{filename}'")
       # Derived fields
       details[:scan_summary]    = details.values_at(:date, :time).join('_')
-      details[:subject_summary] = details.values_at(:last, :first, :hist).join('_')
+      details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
     else
       log_debug("No match: '#{File.basename(filename)}'")
     end
-#    pp details
+    #    pp details
     details
   end
 
@@ -160,6 +165,15 @@ module HRRTUtility
 
   def parse_time(timestr)
     parse_datetime(HRRT_TIME_PATTERN, timestr)
+  end
+
+  # Return given name component cleaned (keep only alpha and numeric)
+  #
+  # @param instr [String]
+  # @param outstr [String]
+
+  def clean_name(instr)
+    instr.upcase.gsub(/[^A-Z0-9]/, "")
   end
 
   # Return a Hash of date or time symbols and their integer values

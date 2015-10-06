@@ -43,14 +43,14 @@ class HRRTScan
     em_scan = self.make_test_scan(subject, 'EM', emdate)
     tx_scan = self.make_test_scan(subject, 'TX', emdate - 3600)
     scans = {
-      em_scan.datetime => em_scan,
-      tx_scan.datetime => tx_scan,
+      TYPE_EM => em_scan,
+      TYPE_TX => tx_scan,
     }
     scans
   end
 
   def self.make_test_scan(subject, type, datetime)
-    log_info("#{subject}, #{type}, #{datetime}")
+    log_debug("#{subject}, #{type}, #{datetime}")
     details = {
       date: datetime.strftime("%y%m%d"),
       time: datetime.strftime("%H%M%S"),

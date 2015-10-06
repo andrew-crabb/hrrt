@@ -26,11 +26,8 @@ class HRRTRecon < Thor
   class_option :local   , :aliases => :l, :type => :boolean, :desc => "Run locally (database and archive)"
   class_option :test    , :aliases => :t, :type => :boolean, :desc => "Use test data, archive, and database"
 
-  DIR_SCS_SCANS    = "/mnt/hrrt/SCS_SCANS"
-  DIR_ARCHIVE      = "/data/archive"
-  DIR_ARCHIVE_TEST = "/data/archive_test"
 
-  dir_options = [:directory, :desc => 'Input directory', :default => DIR_SCS_SCANS]
+  dir_options = [:directory, :desc => 'Input directory', :default => HRRT::DIR_SCS_SCANS]
 
   def initialize(args, options, config)
     options << '-v' if options.include?('-V')
@@ -44,7 +41,7 @@ class HRRTRecon < Thor
   desc "parse DIRECTORY", "Parse given directory of HRRT studies"
   method_option *dir_options
   method_option :print_summary, :aliases => :p, :desc => 'Print summary', :default => true
-  def parse(directory = DIR_SCS_SCANS)
+  def parse(directory = HRRT::DIR_SCS_SCANS)
     make_db_connection
     input_dir = directory || get_input_directory
     @logger.fatal("No such directory: #{input_dir}") unless Dir.exist?(input_dir)
@@ -53,7 +50,7 @@ class HRRTRecon < Thor
 
   desc "archive DIRECTORY", "Archive given directory of HRRT studies"
   method_option *dir_options
-  def archive(directory = DIR_SCS_SCANS)
+  def archive(directory = HRRT::DIR_SCS_SCANS)
     parse(directory)
     # invoke :parse
     @hrrt.archive
@@ -61,7 +58,7 @@ class HRRTRecon < Thor
 
   desc "checksum DIRECTORY", "Checksum given directory of HRRT studies"
   method_option *dir_options
-  def checksum(directory = DIR_SCS_SCANS)
+  def checksum(directory = HRRT::DIR_SCS_SCANS)
     parse(directory)
     @hrrt.checksum
   end

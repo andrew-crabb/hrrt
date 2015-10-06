@@ -132,7 +132,6 @@ class HRRTFile
 
   def acs_name
     details = get_details
-#    details[:yr] += 2000 if details[:yr] < 100
     sprintf(NAME_FORMAT_ACS, details)
   end
 
@@ -212,7 +211,7 @@ class HRRTFile
   def create_test_data
     create_test_file_names
     write_test_data
-    log_info(File.join(@file_path, @file_name))
+    log_debug(File.join(@file_path, @file_name))
   end
 
   # Fill in @file_path and @file_name for this File object

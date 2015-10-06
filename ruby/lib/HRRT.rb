@@ -14,25 +14,39 @@ class HRRT
   include MyLogging
   include MyOpts
 
+  DIR_SCS_SCANS    = "/mnt/hrrt/SCS_SCANS"
+  DIR_ARCHIVE      = "/data/archive"
+  DIR_ARCHIVE_TEST = "/data/archive_test"
+
   # @!attribute [r] scans
   # Return array of all HRRTScan objects.
   # @return [Array<HRRTScan>]
-  attr_reader :scans
+  attr_reader   :subjects
+  attr_reader   :scans
+  attr_reader   :all_files
+  attr_reader   :hrrt_files
+  attr_reader   :test_subjects
+  attr_reader   :test_scans
+  attr_accessor :input_dir
 
   def initialize
     log_debug("initialize")
     @hrrt_files = {}
     @scans = {}
     @subjects = {}
+    @test_files = {}
+    @test_scans = {}
   end
 
   def parse(input_dir)
+    log_debug("-------------------- begin --------------------")
     @input_dir = input_dir
     read_files
     process_files
     process_scans
     print_summary #      if MyOpts.get(:verbose)
-    print_files_summary if MyOpts.get(:vverbose)
+#    print_files_summary if MyOpts.get(:vverbose)
+    log_debug("-------------------- end --------------------")
   end
 
   def read_files
@@ -41,6 +55,26 @@ class HRRT
     log_debug("#{@input_dir}: #{@all_files.count} files")
   end
 
+  # New way of doing it: Start at the top (Subject -> Scan -> File)
+  # Return Subject for this file name, creating it if necessary
+
+  def process_files
+    log_debug("-------------------- begin --------------------")
+    @all_files.each do |infile|
+      log_debug("-------------------- #{File.basename(infile)} --------------------")
+
+      if details = parse_filename(infile)
+        subject = subject_for(details)
+        scan = scan_for(details, subject)
+        add_hrrt_file(details, subject, scan, infile)
+      end
+    end
+    log_debug("-------------------- end --------------------")
+  end
+
+  # Assign to each scan its files.
+  # Must be done after process_files to ensure all files present first.
+
   def process_scans
     log_debug
     @hrrt_files.each do |datetime, files|
@@ -48,20 +82,8 @@ class HRRT
     end
   end
 
-  # New way of doing it: Start at the top (Subject -> Scan -> File)
-  # Return Subject for this file name, creating it if necessary
-
-  def process_files
-    @all_files.each do |infile|
-      if details = parse_filename(infile)
-        subject = subject_for(details)
-        scan = scan_for(details, subject)
-        add_hrrt_file(details, subject, scan, infile)
-      end
-    end
-  end
-
   def subject_for(details)
+    log_debug(details[:subject_summary])
     if details
       @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
     end
@@ -120,21 +142,23 @@ class HRRT
 
   # Create test data
 
-  def make_data
-    log_info
-    @subjects = HRRTSubject::make_test_subjects
-    @subjects.each do |summ, test_subject|
-      delete_subject_directory(test_subject)
-      @scans = HRRTScan::make_test_scans(test_subject)
-      @scans.each do |datetime, scan|
-        make_data_for_scan(scan)
+  def make_test_data
+    log_debug("-------------------- begin --------------------")
+    @test_subjects = HRRTSubject::make_test_subjects
+    @test_subjects.each do |bad_subject, good_subject|
+      delete_subject_directory(bad_subject)
+      test_scans = HRRTScan::make_test_scans(bad_subject)
+      test_scans.each do |type, scan|
+        make_test_data_for_scan(scan)
       end
+      @test_scans[good_subject.summary] = test_scans
     end
+    log_debug("-------------------- end --------------------")
   end
 
-  def make_data_for_scan(scan)
-    test_files_bydate = HRRTFile::make_test_files(scan)
-    test_files_bydate.each do |datetime, test_files|
+  def make_test_data_for_scan(scan)
+    @test_files[scan.summary] = HRRTFile::make_test_files(scan)
+    @test_files[scan.summary].each do |datetime, test_files|
       test_files.each do |theclass, test_file|
         # test_file.delete_test_data
         test_file.create_test_data
@@ -153,7 +177,7 @@ class HRRT
       files.each { |f| File.unlink(File.join(file_path, f)) }
       [HRRTFile::TRANSMISSION, ''].each do |subdir|
         fullpath = File.join(file_path, subdir)
-        log_info("unlink #{fullpath}")
+        log_debug("unlink #{fullpath}")
         Dir.unlink("#{fullpath}") if Dir.exists? fullpath
       end
     end

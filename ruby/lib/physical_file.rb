@@ -125,7 +125,7 @@ module PhysicalFile
   end
 
   def write_test_data
-    log_info(File.join(@file_path, @file_name))
+    log_debug(File.join(@file_path, @file_name))
     FileUtils.mkdir_p(@file_path)
     f = File.new(File.join(@file_path, @file_name),  "w")
     f.write(test_data_contents)

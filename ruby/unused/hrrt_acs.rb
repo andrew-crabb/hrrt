@@ -23,12 +23,8 @@ class HRRTACS
     @all_files = []
     Dir.chdir(indir)
     all_dirs = Dir.glob('*').select { |f| File.directory? f }
-    
-        @all_files = Dir.glob("**/*").select { |f| File.file? f }
-        pp @all_files
-    puts "#{@all_files.count} files in #{indir}"
-    exit
 
+    @all_files = Dir.glob("**/*").select { |f| File.file? f }
     all_dirs = Dir.glob('*').select { |f| File.directory? f }
     all_dirs.each do |subdir|
       read_dir(subdir)

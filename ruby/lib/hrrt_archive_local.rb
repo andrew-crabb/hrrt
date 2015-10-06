@@ -9,8 +9,8 @@ require_relative './hrrt_archive'
 class HRRTArchiveLocal < HRRTArchive
 
   ARCHIVE_ROOT = '/data/archive'
+    ARCHIVE_ROOT_TEST = '/data/archive_test'
   ARCHIVE_PATH_FMT = "%<root>s/20%<yr>02d/%<mo>02d"
-
 
   # Test whether given HRRTFile object is stored in this archive
   #
@@ -33,7 +33,7 @@ class HRRTArchiveLocal < HRRTArchive
     present = false
     if (fqn = full_archive_name(f))
       present = f.matches_file?(fqn)
-      log_debug("#{present}: #{fqn}")
+      log_debug("#{present ? 'yes' : 'no '}: #{fqn}")
     end
     present
   end
@@ -46,7 +46,8 @@ class HRRTArchiveLocal < HRRTArchive
 
   def path_in_archive(f)
     if m = parse_date(f.date)
-      path = sprintf(ARCHIVE_PATH_FMT, root: ARCHIVE_ROOT, yr: m[:yr].to_i, mo: m[:mo].to_i)
+      root = MyOpts.get(:test)? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
+      path = sprintf(ARCHIVE_PATH_FMT, root: root, yr: m[:yr].to_i, mo: m[:mo].to_i)
     else
       raise
     end

@@ -13,8 +13,8 @@ class HRRTSubject
   # Definitions
   # ------------------------------------------------------------
 
-  SUMMARY_FMT        = "%<last>-12s, %<name_first>-12s %<history>s"
-  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects.json")
+  SUMMARY_FMT        = "%<name_last>-12s, %<name_first>-12s %<history>s"
+  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects_1.json")
 
   SUMM_FMT_SHORT    = :summ_fmt_short
   SUMM_FMT_FILENAME = :summ_fmt_filename
@@ -23,22 +23,28 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
-  attr_reader :details
+  attr_reader :details_orig   # [:last, :first, :hist] - As read in from input file.
+
+  attr_reader :name_last
+  attr_reader :name_first
+  attr_reader :history
 
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
 
+  # Create test subject data from config file
+  # Returns an array of [subject_with_errors, subject_without_errors]
+  #
+  # @return subjects [Hash[HRRTSubject]]
+
   def self.make_test_subjects
-    subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON))
-    subjects = {}
-    subject_data['name_last'].each do |last_in, last_out|
-      subject_data['name_first'].each do |first_in, first_out|
-        subject_data['history'].each do |hist_in, hist_out|
-          subj = HRRTSubject.new(last: last_in, first: first_in, hist: hist_in)
-          subjects[subj.summary(:summ_fmt_filename)] = subj
-        end
-      end
+    subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON), symbolize_names: true)
+    subjects = []
+    subject_data.each do |subj|
+      subj_in  = HRRTSubject.new(subj[:given].merge(do_clean: false))
+      subj_out = HRRTSubject.new(subj[:answer])
+      subjects.push([subj_in, subj_out])
     end
     subjects
   end
@@ -52,23 +58,21 @@ class HRRTSubject
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(details)
-    log_debug("last #{details[:last]} first #{details[:first]} hist #{details[:hist]}")
-    @details = details
-    # @name_last  = details[:last]
-    # @name_first = details[:first]
-    # @history    = details[:hist]
+    @details_orig = details
+    do_clean = details.has_key?(:do_clean) ? details[:do_clean] : true
+
+    @name_last  = do_clean ? clean_name(details[:name_last])  : details[:name_last]
+    @name_first = do_clean ? clean_name(details[:name_first]) : details[:name_first]
+    @history    = do_clean ? clean_name(details[:history])    : details[:history]
+    log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}< (clean #{do_clean.to_s})")
   end
 
-  def name_last
-    @details[:last]
-  end
-
-  def name_first
-    @details[:first]
-  end
-
-  def history
-    @details[:hist]
+  def details
+    {
+      name_last:  @name_last,
+      name_first: @name_first,
+      history:    @history,
+    }
   end
 
   def summary(format = :summ_fmt_short)
