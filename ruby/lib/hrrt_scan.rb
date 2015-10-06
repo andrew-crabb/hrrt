@@ -34,6 +34,10 @@ class HRRTScan
   attr_accessor :files
   attr_accessor :subject
 
+  attr_reader :date
+    attr_reader :time
+      attr_reader :type
+
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
@@ -66,7 +70,10 @@ class HRRTScan
   # Create new Scan and fill in its files
 
   def initialize(details, subject)
-    @details = details
+#    @details = details
+@date = details[:date]
+@time = details[:time]
+@type = details[:type]
     @subject = subject
     log_debug("#{datetime} #{subject.summary}")
   end
@@ -77,20 +84,29 @@ class HRRTScan
   # @return details [Hash]
 
   def details
-    @details.merge(parse_date(@details[:date])).merge(parse_time(@details[:time]))
+#    ret = @details.merge(parse_date(@details[:date])).merge(parse_time(@details[:time]))
+  details = {
+    date: @date,
+    time: @time,
+    type: @type,
+  }
+    details = details.merge(parse_date(@date)).merge(parse_time(@time))
+#    puts "-------------- Scan details returning:"
+#    pp details
+  details
   end
 
-  def date
-    @details[:date]
-  end
-
-  def time
-    @details[:time]
-  end
-
-  def type
-    @details[:type]
-  end
+#  def date
+#    @details[:date]
+#  end
+#
+#  def time
+#    @details[:time]
+#  end
+#
+#  def type
+#    @details[:type]
+#  end
 
   def has_all_files
     (@files.keys & HRRTFile::CLASSES).sort.eql?(HRRTFile::CLASSES.sort)

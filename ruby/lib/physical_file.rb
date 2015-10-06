@@ -4,6 +4,7 @@ require_relative './my_logging'
 
 require 'seven_zip_ruby'
 require 'digest/crc32'
+require 'shellwords'
 
 include MyLogging
 
@@ -52,7 +53,7 @@ module PhysicalFile
 
   def write_uncomp(outfile)
     log_debug("#{full_name}, #{outfile}")
-    result = Rsync.run(full_name, outfile, '--times')
+    result = Rsync.run(Shellwords.escape(full_name), outfile, '--times')
     unless result.success?
       puts result.error
       raise
@@ -83,11 +84,14 @@ module PhysicalFile
   # The alternative was to have HRRTFile test against physical file.
 
   def matches_file?(other_file)
-    case @archive_format
+  	log_debug("standard_name #{standard_name}, other #{other_file}, format #{archive_format}")
+    case archive_format
     when FORMAT_NATIVE
       matches_file_uncomp?(other_file)
     when FORMAT_COMPRESSED
       matches_file_comp?(other_file)
+  else
+  	raise StandardError, "archive_format '#{archive_format}' not matched"
     end
   end
 
@@ -98,6 +102,7 @@ module PhysicalFile
   # @todo Add database integration for storing CRC checksums
 
   def matches_file_uncomp?(archive_file)
+#  	  	log_debug(archive_file)
     same_size_as(archive_file) && same_modification_as(archive_file)
   end
 
@@ -107,11 +112,13 @@ module PhysicalFile
   # @param archive_file [String] File to test against
 
   def matches_file_comp?(archive_file)
+#  	log_debug(archive_file)
     present = false
     if File.exist?(archive_file)
       File.open(archive_file, "rb") do |file|
         SevenZipRuby::Reader.open(file) do |szr|
           entry = szr.entries.first
+#   	    	puts "xxx up to here 2: size from 7z = #{entry.size}, my size = #{@file_size}"
           present = entry.size == @file_size
         end
       end

@@ -27,6 +27,7 @@ class HRRT
   attr_reader   :hrrt_files
   attr_reader   :test_subjects
   attr_reader   :test_scans
+  attr_reader   :test_files
   attr_accessor :input_dir
 
   def initialize
@@ -44,8 +45,8 @@ class HRRT
     read_files
     process_files
     process_scans
-    print_summary #      if MyOpts.get(:verbose)
-#    print_files_summary if MyOpts.get(:vverbose)
+    #    print_summary  if MyOpts.get(:verbose)
+    #    print_files_summary if MyOpts.get(:vverbose)
     log_debug("-------------------- end --------------------")
   end
 
@@ -61,7 +62,7 @@ class HRRT
   def process_files
     log_debug("-------------------- begin --------------------")
     @all_files.each do |infile|
-      log_debug("-------------------- #{File.basename(infile)} --------------------")
+      log_debug("----- #{File.basename(infile)} -----")
 
       if details = parse_filename(infile)
         subject = subject_for(details)
@@ -100,7 +101,7 @@ class HRRT
   def add_hrrt_file(details, subject, scan, infile)
     if hrrt_file = create_hrrt_file(details, infile)
       hrrt_file.scan = scan
-      hrrt_file.subject = subject
+      #      hrrt_file.subject = subject
       @hrrt_files[hrrt_file.datetime] ||= {}
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
@@ -109,9 +110,11 @@ class HRRT
   end
 
   def archive
+    log_debug("-------------------- begin --------------------")
     log_info("#{@hrrt_files.length} files")
     @archive_local = HRRTArchiveLocal.new
     @archive_local.archive_files(@hrrt_files)
+    log_debug("-------------------- end --------------------")
   end
 
   def checksum
@@ -166,6 +169,15 @@ class HRRT
     end
   end
 
+  def archive_is_empty
+    HRRTArchiveLocal.archive_is_empty
+  end
+
+  # @todo: Add non-local archive
+
+  def clear_test_archive
+    HRRTArchiveLocal.clear_test_archive
+  end
 
   # Delete this file from disk, and its containing directory if possible
 
@@ -183,5 +195,12 @@ class HRRT
     end
   end
 
+  # @todo: Add non-local archive
+
+  def ensure_file_in_archive(f)
+    log_debug(f.standard_name)
+    # pp f
+    @archive_local.present?(f)
+  end
 
 end

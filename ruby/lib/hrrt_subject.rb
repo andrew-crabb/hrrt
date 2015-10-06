@@ -23,7 +23,7 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
-  attr_reader :details_orig   # [:last, :first, :hist] - As read in from input file.
+  attr_reader :details_orig   # [:last, :first, :history] - As read in from input file.
 
   attr_reader :name_last
   attr_reader :name_first
@@ -42,7 +42,7 @@ class HRRTSubject
     subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON), symbolize_names: true)
     subjects = []
     subject_data.each do |subj|
-      subj_in  = HRRTSubject.new(subj[:given].merge(do_clean: false))
+      subj_in  = HRRTSubject.new(subj[:given])
       subj_out = HRRTSubject.new(subj[:answer])
       subjects.push([subj_in, subj_out])
     end
@@ -58,33 +58,43 @@ class HRRTSubject
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(details)
-    @details_orig = details
-    do_clean = details.has_key?(:do_clean) ? details[:do_clean] : true
-
-    @name_last  = do_clean ? clean_name(details[:name_last])  : details[:name_last]
-    @name_first = do_clean ? clean_name(details[:name_first]) : details[:name_first]
-    @history    = do_clean ? clean_name(details[:history])    : details[:history]
-    log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}< (clean #{do_clean.to_s})")
+    @name_last  = details[:name_last]
+    @name_first = details[:name_first]
+    @history    = details[:history]
+    # @details_orig = details
+    # do_clean = details.has_key?(:do_clean) ? details[:do_clean] : true
+    # @name_last  = do_clean ? clean_name(details[:name_last])  : details[:name_last]
+    # @name_first = do_clean ? clean_name(details[:name_first]) : details[:name_first]
+    # @history    = do_clean ? clean_name(details[:history])    : details[:history]
+    log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}<")
   end
 
-  def details
-    {
-      name_last:  @name_last,
-      name_first: @name_first,
-      history:    @history,
+  # Return hash of subject details.
+  #
+  # @param clean [Boolean] Strip all spaces and punctuation from name components.
+
+  def details(clean = false)
+    details = {
+      history:    clean ? clean_name(@history)    : @history   ,
+      name_first: clean ? clean_name(@name_first) : @name_first,
+      name_last:  clean ? clean_name(@name_last)  : @name_last ,
     }
+#    puts "AAAAAAAAAAAAAAAA Subject details(#{clean.to_s}):"
+#    pp details
+    details
   end
 
-  def summary(format = :summ_fmt_short)
+  def summary(format = :summ_fmt_short, clean = false)
+    details = details(clean)
     case format
     when :summ_fmt_short
-      sprintf("%-12s %-12s %-12s", name_last, name_first, history)
+      sprintf("%-12s %-12s %-12s", details[:name_last], details[:name_first], details[:history])
     when :summ_fmt_filename
-      sprintf("%s_%s_%s", name_last, name_first, history)
+      sprintf("%s_%s_%s", details[:name_last], details[:name_first], details[:history])
     when :summ_fmt_name
-      sprintf("%s_%s", name_last, name_first)
+      sprintf("%s_%s", details[:name_last], details[:name_first])
     when :summ_fmt_names
-      sprintf("%s, %s", name_last, name_first)
+      sprintf("%s, %s", details[:name_last], details[:name_first])
     else
       raise
     end

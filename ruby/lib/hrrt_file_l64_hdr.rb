@@ -40,9 +40,9 @@ class HRRTFileL64Hdr < HRRTFile
     isotope_halflife_erb = "1224.000000"
     dose_type_erb        = "C-11"
     patient_sex_erb      = "Male"
-    patient_id_erb       = @subject.history
+    patient_id_erb       = subject.history
     patient_dob_erb      = "1/1/1970"
-    patient_name_erb     = @subject.summary(:summ_fmt_names)
+    patient_name_erb     = subject.summary(:summ_fmt_names)
     frame_definition_erb = @scan.type == HRRTScan::TYPE_EM ? "15*4,30*4,60*3,120*2,240*5,300*12" : "*"
     image_duration_erb   = @scan.type == HRRTScan::TYPE_EM ? "5400" : "300"
     mode_erb             =  HRRTScan::SCAN_TYPES[@scan.type]

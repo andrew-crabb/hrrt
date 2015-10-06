@@ -86,5 +86,9 @@ class HRRTArchive
     fail NotImplementedError, "Method verify_file must be implemented"
   end
 
+  def archive_is_empty
+    fail NotImplementedError, "Method #{__method__} must be implemented"
+  end
+
 
 end

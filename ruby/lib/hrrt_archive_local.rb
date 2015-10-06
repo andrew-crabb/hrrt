@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 
 require 'fileutils'
+require 'find'
 require 'rsync'
 
 require_relative './hrrt_archive'
@@ -8,9 +9,34 @@ require_relative './hrrt_archive'
 # Class representing the HRRT local (hrrt-recon) file archive
 class HRRTArchiveLocal < HRRTArchive
 
-  ARCHIVE_ROOT = '/data/archive'
-    ARCHIVE_ROOT_TEST = '/data/archive_test'
-  ARCHIVE_PATH_FMT = "%<root>s/20%<yr>02d/%<mo>02d"
+  ARCHIVE_ROOT      = '/data/archive'
+  ARCHIVE_ROOT_TEST = '/data/archive_test'
+  ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
+  ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
+
+  # ------------------------------------------------------------
+  # Class methods
+  # ------------------------------------------------------------
+
+  def self.files_in_test_archive
+    found_files = Find.find(ARCHIVE_ROOT_TEST) { |f| File.file?(f) }
+    found_files = [] unless found_files
+  end
+
+  def self.clear_test_archive
+    testfiles = self.files_in_test_archive
+    nfiles = testfiles ? testfiles.count : 0
+    if nfiles < ARCHIVE_TEST_MAX
+      FileUtils.rm_rf(ARCHIVE_ROOT_TEST)
+      FileUtils.mkdir(ARCHIVE_ROOT_TEST) unless File.directory?(ARCHIVE_ROOT_TEST)
+    else
+      raise("More than #{ARCHIVE_TEST_MAX} files in #{ARCHIVE_ROOT_TEST}: #{nfiles}")
+    end
+  end
+
+  def self.archive_is_empty
+    self.files_in_test_archive.count == 0
+  end
 
   # Test whether given HRRTFile object is stored in this archive
   #
@@ -73,9 +99,9 @@ class HRRTArchiveLocal < HRRTArchive
   # @param f [HRRTFile] The file to store
 
   def store_file(f)
-    if MyOpts.get(:dummy)
-      log_info("(#{f.full_name}, #{full_archive_name(f)}")
-    else
+    log_info("#{f.full_name}, #{full_archive_name(f)}")
+
+    unless MyOpts.get(:dummy)
       FileUtils.mkdir_p(path_in_archive(f))
       f.write_physical(full_archive_name(f))
     end

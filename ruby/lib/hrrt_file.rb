@@ -40,9 +40,9 @@ class HRRTFile
   # Accssors
   # ------------------------------------------------------------
 
-  attr_accessor :subject
+#  attr_accessor :subject
   attr_accessor :scan
-  attr_accessor :archive_format
+#  attr_accessor :archive_format
 
   # ------------------------------------------------------------
   # Class methods
@@ -53,7 +53,7 @@ class HRRTFile
     CLASSES.each do |theclass|
       newfile = Object.const_get(theclass).new
       newfile.scan = scan
-      newfile.subject = scan.subject
+#      newfile.subject = scan.subject
       test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
@@ -79,9 +79,9 @@ class HRRTFile
   #
   # @abstract
 
-  def self.archive_format
-    raise
-  end
+#  def self.archive_format
+#    raise
+#  end
 
   # ------------------------------------------------------------
   # Object methods
@@ -90,6 +90,10 @@ class HRRTFile
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
   def initialize
+  end
+
+  def subject
+    @scan.subject
   end
 
   # Return extension of this object's class
@@ -123,7 +127,9 @@ class HRRTFile
   # @return filename [String]
 
   def standard_name
-    sprintf(NAME_FORMAT_STD, get_details)
+#    puts "************************************** XXXXXXXXXXX hrrt_file standard_name calling get_details(clean = true)"
+#    pp get_details(true)
+    sprintf(NAME_FORMAT_STD, get_details(true))
   end
 
   # Return name of this file in ACS format
@@ -131,19 +137,19 @@ class HRRTFile
   # @return filename [String]
 
   def acs_name
-    details = get_details
+    details = get_details(false)
     sprintf(NAME_FORMAT_ACS, details)
   end
 
   # Return a hash of details relevant to this File.
   # From self: extn()
-  # From subject: :last, :first, :hist
+  # From subject: :last, :first, :history
   # From scan: :date, :time, :type
   #
   # @return details [Hash]
 
-  def get_details
-    subject.details.merge(scan.details).merge(details)
+  def get_details(clean = true)
+    subject.details(clean).merge(scan.details).merge(details)
   end
 
   # Return hash of details stored in this File object
@@ -165,7 +171,7 @@ class HRRTFile
   def print_summary(short = true)
     log_info(sprintf("%-50s %10d", @file_name, @file_size))
     if !short
-      log_info("Subject: #{@subject.summary}")
+      log_info("Subject: #{subject.summary}")
       log_info("Scan: #{@scan.summary}")
     end
   end
@@ -211,6 +217,8 @@ class HRRTFile
   def create_test_data
     create_test_file_names
     write_test_data
+            read_physical(full_name)
+
     log_debug(File.join(@file_path, @file_name))
   end
 
@@ -226,7 +234,7 @@ class HRRTFile
   # @return path [String]
 
   def test_data_path
-    file_path = File.join(TEST_DATA_PATH, @subject.summary(:summ_fmt_name))
+    file_path = File.join(TEST_DATA_PATH, subject.summary(:summ_fmt_name))
     file_path = File.join(file_path, TRANSMISSION) if @scan.type == HRRTScan::TYPE_TX
     file_path
   end
