@@ -159,7 +159,7 @@ $g_logger->debug('g_hrrt_det');
 $g_logger->debug(sub { Dumper($g_hrrt_det)});
 
 # Details of calibration l64 file.
-my $recon = make_recon_obj();
+my $recon = make_recon_obj($O_TEST_NORM => $opts->{$OPT_TESTNORM});
 $recon->print_study_summary();
 
 # erg_ratios stores pairs of erg ratio - roi ratio.
@@ -268,6 +268,7 @@ sub make_recon_obj {
   if (has_len($argptr)) {
     %recon_opts = (%recon_opts, %{$argptr});
   }
+#  print Dumper(\%recon_opts);
 
   my $recon = HRRTRecon->new(\%recon_opts);
 
@@ -554,7 +555,9 @@ sub select_calibration_date {
   # Get date of scan from EM file.
   my $calibdate = $g_hrrt_det->{'date'}->{'YYYYMMDD'};
   $g_logger->info("date from header: $calibdate");
-  unless (defined($calibdate)) {
+  unless (defined($calib_values{$calibdate})) {
+    print "*****  ERROR: No calibration values for date $calibdate  *****\n";
+    print "Calibration values must be entered in the file $opts->{$OPT_VALUES_FILE}\n";
     $calibdate = prompt(
       'Select Calibration Date:',
       -verb,

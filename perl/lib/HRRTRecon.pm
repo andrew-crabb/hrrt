@@ -1514,7 +1514,7 @@ sub identify_norm_file {
     return $this->{$_LOG}->info("No norm file ${normdir}/${normfile}.n\n", 1);
   }
   # return "${normdir}/${normfile}";
-  $this->{$_LOG}->info("identify_norm_file: returning $normfile");
+  $this->{$_LOG}->info("identify_norm_file(span $paramargs{$PFILE_SPAN}, key $paramargs{$PFILE_KEY}): returning $normfile");
   return $normfile;
 }
 
