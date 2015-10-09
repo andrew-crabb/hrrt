@@ -16,32 +16,32 @@ module HRRTUtility
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = %r{
-    (?<name_last>\w+)
-    _(?<name_first>\w*)
-    _(?<history>\w*)
-    _(?<mod>PET)
-    _(?<date>\d{6})
-    _(?<time>\d{6})
-    _(?<type>\w{2})
-    \.(?<extn>[\w\.]+)
+    (?<name_last>\w+)		# subject
+    _(?<name_first>\w*)		# subject
+    _(?<history>\w*)		# subject
+    _(?<mod>PET)			# constant
+    _(?<scan_date>\d{6})	# scan
+    _(?<scan_time>\d{6})	# scan
+    _(?<scan_type>\w{2})	# scan
+    \.(?<extn>[\w\.]+)		# file
   }x
   NAME_PATTERN_ACS = %r{
-    (?<name_last>[^-]+\s*)
-    -(?<name_first>\s*[^-]*\s*)
-    -(?<history>\s*[^-]*\s*)
+    (?<name_last>[^-]+\s*)			# subject
+    -(?<name_first>\s*[^-]*\s*)		# subject
+    -(?<history>\s*[^-]*\s*)		# subject
     -(?<yr>\d{4}\s*)
     \.(?<mo>\d{1,2})
     \.(?<dy>\d{1,2})
     \.(?<hr>\d{1,2})
     \.(?<mn>\d{1,2})
     \.(?<sc>\d{1,2})
-    _(?<type>\w{2})
-    \.(?<extn>[\w\.]+)
+    _(?<scan_type>\w{2})			# scan
+    \.(?<extn>[\w\.]+)				# file
   }x
 
   # printf formatting strings for file names in standard and ACS format.
-  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_%<date>s_%<time>s_%<type>s.%<extn>s"
-  NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<type>s.%<extn>s"
+  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
+  NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
 
   HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
   HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
@@ -101,9 +101,9 @@ module HRRTUtility
     #    log_debug(filename)
     if match = matches_hrrt_name(File.basename(filename))
       details = {
-        date:       match.names.include?('date') ? match[:date] : make_date(match),
-        time:       match.names.include?('time') ? match[:time] : make_time(match),
-        type:       match[:type].upcase,
+        scan_date:       match.names.include?('scan_date') ? match[:scan_date] : make_date(match),
+        scan_time:       match.names.include?('scan_time') ? match[:scan_time] : make_time(match),
+        scan_type:       match[:scan_type].upcase,
         extn:       match[:extn].downcase,
         name_last:  match[:name_last].upcase,
         name_first: match[:name_first].upcase,
@@ -111,7 +111,7 @@ module HRRTUtility
       }
       log_debug("'#{filename}'")
       # Derived fields
-      details[:scan_summary]    = details.values_at(:date, :time).join('_')
+      details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')
       details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
     else
       log_debug("No match: '#{File.basename(filename)}'")

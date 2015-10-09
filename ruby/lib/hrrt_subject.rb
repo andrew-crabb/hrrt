@@ -19,6 +19,9 @@ class HRRTSubject
   SUMM_FMT_SHORT    = :summ_fmt_short
   SUMM_FMT_FILENAME = :summ_fmt_filename
 
+  DB_TABLE = :subject
+  REQUIRED_FIELDS = %i(name_last name_first history)
+
   # ------------------------------------------------------------
   # Accessors
   # ------------------------------------------------------------
@@ -79,9 +82,13 @@ class HRRTSubject
       name_first: clean ? clean_name(@name_first) : @name_first,
       name_last:  clean ? clean_name(@name_last)  : @name_last ,
     }
-#    puts "AAAAAAAAAAAAAAAA Subject details(#{clean.to_s}):"
-#    pp details
+    #    puts "AAAAAAAAAAAAAAAA Subject details(#{clean.to_s}):"
+    #    pp details
     details
+  end
+
+  def id
+    @id
   end
 
   def summary(format = :summ_fmt_short, clean = false)
@@ -103,5 +110,15 @@ class HRRTSubject
   def print_summary(format = :summ_fmt_short)
     puts "#{self.class.name}: #{summary(format)}"
   end
+
+  def ensure_in_database
+    add_to_database unless present_in_database?
+  end
+
+  def add_to_database
+    db_params = make_database_params(REQUIRED_FIELDS)
+    add_record_to_database(db_params)
+  end
+
 
 end

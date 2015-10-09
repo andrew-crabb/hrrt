@@ -78,6 +78,7 @@ class HRRT
 
   def process_scans
     log_debug
+    pp @scans
     @hrrt_files.each do |datetime, files|
       @scans[datetime].files = files
     end
@@ -201,6 +202,14 @@ class HRRT
     log_debug(f.standard_name)
     # pp f
     @archive_local.present?(f)
+  end
+
+  # Check database contents against disk contents.
+  # Remove 
+
+  def check_database_against_filesystem
+  	input_dir = MyOpts.get(:test) ? HRRTFile::TEST_DATA_PATH : DIR_SCS_SCANS
+  	sync_database_to_directory(input_dir)
   end
 
 end

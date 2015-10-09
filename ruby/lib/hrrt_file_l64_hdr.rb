@@ -43,9 +43,9 @@ class HRRTFileL64Hdr < HRRTFile
     patient_id_erb       = subject.history
     patient_dob_erb      = "1/1/1970"
     patient_name_erb     = subject.summary(:summ_fmt_names)
-    frame_definition_erb = @scan.type == HRRTScan::TYPE_EM ? "15*4,30*4,60*3,120*2,240*5,300*12" : "*"
-    image_duration_erb   = @scan.type == HRRTScan::TYPE_EM ? "5400" : "300"
-    mode_erb             =  HRRTScan::SCAN_TYPES[@scan.type]
+    frame_definition_erb = @scan.scan_type == HRRTScan::TYPE_EM ? "15*4,30*4,60*3,120*2,240*5,300*12" : "*"
+    image_duration_erb   = @scan.scan_type == HRRTScan::TYPE_EM ? "5400" : "300"
+    mode_erb             =  HRRTScan::SCAN_TYPES[@scan.scan_type]
     study_time_erb       = sprintf(HDR_TIME_FMT, details)
     study_date_erb       = sprintf(HDR_DATE_FMT, details)
     file_name_erb        = acs_name
