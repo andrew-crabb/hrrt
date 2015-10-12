@@ -52,6 +52,11 @@ class HRRTSubject
     subjects
   end
 
+    def self.all_records_in_database
+    all_records_in_table(DB_TABLE)
+  end
+
+
   # ------------------------------------------------------------
   # Instance methods
   # ------------------------------------------------------------

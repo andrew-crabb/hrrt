@@ -105,6 +105,23 @@ module HRRTDatabase
     log_info("class #{self.class}: inserted new record id #{@id}")
   end
 
+  def delete_record_from_database(db_params)
+    recs = db[self.class::DB_TABLE].where(db_params)
+    log_debug(summary)
+    if recs.count == 1
+      recs.delete
+    else
+      raise
+    end
+  end
+
+  # Return dataset of all records for this table in database.
+
+  def all_records_in_table(thetable)
+    #    log_debug(thetable)
+    db[thetable]
+  end
+
   # ------------------------------------------------------------
   # Non generic methods (will work on only 'file' table)
   # ------------------------------------------------------------
@@ -119,17 +136,27 @@ module HRRTDatabase
 
   def sync_database_to_directory(input_dir)
     ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: hostname)
-    puts "Files in #{input_dir}: #{ds.all.length}"
+    log_info("Files in #{input_dir}: #{ds.all.length}")
     ds.each do |file_record|
-      log_debug
-      pp file_record
       newfile = HRRTFile.new_from_details(file_record)
       unless newfile.exists_on_disk
-        log_info("*** Delete file record: #{newfile.summary}")
+        newfile.remove_from_database
       end
       updates = make_time_params(newfile.exists_on_disk)
-      db[self.class::DB_TABLE].update(updates)
+      db[HRRTFile::DB_TABLE].update(updates)
     end
+  end
+
+  # Update Subject and Scan tables against File
+  # Delete any Scan not linked to from any File
+  # Delete any Subject not linked to from any Scan
+
+  def check_subjects_scans
+    ds =    db[HRRTScan::DB_TABLE].left_join(:file, :scan_id=>:id)
+    unreferenced_scans = ds.where(Sequel.qualify(:file, :id) => nil)
+    puts "scans to delete: "
+    unreferenced_scans.each { |scan| puts scan.to_s }
+    pp ds
   end
 
   # Create hash of time fields for insertion into database.

@@ -18,6 +18,11 @@ class HRRT
   DIR_ARCHIVE      = "/data/archive"
   DIR_ARCHIVE_TEST = "/data/archive_test"
 
+  # Class names
+  HRRTFILE    = "HRRTFile"
+  HRRTSCAN    = "HRRTScan"
+  HRRTSUBJECT = "HRRTSubject"
+
   # @!attribute [r] scans
   # Return array of all HRRTScan objects.
   # @return [Array<HRRTScan>]
@@ -78,7 +83,6 @@ class HRRT
 
   def process_scans
     log_debug
-    pp @scans
     @hrrt_files.each do |datetime, files|
       @scans[datetime].files = files
     end
@@ -120,7 +124,7 @@ class HRRT
 
   def checksum
     @hrrt_files.each do |dtime, files|
-      log_debug(dtime)
+      # log_debug(dtime)
       files.each do |type, file|
         file.ensure_in_database
       end
@@ -205,11 +209,30 @@ class HRRT
   end
 
   # Check database contents against disk contents.
-  # Remove 
+  # Remove
 
   def check_database_against_filesystem
-  	input_dir = MyOpts.get(:test) ? HRRTFile::TEST_DATA_PATH : DIR_SCS_SCANS
-  	sync_database_to_directory(input_dir)
+    log_debug("-------------------- begin --------------------")
+    input_dir = MyOpts.get(:test) ? HRRTFile::TEST_DATA_PATH : DIR_SCS_SCANS
+    sync_database_to_directory(input_dir)
+    check_subjects_scans
+    puts "exiting"
+    exit
+    log_debug("-------------------- end --------------------")
+  end
+
+  def count_records_in_database
+    records = {}
+    [HRRTFILE, HRRTSCAN, HRRTSUBJECT].each do |theclass|
+      records[theclass] = Object.const_get(theclass).all_records_in_database.count
+    end
+    log_debug
+    pp records
+    records
+  end
+
+  def database_is_empty
+    count_records_in_database.values.inject(:+) == 0
   end
 
 end

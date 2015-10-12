@@ -87,6 +87,10 @@ class HRRTFile
     self::ARCHIVE_FORMAT
   end
 
+  def self.all_records_in_database
+    all_records_in_table(DB_TABLE)
+  end
+
   # Return the archive format of this class
   #
   # @abstract
@@ -246,15 +250,25 @@ class HRRTFile
     add_to_database unless present_in_database?
   end
 
+  # Add record of this File to database.
+  # Adds Scan record, if necessary, which in turn adds Subject record.
+
   def add_to_database
     calculate_crc32 unless @file_crc32
     @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS.push(:file_crc32))
+    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32])
     db_params.merge!(make_time_params(true))
     db_params.merge!(scan_id: @scan.id)
     add_record_to_database(db_params)
   end
 
+  # Delete record of this File from database.
+
+  def remove_from_database
+    log_debug("required fields: #{REQUIRED_FIELDS.count} : " + REQUIRED_FIELDS.join(" ").to_s)
+    db_params = make_database_params(REQUIRED_FIELDS)
+    delete_record_from_database(db_params)
+  end
 
   # Search for required fields including any given as parameters.
   # Need to be able to search without crc for quick search using mod time.
@@ -270,7 +284,7 @@ class HRRTFile
     write_test_data
     read_physical(full_name)
 
-    log_debug(File.join(@file_path, @file_name))
+#    log_debug(File.join(@file_path, @file_name))
   end
 
   # Fill in @file_path and @file_name for this File object
