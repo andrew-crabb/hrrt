@@ -135,7 +135,7 @@ module PhysicalFile
   end
 
   def write_test_data
-#    log_debug(File.join(@file_path, @file_name))
+    #    log_debug(File.join(@file_path, @file_name))
     FileUtils.mkdir_p(@file_path)
     f = File.new(File.join(@file_path, @file_name),  "w")
     f.write(test_data_contents)
@@ -157,9 +157,10 @@ module PhysicalFile
     if File.exist?(full_name)
       stat = File.stat(full_name)
       exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i
-    log_debug("#{full_name}: exists = #{exists.to_s} (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+    else
+      log_debug("#{exists.to_s}: #{full_name}")
     end
-    log_debug("#{exists.to_s}: #{full_name}")
     exists
   end
 

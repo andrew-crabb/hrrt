@@ -216,8 +216,6 @@ class HRRT
     input_dir = MyOpts.get(:test) ? HRRTFile::TEST_DATA_PATH : DIR_SCS_SCANS
     sync_database_to_directory(input_dir)
     check_subjects_scans
-    puts "exiting"
-    exit
     log_debug("-------------------- end --------------------")
   end
 
@@ -226,8 +224,6 @@ class HRRT
     [HRRTFILE, HRRTSCAN, HRRTSUBJECT].each do |theclass|
       records[theclass] = Object.const_get(theclass).all_records_in_database.count
     end
-    log_debug
-    pp records
     records
   end
 

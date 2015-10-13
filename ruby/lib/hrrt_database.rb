@@ -95,8 +95,6 @@ module HRRTDatabase
       # field_name = db_field_name(field)
       db_params[field] = instance_variable_get("@#{field}")
     end
-    log_debug("db_params:")
-    pp db_params
     db_params
   end
 
@@ -136,27 +134,26 @@ module HRRTDatabase
 
   def sync_database_to_directory(input_dir)
     ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: hostname)
-    log_info("Files in #{input_dir}: #{ds.all.length}")
     ds.each do |file_record|
       newfile = HRRTFile.new_from_details(file_record)
       unless newfile.exists_on_disk
         newfile.remove_from_database
       end
-      updates = make_time_params(newfile.exists_on_disk)
-      db[HRRTFile::DB_TABLE].update(updates)
     end
   end
+
 
   # Update Subject and Scan tables against File
   # Delete any Scan not linked to from any File
   # Delete any Subject not linked to from any Scan
 
   def check_subjects_scans
-    ds =    db[HRRTScan::DB_TABLE].left_join(:file, :scan_id=>:id)
-    unreferenced_scans = ds.where(Sequel.qualify(:file, :id) => nil)
-    puts "scans to delete: "
-    unreferenced_scans.each { |scan| puts scan.to_s }
-    pp ds
+    ds_scan = db[:scan].left_join(:file, :scan_id=>:id).where(Sequel.qualify(:file, :id) => nil)
+    log_info("Deleting #{ds_scan.count} Scans not referenced by a File")
+    ds_scan.delete
+    ds_subj = db[:subject].left_join(:scan, :subject_id=>:id).where(Sequel.qualify(:scan, :id) => nil)
+    log_info("Deleting #{ds_subj.count} Subjects not referenced by a Scan")
+    ds_subj.delete
   end
 
   # Create hash of time fields for insertion into database.

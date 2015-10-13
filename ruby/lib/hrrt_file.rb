@@ -28,25 +28,13 @@ class HRRTFile
   # Map from database field to object variable name.
 
   DB_TABLE = :file
-
-  # DB_MAP = {
-  #   :name     => 'file_name',
-  #   :path     => 'file_path',
-  #   :size     => 'file_size',
-  #   :modified => 'file_modified',
-  #   :host     => 'hostname',
-  #   :crc32    => 'file_crc32',   # Optional for query, required for add.
-  # }
-
   REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
 
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
 
-  #  attr_accessor :subject
   attr_accessor :scan
-  #  attr_accessor :archive_format
 
   # ------------------------------------------------------------
   # Class methods
@@ -57,7 +45,6 @@ class HRRTFile
     CLASSES.each do |theclass|
       newfile = Object.const_get(theclass).new
       newfile.scan = scan
-      #      newfile.subject = scan.subject
       test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
@@ -90,14 +77,6 @@ class HRRTFile
   def self.all_records_in_database
     all_records_in_table(DB_TABLE)
   end
-
-  # Return the archive format of this class
-  #
-  # @abstract
-
-  #  def self.archive_format
-  #    raise
-  #  end
 
   # ------------------------------------------------------------
   # Object methods
@@ -189,7 +168,7 @@ class HRRTFile
   def fill_in_details(details)
     PHYSICAL_FILE_DETAILS.each do |varname|
       #    details.each do |key, value|
-      puts "instance_variable_set(@#{varname}, #{details[varname]})"
+#      puts "instance_variable_set(@#{varname}, #{details[varname]})"
       instance_variable_set("@#{varname}", details[varname])
     end
   end
@@ -265,7 +244,6 @@ class HRRTFile
   # Delete record of this File from database.
 
   def remove_from_database
-    log_debug("required fields: #{REQUIRED_FIELDS.count} : " + REQUIRED_FIELDS.join(" ").to_s)
     db_params = make_database_params(REQUIRED_FIELDS)
     delete_record_from_database(db_params)
   end
