@@ -27,7 +27,7 @@ class HRRTFileL64 < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize
+  def initialize(params = {}, required_keys = nil)
     super
   end
 
@@ -35,18 +35,35 @@ class HRRTFileL64 < HRRTFile
   #
   # @return [String] Name of the file in this archive.
 
-  def name_in_archive
-    standard_name + '.' + ARCHIVE_SUFFIX
-  end
+  # def name_in_archive
+  #   standard_name + '.' + ARCHIVE_SUFFIX
+  # end
 
   # Compress and write this file to disk.
-  #
-  # @param outfile [String] File name to write to
 
-  def write_physical(outfile)
-    write_comp(outfile)
+  def write_physical
+    write_comp(full_name)
   end
 
+  # Return true if this file is archive copy of source file
+  # @note Default is to compare uncompressed: overload to test compressed files
+  #
+  # @return [Boolean]
 
+  def is_copy_of?(source_file)
+    is_compressed_copy_of?(source_file)
+  end
+
+  # Duplicate the given file, using already-filled @file_path and @file_name
+  #
+  # @attr source_file [String]
+
+  def copy_file(source_file)
+    write_comp(source_file)
+  end
+
+  def standard_name
+    "#{super}.#{ARCHIVE_SUFFIX}"
+  end
 
 end

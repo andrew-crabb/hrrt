@@ -34,7 +34,18 @@ class HRRTFile
   # Accssors
   # ------------------------------------------------------------
 
+  # @return [HRRTScan] The Scan object this File belongs to
   attr_accessor :scan
+
+  # @return [HRRTArchive] The Archive object this file is archived in, or nil
+  attr_accessor :archive
+
+  # Following attributes need to be set when empty File object created from database.
+  attr_accessor :hostname
+  attr_accessor :file_path
+  attr_accessor :file_name
+  attr_accessor :file_size
+  attr_accessor :file_modified
 
   # ------------------------------------------------------------
   # Class methods
@@ -43,35 +54,12 @@ class HRRTFile
   def self.make_test_files(scan)
     test_files = {scan.datetime => {}}
     CLASSES.each do |theclass|
-      newfile = Object.const_get(theclass).new
+      newfile = Object.const_get(theclass).new({}, {})
       newfile.scan = scan
+      newfile.create_test_data
       test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
-  end
-
-  # Create new HRRTFile and fill in its details (come from database)
-
-  def self.new_from_details(details)
-    newfile = HRRTFile.new
-    newfile.fill_in_details(details)
-    newfile
-  end
-
-  # Return the file extension of this class
-  #
-  # @return extn [String]
-
-  def self.extn
-    self::SUFFIX
-  end
-
-  # Return the archive format of this class
-  #
-  # @return format [String]
-
-  def self.archive_format
-    self::ARCHIVE_FORMAT
   end
 
   def self.all_records_in_database
@@ -84,7 +72,22 @@ class HRRTFile
 
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
-  def initialize
+  def initialize(params = {}, required_keys = nil)
+    set_params(params, required_keys)
+    log_debug(full_name)
+  end
+
+  # Return a copy of the given file.
+  # Retain @scan, @file_name and @file_path, but read in physical parameters
+
+  def archive_copy(archive)
+    archive_copy = self.clone
+    archive_copy.file_name = standard_name
+    archive_copy.file_path = archive.path_in_archive(self)
+    archive_copy.read_physical
+    archive_copy.archive = archive
+    #    log_debug(archive_copy.summary)
+    archive_copy
   end
 
   def subject
@@ -96,12 +99,18 @@ class HRRTFile
   # @return extn [String]
 
   def extn
-    self.class.extn
+    self.class::SUFFIX
   end
 
-  # def required_fields
-  #   REQUIRED_FIELDS
-  # end
+  # Return true if this file is archive copy of source file
+  # @note Default is to compare uncompressed: overload to test compressed files
+  #
+  # @return [Boolean]
+
+  def is_copy_of?(source_file)
+    #    log_debug("my file_name #{file_name}, source_file file_name #{source_file.file_name}")
+    is_uncompressed_copy_of?(source_file)
+  end
 
   # Return archive format of this object's class
   # This base class works in all derived classes
@@ -109,17 +118,8 @@ class HRRTFile
   # @return archive_format [String]
 
   def archive_format
-    self.class.archive_format
+    self.class::ARCHIVE_FORMAT
   end
-
-  # Return database field name corresponding to class variable name
-  #
-  # @return field_name [String]
-
-  # def db_field_name(var_name)
-  #   raise("db_field_name: Bad var_name #{var_name}") unless DB_MAP.has_key?(var_name)
-  #   DB_MAP[var_name]
-  # end
 
   def id
     @id
@@ -130,8 +130,6 @@ class HRRTFile
   # @return filename [String]
 
   def standard_name
-    #    puts "************************************** XXXXXXXXXXX hrrt_file standard_name calling get_details(clean = true)"
-    #    pp get_details(true)
     sprintf(NAME_FORMAT_STD, get_details(true))
   end
 
@@ -155,24 +153,6 @@ class HRRTFile
     subject.details(clean).merge(scan.details).merge(details)
   end
 
-  # Incoming record:
-  #{:id=>122,
-  # :series_id=>0,
-  # :name=>"TESTTWO-first-4002008-2014.11.6.7.58.36_TX.l64.hdr",
-  # :path=>"/Users/ahc/data/hrrt_acs/TESTTWO_first/Transmission",
-  # :host=>"andy.local",
-  # :crc32=>"534B6E32",
-  # :size=>653,
-  # :modified=>1415311116}
-
-  def fill_in_details(details)
-    PHYSICAL_FILE_DETAILS.each do |varname|
-      #    details.each do |key, value|
-#      puts "instance_variable_set(@#{varname}, #{details[varname]})"
-      instance_variable_set("@#{varname}", details[varname])
-    end
-  end
-
   # Return hash of details stored in this File object
   #
   # @return details [Hash]
@@ -185,8 +165,8 @@ class HRRTFile
     @scan.datetime
   end
 
-  def date
-    @scan.date
+  def scan_date
+    @scan.scan_date
   end
 
   def print_summary(short = true)
@@ -194,7 +174,11 @@ class HRRTFile
   end
 
   def summary(short = true)
-    summary = sprintf("%-50s %10d", @file_name, @file_size)
+    if file_size
+      summary = sprintf("%-40s %-40s %10d %10d", file_path, file_name, file_size, file_modified)
+    else
+      summary = sprintf("%-40s %-40s <not read from disk>", file_path, file_name)
+    end
     if !short
       summary += "Subject: #{subject.summary}"
       summary += "Scan: #{@scan.summary}"
@@ -202,22 +186,20 @@ class HRRTFile
     summary
   end
 
-  # Name to be used for this HRRTFile object in archive.
-  #
-  # @return [String] Name of the file in this archive.
+  # Duplicate given file, update records of new file, update record
 
-  def name_in_archive
-    standard_name
+  def store_copy_of(source_file)
+    copy_file(source_file)
+    read_physical
+    ensure_in_database
   end
 
-  # Write this file to disk.
-  # By default, write uncompressed.
+  # Duplicate the given file, using already-filled @file_path and @file_name
   #
-  # @param outfile [String] File name to write to
-  # @note overload this method to write compressed file
+  # @attr source_file [String]
 
-  def write_physical(outfile)
-    write_uncomp(outfile)
+  def copy_file(source_file)
+    write_uncomp(source_file)
   end
 
   # Check that this File exists in database
@@ -235,8 +217,9 @@ class HRRTFile
   def add_to_database
     calculate_crc32 unless @file_crc32
     @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32])
-    db_params.merge!(make_time_params(true))
+    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class])
+    puts "db_params:"
+    pp db_params
     db_params.merge!(scan_id: @scan.id)
     add_record_to_database(db_params)
   end
@@ -260,9 +243,8 @@ class HRRTFile
   def create_test_data
     create_test_file_names
     write_test_data
-    read_physical(full_name)
-
-#    log_debug(File.join(@file_path, @file_name))
+    read_physical
+    #    log_debug("************ host #{hostname}, name #{full_name}")
   end
 
   # Fill in @file_path and @file_name for this File object

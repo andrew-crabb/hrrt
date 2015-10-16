@@ -85,7 +85,6 @@ module HRRTDatabase
 
   def find_records_in_database(fields)
     db_params = make_database_params(fields)
-    log_debug("SQL query (#{self.class::DB_TABLE}) is: " + db[self.class::DB_TABLE].where(db_params).sql.to_s)
     db[self.class::DB_TABLE].where(db_params)
   end
 
@@ -133,13 +132,18 @@ module HRRTDatabase
   # Remove any database records not on disk
 
   def sync_database_to_directory(input_dir)
-    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: hostname)
+
+    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: get_hostname)
     ds.each do |file_record|
-      newfile = HRRTFile.new_from_details(file_record)
-      unless newfile.exists_on_disk
-        newfile.remove_from_database
+      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
+      # puts "file_values: "
+      # pp file_values
+      test_file = HRRTFile.new(file_values)
+      unless test_file.exists_on_disk?
+        test_file.remove_from_database
       end
     end
+    log_debug("-------------------- end --------------------")
   end
 
 
@@ -154,19 +158,6 @@ module HRRTDatabase
     ds_subj = db[:subject].left_join(:scan, :subject_id=>:id).where(Sequel.qualify(:scan, :id) => nil)
     log_info("Deleting #{ds_subj.count} Subjects not referenced by a Scan")
     ds_subj.delete
-  end
-
-  # Create hash of time fields for insertion into database.
-  # If param 'seen' true, set :seen to now.
-  #
-  # @param seen [Boolean]
-  # @return vals [Hash]
-
-  def make_time_params(seen = false)
-    now = Time.now.to_i
-    vals = {file_checked: now}
-    vals[:file_seen] = now if seen
-    vals
   end
 
 end

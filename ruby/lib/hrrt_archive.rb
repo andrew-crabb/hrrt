@@ -19,31 +19,28 @@ class HRRTArchive
   end
 
   # Archive all files in the ACS.
+  # Return hash of same structure as and corresponding to @hrrt_files
 
   def archive_files(files_by_datetime)
+    archive_files = {}
     files_by_datetime.each do |datetime, files|
-      files.each do |datetime, file|
-        archive_file(file)
+      archive_files[datetime] ||= Hash.new
+      files.each do |filetype, file|
+        archive_files[datetime][filetype] = archive_file(file)
       end
     end
+    archive_files
   end
 
   # Archive given file
 
-  def archive_file(f)
-    unless present?(f)
-      store_file(f)
+  def archive_file(source_file)
+    log_debug(source_file.full_name)
+    archive_file = source_file.archive_copy(self)
+    unless archive_file.is_copy_of?(source_file)
+      archive_file.store_copy_of(source_file)
     end
-  end
-
-  # Test whether given HRRTFile object is stored in this archive
-  #
-  # @abstract
-  # @param f [HRRTFile] The file to test for.
-  # @raise [NotImplementedError]
-
-  def present?(f)
-    fail NotImplementedError, "Method present? must be implemented"
+    archive_file
   end
 
   # Name to be used for this HRRTFile object in this archive.
@@ -90,5 +87,8 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented"
   end
 
+  def checksum
+    fail NotImplementedError, "Method #{__method__} must be implemented"
+  end
 
 end

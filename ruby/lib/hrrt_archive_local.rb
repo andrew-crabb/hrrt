@@ -18,6 +18,8 @@ class HRRTArchiveLocal < HRRTArchive
   # Class methods
   # ------------------------------------------------------------
 
+  # Note: Hard-coded to avoid mistakenly listing true archive
+
   def self.files_in_test_archive
     found_files = Find.find(ARCHIVE_ROOT_TEST) { |f| File.file?(f) }
     found_files = [] unless found_files
@@ -55,15 +57,6 @@ class HRRTArchiveLocal < HRRTArchive
   ###   Method = LZMA:12m
   ###   Block = 0
 
-  def present?(f)
-    present = false
-    if (fqn = full_archive_name(f))
-      present = f.matches_file?(fqn)
-      log_debug("#{present ? 'yes' : 'no '}: #{fqn}")
-    end
-    present
-  end
-
   # Name to be used for this HRRTFile object in this archive.
   #
   # @param f [HRRTFile] The file to return the name of.
@@ -71,7 +64,7 @@ class HRRTArchiveLocal < HRRTArchive
   # @raise Error if date string is not parsed.
 
   def path_in_archive(f)
-    if m = parse_date(f.date)
+    if m = parse_date(f.scan_date)
       root = MyOpts.get(:test)? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
       path = sprintf(ARCHIVE_PATH_FMT, root: root, yr: m[:yr].to_i, mo: m[:mo].to_i)
     else
@@ -98,12 +91,13 @@ class HRRTArchiveLocal < HRRTArchive
   #
   # @param f [HRRTFile] The file to store
 
-  def store_file(f)
-    log_info("#{f.full_name}, #{full_archive_name(f)}")
+  def store_file(source_file, dest_file)
+    log_info("source #{source_file.full_name}, dest #{dest_file.full_name}")
 
     unless MyOpts.get(:dummy)
-      FileUtils.mkdir_p(path_in_archive(f))
-      f.write_physical(full_archive_name(f))
+      FileUtils.mkdir_p(dest_file.file_path)
+      # f.write_physical(full_archive_name(f))
+      dest_file.make_archive_copy(source_file)
     end
   end
 
@@ -116,6 +110,36 @@ class HRRTArchiveLocal < HRRTArchive
     File.open(full_archive_name(f), "rb") do |file|
       SevenZipRuby::Reader.verify(file)
       # => true/false
+    end
+  end
+
+  # Note: Hard-coded to avoid mistakenly listing true archive
+
+  def files_in_archive
+    root = MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT
+    Dir.chdir(root)
+    found_files = Dir['**/*'].reject {|fn| File.directory?(fn) }
+    found_files = [] unless found_files
+    log_debug("root is #{root}: #{found_files.count} files found")
+    found_files
+  end
+
+  # Build a File object of every file in the archive
+
+  def inventory_archive_contents
+    allfiles = files_in_archive
+    log_debug("#{allfiles.count} files found")
+    allfiles.each do |thefile|
+      puts thefile
+    end
+  end
+
+  # Ensure that every file in the archive is in the database
+
+  def checksum
+    inventory_archive_contents
+    @archive_files.each do |file|
+      file.ensure_in_database
     end
   end
 

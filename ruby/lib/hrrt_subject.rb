@@ -26,11 +26,9 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
-  attr_reader :details_orig   # [:last, :first, :history] - As read in from input file.
-
-  attr_reader :name_last
-  attr_reader :name_first
-  attr_reader :history
+  attr_accessor :name_last
+  attr_accessor :name_first
+  attr_accessor :history
 
   # ------------------------------------------------------------
   # Class methods
@@ -52,7 +50,7 @@ class HRRTSubject
     subjects
   end
 
-    def self.all_records_in_database
+  def self.all_records_in_database
     all_records_in_table(DB_TABLE)
   end
 
@@ -65,15 +63,12 @@ class HRRTSubject
   #
   # @param details [Hash]  Hash of :last, :first, :history
 
-  def initialize(details)
-    @name_last  = details[:name_last]
-    @name_first = details[:name_first]
-    @history    = details[:history]
-    # @details_orig = details
-    # do_clean = details.has_key?(:do_clean) ? details[:do_clean] : true
-    # @name_last  = do_clean ? clean_name(details[:name_last])  : details[:name_last]
-    # @name_first = do_clean ? clean_name(details[:name_first]) : details[:name_first]
-    # @history    = do_clean ? clean_name(details[:history])    : details[:history]
+  def initialize(params)
+    #  	raise unless (params.keys & REQUIRED_FIELDS).sort.eql?(REQUIRED_FIELDS.sort)
+    set_params(params)
+    # @name_last  = details[:name_last]
+    # @name_first = details[:name_first]
+    # @history    = details[:history]
     log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}<")
   end
 

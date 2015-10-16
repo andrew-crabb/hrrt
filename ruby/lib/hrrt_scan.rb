@@ -41,9 +41,9 @@ class HRRTScan
   attr_accessor :files
   attr_accessor :subject
 
-  attr_reader :scan_date
-  attr_reader :scan_time
-  attr_reader :scan_type
+  attr_accessor :scan_date
+  attr_accessor :scan_time
+  attr_accessor :scan_type
 
   # ------------------------------------------------------------
   # Class methods
@@ -80,11 +80,8 @@ class HRRTScan
 
   # Create new Scan and fill in its files
 
-  def initialize(details, subject)
-    REQUIRED_FIELDS.each do |field|
-      raise("Undefined field: #{field}") unless defined?(details[field])
-      instance_variable_set("@#{field}", details[field])
-    end
+  def initialize(params, subject)
+  	set_params(params)
     @subject = subject
     log_debug("Date: #{datetime} Subject: #{subject.summary}")
   end

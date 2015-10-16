@@ -56,8 +56,8 @@ class HRRT
   end
 
   def read_files
-    Dir.chdir(@input_dir)
-    @all_files = Dir.glob("**/*").select { |f| File.file? f }
+    #    Dir.chdir(@input_dir)
+    @all_files = Dir.glob(File.join(@input_dir, "**/*")).select { |f| File.file? f }
     log_debug("#{@input_dir}: #{@all_files.count} files")
   end
 
@@ -67,15 +67,25 @@ class HRRT
   def process_files
     log_debug("-------------------- begin --------------------")
     @all_files.each do |infile|
-      log_debug("----- #{File.basename(infile)} -----")
-
       if details = parse_filename(infile)
         subject = subject_for(details)
         scan = scan_for(details, subject)
-        add_hrrt_file(details, subject, scan, infile)
+        add_hrrt_file(details, scan, infile)
       end
     end
     log_debug("-------------------- end --------------------")
+  end
+
+  # Create new HRRTFile and store in hash with files from same datetime
+
+  def add_hrrt_file(details, scan, infile)
+    if hrrt_file = create_hrrt_file(details, infile)
+      hrrt_file.scan = scan
+      @hrrt_files[hrrt_file.datetime] ||= {}
+      @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
+    else
+      log_error("No matching class for #{File.basename(infile)}")
+    end
   end
 
   # Assign to each scan its files.
@@ -89,7 +99,6 @@ class HRRT
   end
 
   def subject_for(details)
-    log_debug(details[:subject_summary])
     if details
       @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
     end
@@ -101,34 +110,24 @@ class HRRT
     end
   end
 
-  # Create new HRRTFile and store in hash with files from same datetime
-
-  def add_hrrt_file(details, subject, scan, infile)
-    if hrrt_file = create_hrrt_file(details, infile)
-      hrrt_file.scan = scan
-      #      hrrt_file.subject = subject
-      @hrrt_files[hrrt_file.datetime] ||= {}
-      @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
-    else
-      log_error("No matching class for #{File.basename(infile)}")
-    end
-  end
-
   def archive
     log_debug("-------------------- begin --------------------")
-    log_info("#{@hrrt_files.length} files")
+    log_info("#{@hrrt_files.length} scans")
     @archive_local = HRRTArchiveLocal.new
-    @archive_local.archive_files(@hrrt_files)
+    @archive_files = @archive_local.archive_files(@hrrt_files)
     log_debug("-------------------- end --------------------")
+
   end
 
-  def checksum
+  def checksum_acs
+    log_debug("-------------------- begin --------------------")
     @hrrt_files.each do |dtime, files|
       # log_debug(dtime)
       files.each do |type, file|
         file.ensure_in_database
       end
     end
+    log_debug("-------------------- end --------------------")
   end
 
   def print_files_summary
@@ -157,21 +156,11 @@ class HRRT
       delete_subject_directory(bad_subject)
       test_scans = HRRTScan::make_test_scans(bad_subject)
       test_scans.each do |type, scan|
-        make_test_data_for_scan(scan)
+        @test_files[scan.summary] = HRRTFile::make_test_files(scan)
       end
       @test_scans[good_subject.summary] = test_scans
     end
     log_debug("-------------------- end --------------------")
-  end
-
-  def make_test_data_for_scan(scan)
-    @test_files[scan.summary] = HRRTFile::make_test_files(scan)
-    @test_files[scan.summary].each do |datetime, test_files|
-      test_files.each do |theclass, test_file|
-        # test_file.delete_test_data
-        test_file.create_test_data
-      end
-    end
   end
 
   def archive_is_empty
@@ -202,11 +191,22 @@ class HRRT
 
   # @todo: Add non-local archive
 
-  def ensure_file_in_archive(f)
-    log_debug(f.standard_name)
-    # pp f
-    @archive_local.present?(f)
+  def all_files_are_archived?
+    ret = true
+    @hrrt_files.each do |datetime, files|
+      files.each do |fileclass, source_file|
+        archive_file = @archive_files[datetime][fileclass]
+#        log_debug("#{source_file.full_name} #{archive_file.full_name}")
+        unless archive_file.is_copy_of?(source_file)
+          log_error("ERROR: No archive file for source file #{source_file.full_name}")
+          ret = false
+        end
+      end
+    end
+    ret
   end
+
+
 
   # Check database contents against disk contents.
   # Remove

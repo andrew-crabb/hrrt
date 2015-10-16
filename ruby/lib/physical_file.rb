@@ -25,8 +25,8 @@ module PhysicalFile
   # Accssors
   # ------------------------------------------------------------
 
-  attr_reader :file_name
-  attr_reader :file_path
+  # attr_reader :file_name
+  # attr_reader :file_path
   attr_reader :file_size
   attr_reader :file_modified
   attr_reader :file_crc32
@@ -36,14 +36,16 @@ module PhysicalFile
   # ------------------------------------------------------------
 
   # Read in to this object the physical characteristics of the file it represents
+  # Requires @file_path and @file_name to be filled in already
+  # Sets file_size and file_modified to nil if file does not exist
 
-  def read_physical(infile)
-    stat = File.stat(infile)
-    @file_name = File.basename(infile)
-    @file_path = File.dirname(File.absolute_path(infile))
-    @file_size = stat.size
-    @file_modified = stat.mtime.to_i
-    @hostname = hostname
+  def read_physical
+    stat = File.exist?(full_name) ? File.stat(full_name) : nil
+    @file_size     = stat ? stat.size       : nil
+    @file_modified = stat ? stat.mtime.to_i : nil
+    @hostname      = get_hostname
+    @file_class    = self.class.to_s
+    @file_crc32    = nil      # Necessary since sometimes this called on cloned object
   end
 
   # Fully qualified name of this file
@@ -51,51 +53,47 @@ module PhysicalFile
   # @return full_name [String]
 
   def full_name
-    File.join(@file_path, @file_name)
+    file_path ? File.join(file_path, file_name) : ""
   end
 
-  def write_uncomp(outfile)
-    log_debug("#{full_name}, #{outfile}")
-    result = Rsync.run(Shellwords.escape(full_name), outfile, '--times')
-    unless result.success?
-      puts result.error
-      raise
-    end
+  def write_uncomp(source_file)
+    Dir.chdir(source_file.file_path)
+    FileUtils.mkdir_p(file_path)
+    log_debug("source #{source_file.full_name}, dest #{full_name}")
+    result = Rsync.run(Shellwords.escape(source_file.full_name), full_name, '--times')
+    raise "#{result.error}" unless result.success?
   end
 
-  def write_comp(outfile)
-    log_debug("#{full_name}, #{outfile}")
-    Dir.chdir(@file_path)
-    File.open(outfile, "wb") do |file|
+  def write_comp(source_file)
+    log_debug("source #{source_file.full_name}, dest #{full_name}")
+    FileUtils.mkdir_p(file_path)
+    File.open(full_name, "wb") do |file|
       SevenZipRuby::Writer.open(file) do |szr|
-        szr.add_file(@file_name)
+        Dir.chdir(source_file.file_path)
+        szr.add_file(source_file.file_name)
       end
     end
-    raise StandardError, outfile unless matches_file_comp?(outfile)
+    raise StandardError, file_name unless is_compressed_copy_of?(source_file)
   end
+
+  # Return true if both this file and other file exist, and both have matching non-null modified times
 
   def same_modification_as(other_file)
-    File.exist?(other_file) && @file_modified == File.stat(other_file).mtime.to_i
+    same_modification = false
+    if exists_on_disk? && File.exist?(other_file.full_name)
+      same_modification = @file_modified &&  @file_modified == File.stat(other_file.full_name).mtime.to_i
+    end
+    same_modification
   end
+
+  # Return true if both this file and other file exist, and both have matching non-null sizes
 
   def same_size_as(other_file)
-    File.exist?(other_file) && @file_size == File.stat(other_file).size
-  end
-
-  # Test this physical file against another.
-  # Switch on file format (un)compressed here to keep HRRTFile independent of physical.
-  # The alternative was to have HRRTFile test against physical file.
-
-  def matches_file?(other_file)
-    log_debug("standard_name #{standard_name}, other #{other_file}, format #{archive_format}")
-    case archive_format
-    when FORMAT_NATIVE
-      matches_file_uncomp?(other_file)
-    when FORMAT_COMPRESSED
-      matches_file_comp?(other_file)
-    else
-      raise StandardError, "archive_format '#{archive_format}' not matched"
+    same_size = false
+    if exists_on_disk? && File.exist?(other_file.full_name)
+      same_size = @file_size && @file_size == File.stat(other_file.full_name).size
     end
+    same_size
   end
 
   # Test this file against given archive
@@ -104,9 +102,11 @@ module PhysicalFile
   # @param archive_file [String] File to test against
   # @todo Add database integration for storing CRC checksums
 
-  def matches_file_uncomp?(archive_file)
-    #       log_debug(archive_file)
-    same_size_as(archive_file) && same_modification_as(archive_file)
+  def is_uncompressed_copy_of?(source_file)
+    #       log_debug(source_file)
+    ret = same_size_as(source_file) && same_modification_as(source_file)
+    log_debug("#{ret.to_s}: #{full_name} #{source_file.full_name}")
+    ret
   end
 
   # Test this file against given archive
@@ -114,30 +114,30 @@ module PhysicalFile
   #
   # @param archive_file [String] File to test against
 
-  def matches_file_comp?(archive_file)
-    #   log_debug(archive_file)
+  def is_compressed_copy_of?(source_file)
     present = false
-    if File.exist?(archive_file)
-      File.open(archive_file, "rb") do |file|
+    if File.exist?(full_name)
+      File.open(full_name, "rb") do |file|
         SevenZipRuby::Reader.open(file) do |szr|
           entry = szr.entries.first
           #           puts "xxx up to here 2: size from 7z = #{entry.size}, my size = #{@file_size}"
-          present = entry.size == @file_size
+          present = entry.size == source_file.file_size
         end
       end
     end
+    log_debug("#{present.to_s}: #{full_name} #{source_file.full_name}")
     present
   end
 
   def calculate_crc32
     @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
-    log_debug("#{@file_name}: #{@file_crc32}")
+    log_debug("#{file_name}: #{@file_crc32}")
   end
 
   def write_test_data
     #    log_debug(File.join(@file_path, @file_name))
     FileUtils.mkdir_p(@file_path)
-    f = File.new(File.join(@file_path, @file_name),  "w")
+    f = File.new(full_name,  "w")
     f.write(test_data_contents)
     f.close
   end
@@ -152,14 +152,14 @@ module PhysicalFile
   # Test to see if file matching given details exists on disk.
   # Details to match: :name, :path, :host, :size, :modified
 
-  def exists_on_disk
+  def exists_on_disk?
     exists = false
     if File.exist?(full_name)
       stat = File.stat(full_name)
       exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i
-      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+#      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
     else
-      log_debug("#{exists.to_s}: #{full_name}")
+#      log_debug("#{exists.to_s}: #{full_name}")
     end
     exists
   end

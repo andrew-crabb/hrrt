@@ -26,9 +26,8 @@ class HRRTFileL64Hc < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize
+  def initialize(params = {}, required_keys = nil)
     super
-    log_debug
   end
 
 end

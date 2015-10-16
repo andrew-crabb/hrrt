@@ -55,11 +55,7 @@ module HRRTUtility
   NEEDED_NAMES_DATE = %w(yr mo dy)
   NEEDED_NAMES_TIME = %w(hr mn sc)
 
-  CLASS_L64     = 'HRRTFileL64'
-  CLASS_L64_HDR = 'HRRTFileL64Hdr'
-  CLASS_L64_HC  = 'HRRTFileL64Hc'
-
-  CLASSES = [CLASS_L64, CLASS_L64_HDR, CLASS_L64_HC]
+  CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
   # ------------------------------------------------------------
   # Methods
@@ -83,10 +79,15 @@ module HRRTUtility
   def create_hrrt_file(details, infile)
     hrrt_file = nil
     CLASSES.each do |classtype|
-      if details[:extn] == Object.const_get(classtype).extn
-        hrrt_file = Object.const_get(classtype).new
-        hrrt_file.read_physical(infile)
-        log_debug("#{File.basename(infile)}: New #{classtype}")
+      if details[:extn] == Object.const_get(classtype)::SUFFIX
+        params = {
+          file_path: File.dirname(infile),
+          file_name: File.basename(infile),
+        }
+        # Create an HRRTFile filling in only file path and name, then read other details.
+        hrrt_file = Object.const_get(classtype).new(params, params.keys)
+        hrrt_file.read_physical
+        break
       end
     end
     hrrt_file
@@ -109,7 +110,6 @@ module HRRTUtility
         name_first: match[:name_first].upcase,
         history:    match[:history].upcase,
       }
-      log_debug("'#{filename}'")
       # Derived fields
       details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')
       details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
@@ -134,6 +134,34 @@ module HRRTUtility
       raise
     end
     date
+  end
+
+  def required_fields
+  	self.class::REQUIRED_FIELDS
+  end
+
+  # Ensure that all keys from REQUIRED_FIELDS are present in params
+  # Return hash containing only key-value pairs matching these
+  #
+  # @param params [Hash]
+  # @return my_params [Hash]
+
+  def check_params(params, required_keys = nil)
+    required_keys ||= self.class::REQUIRED_FIELDS
+    my_params =  params.select { |key, value| required_keys.include?(key) }
+    unless my_params.keys.sort.eql?(required_keys.sort)
+      puts "Looking for: #{required_keys.sort.join(', ')}"
+      puts "Received   : #{my_params.keys.sort.join(', ')}"
+      raise("Params don't match for class #{self.class}")
+    end
+    my_params
+  end
+
+  # Call check_params() on given params, then call accessor for each key-value pair
+
+  def set_params(params, required_keys = nil)
+    my_params = check_params(params, required_keys)
+    my_params.each { |key, value| send "#{key}=", value }
   end
 
   # Create time in standard format HHMMSS from MatchData object
@@ -191,7 +219,7 @@ module HRRTUtility
   #
   # @return hostname [String]
 
-  def hostname
+  def get_hostname
     Socket.gethostname
   end
 
