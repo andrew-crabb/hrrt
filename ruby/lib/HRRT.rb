@@ -116,28 +116,27 @@ class HRRT
     @archive_local = HRRTArchiveLocal.new
     @archive_files = @archive_local.archive_files(@hrrt_files)
     log_debug("-------------------- end --------------------")
+  end
 
+  def archive_aws
+    @archive_aws = HRRTArchiveAWS.new
+    @archive_aws.print_summary
+  end
+
+  def hrrt_files_each
+    @hrrt_files.each do |dtime, files|
+      files.each { |type, file| yield file }
+    end
   end
 
   def checksum_acs
     log_debug("-------------------- begin --------------------")
-    @hrrt_files.each do |dtime, files|
-      # log_debug(dtime)
-      files.each do |type, file|
-        file.ensure_in_database
-      end
-    end
+    hrrt_files_each { |f| f.ensure_in_database }
     log_debug("-------------------- end --------------------")
   end
 
   def print_files_summary
-    log_info('==== File Summary ====')
-    @hrrt_files.each do |datetime, files|
-      log_info(datetime)
-      files.each do |extn, file|
-        file.print_summary(false)
-      end
-    end
+    hrrt_files_each { |f| log_info(f.summary) }
   end
 
   def print_summary
@@ -193,28 +192,25 @@ class HRRT
 
   def all_files_are_archived?
     ret = true
-    @hrrt_files.each do |datetime, files|
-      files.each do |fileclass, source_file|
-        archive_file = @archive_files[datetime][fileclass]
-#        log_debug("#{source_file.full_name} #{archive_file.full_name}")
-        unless archive_file.is_copy_of?(source_file)
-          log_error("ERROR: No archive file for source file #{source_file.full_name}")
-          ret = false
-        end
+    hrrt_files_each do |f|
+      archive_file = @archive_files[f.datetime][f.class]
+      unless archive_file.is_copy_of?(f)
+        log_error("ERROR: No archive file for source file #{f.full_name}")
+        ret = false
       end
     end
     ret
   end
 
-
-
   # Check database contents against disk contents.
   # Remove
 
-  def check_database_against_filesystem
+  def check_database_against_archives
     log_debug("-------------------- begin --------------------")
     input_dir = MyOpts.get(:test) ? HRRTFile::TEST_DATA_PATH : DIR_SCS_SCANS
-    sync_database_to_directory(input_dir)
+    [input_dir, HRRTArchiveLocal.archive_root].each do |thedir|
+      sync_database_to_directory(thedir)
+    end
     check_subjects_scans
     log_debug("-------------------- end --------------------")
   end
@@ -225,6 +221,12 @@ class HRRT
       records[theclass] = Object.const_get(theclass).all_records_in_database.count
     end
     records
+  end
+
+  def print_database_summary
+    count_records_in_database.each do |theclass, thecount|
+      printf("%-20s %i\n", theclass, thecount)
+    end
   end
 
   def database_is_empty

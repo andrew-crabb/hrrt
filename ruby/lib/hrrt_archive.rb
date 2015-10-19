@@ -50,7 +50,7 @@ class HRRTArchive
   # @raise [NotImplementedError]
 
   def path_in_archive(f)
-    fail NotImplementedError, "Method path_in_archive? must be implemented"
+    fail NotImplementedError, "Method #{__method__} must be implemented"
   end
 
   # Store HRRTFile object in this archive.
@@ -60,7 +60,7 @@ class HRRTArchive
   # @raise [NotImplementedError]
 
   def store_file(f)
-    fail NotImplementedError, "Method store_file must be implemented"
+    fail NotImplementedError, "Method #{__method__} must be implemented"
   end
 
   # Return fully qualified name of HRRTFile object in this archive.
@@ -70,7 +70,7 @@ class HRRTArchive
   # @raise [NotImplementedError]
 
   def full_archive_name(f)
-    fail NotImplementedError, "Method path_in_archive? must be implemented"
+    fail NotImplementedError, "Method #{__method__} must be implemented"
   end
 
   # Verify HRRTFile object in this archive.
@@ -80,7 +80,7 @@ class HRRTArchive
   # @raise [NotImplementedError]
 
   def verify_file(f)
-    fail NotImplementedError, "Method verify_file must be implemented"
+
   end
 
   def archive_is_empty
@@ -88,6 +88,10 @@ class HRRTArchive
   end
 
   def checksum
+    fail NotImplementedError, "Method #{__method__} must be implemented"
+  end
+
+    def self.archive_root
     fail NotImplementedError, "Method #{__method__} must be implemented"
   end
 

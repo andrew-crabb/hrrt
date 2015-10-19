@@ -64,11 +64,7 @@ class HRRTSubject
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(params)
-    #  	raise unless (params.keys & REQUIRED_FIELDS).sort.eql?(REQUIRED_FIELDS.sort)
     set_params(params)
-    # @name_last  = details[:name_last]
-    # @name_first = details[:name_first]
-    # @history    = details[:history]
     log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}<")
   end
 
@@ -82,8 +78,6 @@ class HRRTSubject
       name_first: clean ? clean_name(@name_first) : @name_first,
       name_last:  clean ? clean_name(@name_last)  : @name_last ,
     }
-    #    puts "AAAAAAAAAAAAAAAA Subject details(#{clean.to_s}):"
-    #    pp details
     details
   end
 

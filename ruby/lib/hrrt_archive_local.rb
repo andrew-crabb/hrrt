@@ -57,6 +57,10 @@ class HRRTArchiveLocal < HRRTArchive
   ###   Method = LZMA:12m
   ###   Block = 0
 
+  def self.archive_root
+    MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
+  end
+
   # Name to be used for this HRRTFile object in this archive.
   #
   # @param f [HRRTFile] The file to return the name of.
@@ -64,13 +68,8 @@ class HRRTArchiveLocal < HRRTArchive
   # @raise Error if date string is not parsed.
 
   def path_in_archive(f)
-    if m = parse_date(f.scan_date)
-      root = MyOpts.get(:test)? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
-      path = sprintf(ARCHIVE_PATH_FMT, root: root, yr: m[:yr].to_i, mo: m[:mo].to_i)
-    else
-      raise
-    end
-    path
+    raise unless m = parse_date(f.scan_date)
+    sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
   end
 
   # Return fully qualified name of HRRTFile object in this archive.
@@ -116,7 +115,7 @@ class HRRTArchiveLocal < HRRTArchive
   # Note: Hard-coded to avoid mistakenly listing true archive
 
   def files_in_archive
-    root = MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT
+    root = self.class.archive_root
     Dir.chdir(root)
     found_files = Dir['**/*'].reject {|fn| File.directory?(fn) }
     found_files = [] unless found_files
