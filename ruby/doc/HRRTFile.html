@@ -90,11 +90,15 @@
     
   
     
+      <dt class="r2">Includes:</dt>
+      <dd class="r2"><span class='object_link'><a href="HRRTDatabase.html" title="HRRTDatabase (module)">HRRTDatabase</a></span>, <span class='object_link'><a href="HRRTUtility.html" title="HRRTUtility (module)">HRRTUtility</a></span>, <span class='object_link'><a href="MyLogging.html" title="MyLogging (module)">MyLogging</a></span>, <span class='object_link'><a href="PhysicalFile.html" title="PhysicalFile (module)">PhysicalFile</a></span></dd>
+      
+    
   
   
   
-    <dt class="r2 last">Defined in:</dt>
-    <dd class="r2 last">lib/HRRT_File.rb</dd>
+    <dt class="r1 last">Defined in:</dt>
+    <dd class="r1 last">lib/hrrt_file.rb</dd>
   
 </dl>
 <div class="clear"></div>
@@ -110,17 +114,22 @@
 <div class="tags">
   
 
+</div><div id="subclasses">
+  <h2>Direct Known Subclasses</h2>
+  <p class="children"><span class='object_link'><a href="HRRTFileL64.html" title="HRRTFileL64 (class)">HRRTFileL64</a></span>, <span class='object_link'><a href="HRRTFileL64Hc.html" title="HRRTFileL64Hc (class)">HRRTFileL64Hc</a></span>, <span class='object_link'><a href="HRRTFileL64Hdr.html" title="HRRTFileL64Hdr (class)">HRRTFileL64Hdr</a></span></p>
 </div>
+
   <h2>Constant Summary</h2>
   
     <dl class="constants">
       
-        <dt id="NAME_PATTERN_STD-constant" class="">NAME_PATTERN_STD =
+        <dt id="SUFFIX-constant" class="">SUFFIX =
           <div class="docstring">
   <div class="discussion">
-    
-<p>Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc HRRT ACS: 
-LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
+    <hr>
+
+<p>Definitions</p>
+<hr>
 
 
   </div>
@@ -130,18 +139,23 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
 
 </div>
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>(?&lt;last&gt;\w+)_(?&lt;first&gt;\w*)_(?&lt;hist&gt;\w*)_(?&lt;mod&gt;PET)_(?&lt;date&gt;\d{6})_(?&lt;time&gt;\d{6})_(?&lt;type&gt;\w{2})\.(?&lt;extn&gt;[\w\.]+)</span><span class='regexp_end'>/</span></span></pre></dd>
+        <dd><pre class="code"><span class='kw'>nil</span></pre></dd>
       
-        <dt id="NAME_PATTERN_ACS-constant" class="">NAME_PATTERN_ACS =
+        <dt id="ARCHIVE_FORMAT-constant" class="">ARCHIVE_FORMAT =
           
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>(?&lt;last&gt;\w+)-(?&lt;first&gt;\w*)-(?&lt;hist&gt;\w*)-(?&lt;yr&gt;\d{4})\.(?&lt;mo&gt;\d{1,2})\.(?&lt;dy&gt;\d{1,2})\.(?&lt;hr&gt;\d{1,2})\.(?&lt;mn&gt;\d{1,2})\.(?&lt;sc&gt;\d{1,2})_(?&lt;type&gt;\w{2})\.(?&lt;extn&gt;[\w\.]+)</span><span class='regexp_end'>/</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'>FORMAT_NATIVE</span></pre></dd>
       
-        <dt id="NEEDED_NAMES_DATE-constant" class="">NEEDED_NAMES_DATE =
+        <dt id="TEST_DATA_SIZE-constant" class="">TEST_DATA_SIZE =
+          
+        </dt>
+        <dd><pre class="code"><span class='int'>10</span><span class='op'>**</span><span class='int'>3</span></pre></dd>
+      
+        <dt id="TEST_DATA_PATH-constant" class="">TEST_DATA_PATH =
           <div class="docstring">
   <div class="discussion">
     
-<p>Required fields in NAME_PATTERN_xxx</p>
+<p>Move these to a config file later.</p>
 
 
   </div>
@@ -151,18 +165,18 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
 
 </div>
         </dt>
-        <dd><pre class="code"><span class='qwords_beg'>%w(</span><span class='tstring_content'>yr</span><span class='words_sep'> </span><span class='tstring_content'>mo</span><span class='words_sep'> </span><span class='tstring_content'>dy</span><span class='words_sep'>)</span></pre></dd>
+        <dd><pre class="code"><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_home'>home</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>data/hrrt_acs</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span></pre></dd>
       
-        <dt id="NEEDED_NAMES_TIME-constant" class="">NEEDED_NAMES_TIME =
+        <dt id="TRANSMISSION-constant" class="">TRANSMISSION =
           
         </dt>
-        <dd><pre class="code"><span class='qwords_beg'>%w(</span><span class='tstring_content'>hr</span><span class='words_sep'> </span><span class='tstring_content'>mn</span><span class='words_sep'> </span><span class='tstring_content'>sc</span><span class='words_sep'>)</span></pre></dd>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Transmission</span><span class='tstring_end'>&#39;</span></span></pre></dd>
       
-        <dt id="HRRT_DATE_FMT-constant" class="">HRRT_DATE_FMT =
+        <dt id="DB_TABLE-constant" class="">DB_TABLE =
           <div class="docstring">
   <div class="discussion">
     
-<p>150824</p>
+<p>Map from database field to object variable name.</p>
 
 
   </div>
@@ -172,59 +186,41 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
 
 </div>
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;yr&gt;02d%&lt;mo&gt;02d%&lt;dy&gt;02d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+        <dd><pre class="code"><span class='symbol'>:file</span></pre></dd>
       
-        <dt id="HRRT_TIME_FMT-constant" class="">HRRT_TIME_FMT =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>083500</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;hr&gt;02d%&lt;mn&gt;02d%&lt;sc&gt;02d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
-      
-        <dt id="EXTN_L64-constant" class="">EXTN_L64 =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>File extensions</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>l64</span><span class='tstring_end'>&#39;</span></span></pre></dd>
-      
-        <dt id="EXTN_L64_HDR-constant" class="">EXTN_L64_HDR =
+        <dt id="REQUIRED_FIELDS-constant" class="">REQUIRED_FIELDS =
           
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>l64.hdr</span><span class='tstring_end'>&#39;</span></span></pre></dd>
-      
-        <dt id="EXTN_HC-constant" class="">EXTN_HC =
-          
-        </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>hc</span><span class='tstring_end'>&#39;</span></span></pre></dd>
-      
-        <dt id="NEEDED_EXTNS_ACS-constant" class="">NEEDED_EXTNS_ACS =
-          
-        </dt>
-        <dd><pre class="code"><span class='lbracket'>[</span><span class='const'>EXTN_L64</span><span class='comma'>,</span> <span class='const'>EXTN_L64_HDR</span><span class='comma'>,</span> <span class='const'>EXTN_HC</span><span class='rbracket'>]</span></pre></dd>
+        <dd><pre class="code"><span class='id identifier rubyid_file_name'>file_name</span> <span class='id identifier rubyid_file_path'>file_path</span> <span class='id identifier rubyid_file_size'>file_size</span> <span class='id identifier rubyid_file_modified'>file_modified</span> <span class='id identifier rubyid_hostname'>hostname</span></pre></dd>
       
     </dl>
   
 
 
+
+  
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="HRRTDatabase.html" title="HRRTDatabase (module)">HRRTDatabase</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="HRRTDatabase.html#DB_NAME-constant" title="HRRTDatabase::DB_NAME (constant)">HRRTDatabase::DB_NAME</a></span>, <span class='object_link'><a href="HRRTDatabase.html#DB_NAME_TEST-constant" title="HRRTDatabase::DB_NAME_TEST (constant)">HRRTDatabase::DB_NAME_TEST</a></span>, <span class='object_link'><a href="HRRTDatabase.html#LOCALHOST-constant" title="HRRTDatabase::LOCALHOST (constant)">HRRTDatabase::LOCALHOST</a></span>, <span class='object_link'><a href="HRRTDatabase.html#WONGLAB-constant" title="HRRTDatabase::WONGLAB (constant)">HRRTDatabase::WONGLAB</a></span></p>
+
+  
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="PhysicalFile.html" title="PhysicalFile (module)">PhysicalFile</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="PhysicalFile.html#FORMAT_COMPRESSED-constant" title="PhysicalFile::FORMAT_COMPRESSED (constant)">PhysicalFile::FORMAT_COMPRESSED</a></span>, <span class='object_link'><a href="PhysicalFile.html#FORMAT_NATIVE-constant" title="PhysicalFile::FORMAT_NATIVE (constant)">PhysicalFile::FORMAT_NATIVE</a></span>, <span class='object_link'><a href="PhysicalFile.html#PHYSICAL_FILE_DETAILS-constant" title="PhysicalFile::PHYSICAL_FILE_DETAILS (constant)">PhysicalFile::PHYSICAL_FILE_DETAILS</a></span></p>
+
+  
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="HRRTUtility.html" title="HRRTUtility (module)">HRRTUtility</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="HRRTUtility.html#CLASSES-constant" title="HRRTUtility::CLASSES (constant)">HRRTUtility::CLASSES</a></span>, <span class='object_link'><a href="HRRTUtility.html#CLASS_L64-constant" title="HRRTUtility::CLASS_L64 (constant)">HRRTUtility::CLASS_L64</a></span>, <span class='object_link'><a href="HRRTUtility.html#CLASS_L64_HC-constant" title="HRRTUtility::CLASS_L64_HC (constant)">HRRTUtility::CLASS_L64_HC</a></span>, <span class='object_link'><a href="HRRTUtility.html#CLASS_L64_HDR-constant" title="HRRTUtility::CLASS_L64_HDR (constant)">HRRTUtility::CLASS_L64_HDR</a></span>, <span class='object_link'><a href="HRRTUtility.html#HDR_DATE_FMT-constant" title="HRRTUtility::HDR_DATE_FMT (constant)">HRRTUtility::HDR_DATE_FMT</a></span>, <span class='object_link'><a href="HRRTUtility.html#HDR_TIME_FMT-constant" title="HRRTUtility::HDR_TIME_FMT (constant)">HRRTUtility::HDR_TIME_FMT</a></span>, <span class='object_link'><a href="HRRTUtility.html#HRRT_DATE_FMT-constant" title="HRRTUtility::HRRT_DATE_FMT (constant)">HRRTUtility::HRRT_DATE_FMT</a></span>, <span class='object_link'><a href="HRRTUtility.html#HRRT_DATE_PATTERN-constant" title="HRRTUtility::HRRT_DATE_PATTERN (constant)">HRRTUtility::HRRT_DATE_PATTERN</a></span>, <span class='object_link'><a href="HRRTUtility.html#HRRT_TIME_FMT-constant" title="HRRTUtility::HRRT_TIME_FMT (constant)">HRRTUtility::HRRT_TIME_FMT</a></span>, <span class='object_link'><a href="HRRTUtility.html#HRRT_TIME_PATTERN-constant" title="HRRTUtility::HRRT_TIME_PATTERN (constant)">HRRTUtility::HRRT_TIME_PATTERN</a></span>, <span class='object_link'><a href="HRRTUtility.html#NAME_FORMAT_ACS-constant" title="HRRTUtility::NAME_FORMAT_ACS (constant)">HRRTUtility::NAME_FORMAT_ACS</a></span>, <span class='object_link'><a href="HRRTUtility.html#NAME_FORMAT_STD-constant" title="HRRTUtility::NAME_FORMAT_STD (constant)">HRRTUtility::NAME_FORMAT_STD</a></span>, <span class='object_link'><a href="HRRTUtility.html#NAME_PATTERN_ACS-constant" title="HRRTUtility::NAME_PATTERN_ACS (constant)">HRRTUtility::NAME_PATTERN_ACS</a></span>, <span class='object_link'><a href="HRRTUtility.html#NAME_PATTERN_STD-constant" title="HRRTUtility::NAME_PATTERN_STD (constant)">HRRTUtility::NAME_PATTERN_STD</a></span>, <span class='object_link'><a href="HRRTUtility.html#NEEDED_NAMES_DATE-constant" title="HRRTUtility::NEEDED_NAMES_DATE (constant)">HRRTUtility::NEEDED_NAMES_DATE</a></span>, <span class='object_link'><a href="HRRTUtility.html#NEEDED_NAMES_TIME-constant" title="HRRTUtility::NEEDED_NAMES_TIME (constant)">HRRTUtility::NEEDED_NAMES_TIME</a></span></p>
+
+  
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="MyLogging.html" title="MyLogging (module)">MyLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="MyLogging.html#DEFAULT_LEVEL-constant" title="MyLogging::DEFAULT_LEVEL (constant)">MyLogging::DEFAULT_LEVEL</a></span></p>
 
 
   <h2>Instance Attribute Summary <small>(<a href="#" class="summary_toggle">collapse</a>)</small></h2>
@@ -233,7 +229,7 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
       <li class="public ">
   <span class="summary_signature">
     
-      <a href="#datetime-instance_method" title="#datetime (instance method)">- (Object) <strong>datetime</strong> </a>
+      <a href="#scan-instance_method" title="#scan (instance method)">- (Object) <strong>scan</strong> </a>
     
 
     
@@ -241,327 +237,6 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
   
   
   
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute datetime.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#file_modified-instance_method" title="#file_modified (instance method)">- (Object) <strong>file_modified</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute file_modified.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#file_name-instance_method" title="#file_name (instance method)">- (Object) <strong>file_name</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute file_name.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#file_path-instance_method" title="#file_path (instance method)">- (Object) <strong>file_path</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute file_path.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#file_size-instance_method" title="#file_size (instance method)">- (Object) <strong>file_size</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute file_size.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#scan_date-instance_method" title="#scan_date (instance method)">- (Object) <strong>scan_date</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute scan_date.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#scan_extn-instance_method" title="#scan_extn (instance method)">- (Object) <strong>scan_extn</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute scan_extn.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#scan_time-instance_method" title="#scan_time (instance method)">- (Object) <strong>scan_time</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute scan_time.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#scan_type-instance_method" title="#scan_type (instance method)">- (Object) <strong>scan_type</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute scan_type.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#subject_history-instance_method" title="#subject_history (instance method)">- (Object) <strong>subject_history</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute subject_history.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#subject_name_first-instance_method" title="#subject_name_first (instance method)">- (Object) <strong>subject_name_first</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
-    
-    
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Returns the value of attribute subject_name_first.</p>
-</div></span>
-  
-</li>
-
-    
-      <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#subject_name_last-instance_method" title="#subject_name_last (instance method)">- (Object) <strong>subject_name_last</strong> </a>
-    
-
-    
-  </span>
-  
-  
-  
-    
-      <span class="note title readonly">readonly</span>
     
     
   
@@ -582,6 +257,11 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
 
 
 
+  
+  
+  <h3 class="inherited">Attributes included from <span class='object_link'><a href="PhysicalFile.html" title="PhysicalFile (module)">PhysicalFile</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="PhysicalFile.html#file_crc32-instance_method" title="PhysicalFile#file_crc32 (method)">#file_crc32</a></span>, <span class='object_link'><a href="PhysicalFile.html#file_modified-instance_method" title="PhysicalFile#file_modified (method)">#file_modified</a></span>, <span class='object_link'><a href="PhysicalFile.html#file_name-instance_method" title="PhysicalFile#file_name (method)">#file_name</a></span>, <span class='object_link'><a href="PhysicalFile.html#file_path-instance_method" title="PhysicalFile#file_path (method)">#file_path</a></span>, <span class='object_link'><a href="PhysicalFile.html#file_size-instance_method" title="PhysicalFile#file_size (method)">#file_size</a></span></p>
+
 
   
     <h2>
@@ -594,7 +274,29 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#matches_name-class_method" title="matches_name (class method)">+ (MatchData) <strong>matches_name</strong>(infile) </a>
+      <a href="#all_records_in_database-class_method" title="all_records_in_database (class method)">+ (Object) <strong>all_records_in_database</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#archive_format-class_method" title="archive_format (class method)">+ (Object) <strong>archive_format</strong> </a>
     
 
     
@@ -609,7 +311,79 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Analyze infile name for HRRT pattern.</p>
+<p>Return the archive format of this class.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#extn-class_method" title="extn (class method)">+ (Object) <strong>extn</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return the file extension of this class.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#make_test_files-class_method" title="make_test_files (class method)">+ (Object) <strong>make_test_files</strong>(scan) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>———————————————————— Class methods ————————————————————.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#new_from_details-class_method" title="new_from_details (class method)">+ (Object) <strong>new_from_details</strong>(details) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create new HRRTFile and fill in its details (come from database).</p>
 </div></span>
   
 </li>
@@ -627,7 +401,322 @@ LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">- (HRRTFile) <strong>initialize</strong>(match) </a>
+      <a href="#acs_name-instance_method" title="#acs_name (instance method)">- (Object) <strong>acs_name</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return name of this file in ACS format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_to_database-instance_method" title="#add_to_database (instance method)">- (Object) <strong>add_to_database</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Add record of this File to database.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#archive_format-instance_method" title="#archive_format (instance method)">- (Object) <strong>archive_format</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return archive format of this object&#39;s class This base class works in
+all derived classes.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#create_test_data-instance_method" title="#create_test_data (instance method)">- (Object) <strong>create_test_data</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#create_test_file_names-instance_method" title="#create_test_file_names (instance method)">- (Object) <strong>create_test_file_names</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Fill in @file_path and @file_name for this File object.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#datetime-instance_method" title="#datetime (instance method)">- (Object) <strong>datetime</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#details-instance_method" title="#details (instance method)">- (Object) <strong>details</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return hash of details stored in this File object.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#ensure_in_database-instance_method" title="#ensure_in_database (instance method)">- (Object) <strong>ensure_in_database</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check that this File exists in database Fills in its @id field.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#extn-instance_method" title="#extn (instance method)">- (Object) <strong>extn</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return extension of this object&#39;s class.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fill_in_details-instance_method" title="#fill_in_details (instance method)">- (Object) <strong>fill_in_details</strong>(details) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Incoming record: :series_id=&gt;0,
+:name=&gt;“TESTTWO-first-4002008-2014.11.6.7.58.36_TX.l64.hdr”,
+:path=&gt;“/Users/ahc/data/hrrt_acs/TESTTWO_first/Transmission”,
+:host=&gt;“andy.local”, :crc32=&gt;“534B6E32”, :size=&gt;653,
+:modified=&gt;1415311116.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#find_in_database-instance_method" title="#find_in_database (instance method)">- (Object) <strong>find_in_database</strong>(fields) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Search for required fields including any given as parameters.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#get_details-instance_method" title="#get_details (instance method)">- (Object) <strong>get_details</strong>(clean = true) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return a hash of details relevant to this File.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#id-instance_method" title="#id (instance method)">- (Object) <strong>id</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>def db_field_name(var_name)   raise(“db_field_name: Bad var_name
+#var_name”) unless DB_MAP.has_key?(var_name)   <a
+href="var_name">DB_MAP</a> end.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">- (HRRTFile) <strong>initialize</strong> </a>
     
 
     
@@ -654,7 +743,7 @@ match.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#make_date-instance_method" title="#make_date (instance method)">- (string) <strong>make_date</strong>(match) </a>
+      <a href="#name_in_archive-instance_method" title="#name_in_archive (instance method)">- (String) <strong>name_in_archive</strong> </a>
     
 
     
@@ -669,7 +758,7 @@ match.</p>
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Create date in standard format YYMMDD from MatchData object.</p>
+<p>Name to be used for this HRRTFile object in archive.</p>
 </div></span>
   
 </li>
@@ -678,31 +767,7 @@ match.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#make_time-instance_method" title="#make_time (instance method)">- (Object) <strong>make_time</strong>(match) </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Create time in standard format HHMMSS from MatchData object.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#print_summary-instance_method" title="#print_summary (instance method)">- (Object) <strong>print_summary</strong>(short = false) </a>
+      <a href="#print_summary-instance_method" title="#print_summary (instance method)">- (Object) <strong>print_summary</strong>(short = true) </a>
     
 
     
@@ -724,7 +789,7 @@ match.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#read_physical-instance_method" title="#read_physical (instance method)">- (Object) <strong>read_physical</strong>(infile) </a>
+      <a href="#remove_from_database-instance_method" title="#remove_from_database (instance method)">- (Object) <strong>remove_from_database</strong> </a>
     
 
     
@@ -739,8 +804,167 @@ match.</p>
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Read in to this object the physical characteristics of the file it
-represents.</p>
+<p>Delete record of this File from database.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#scan_date-instance_method" title="#scan_date (instance method)">- (Object) <strong>scan_date</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#standard_name-instance_method" title="#standard_name (instance method)">- (Object) <strong>standard_name</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return name of this file in standard format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#subject-instance_method" title="#subject (instance method)">- (Object) <strong>subject</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#summary-instance_method" title="#summary (instance method)">- (Object) <strong>summary</strong>(short = true) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#test_data_contents-instance_method" title="#test_data_contents (instance method)">- (Object) <strong>test_data_contents</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#test_data_path-instance_method" title="#test_data_path (instance method)">- (Object) <strong>test_data_path</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return path to test data file for this File object.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#write_physical-instance_method" title="#write_physical (instance method)">- (Object) <strong>write_physical</strong>(outfile) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Write this file to disk.</p>
 </div></span>
   
 </li>
@@ -749,13 +973,57 @@ represents.</p>
     </ul>
   
 
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="HRRTDatabase.html" title="HRRTDatabase (module)">HRRTDatabase</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="HRRTDatabase.html#add_record_to_database-instance_method" title="HRRTDatabase#add_record_to_database (method)">#add_record_to_database</a></span>, <span class='object_link'><a href="HRRTDatabase.html#all_records_in_table-instance_method" title="HRRTDatabase#all_records_in_table (method)">#all_records_in_table</a></span>, <span class='object_link'><a href="HRRTDatabase.html#check_subjects_scans-instance_method" title="HRRTDatabase#check_subjects_scans (method)">#check_subjects_scans</a></span>, <span class='object_link'><a href="HRRTDatabase.html#clear_test_database-instance_method" title="HRRTDatabase#clear_test_database (method)">#clear_test_database</a></span>, <span class='object_link'><a href="HRRTDatabase.html#db-instance_method" title="HRRTDatabase#db (method)">#db</a></span>, <span class='object_link'><a href="HRRTDatabase.html#db_host-instance_method" title="HRRTDatabase#db_host (method)">#db_host</a></span>, <span class='object_link'><a href="HRRTDatabase.html#delete_record_from_database-instance_method" title="HRRTDatabase#delete_record_from_database (method)">#delete_record_from_database</a></span>, <span class='object_link'><a href="HRRTDatabase.html#find_records_in_database-instance_method" title="HRRTDatabase#find_records_in_database (method)">#find_records_in_database</a></span>, <span class='object_link'><a href="HRRTDatabase.html#make_database_params-instance_method" title="HRRTDatabase#make_database_params (method)">#make_database_params</a></span>, <span class='object_link'><a href="HRRTDatabase.html#make_db_connection-instance_method" title="HRRTDatabase#make_db_connection (method)">#make_db_connection</a></span>, <span class='object_link'><a href="HRRTDatabase.html#make_time_params-instance_method" title="HRRTDatabase#make_time_params (method)">#make_time_params</a></span>, <span class='object_link'><a href="HRRTDatabase.html#present_in_database%3F-instance_method" title="HRRTDatabase#present_in_database? (method)">#present_in_database?</a></span>, <span class='object_link'><a href="HRRTDatabase.html#sync_database_to_directory-instance_method" title="HRRTDatabase#sync_database_to_directory (method)">#sync_database_to_directory</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="PhysicalFile.html" title="PhysicalFile (module)">PhysicalFile</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="PhysicalFile.html#calculate_crc32-instance_method" title="PhysicalFile#calculate_crc32 (method)">#calculate_crc32</a></span>, <span class='object_link'><a href="PhysicalFile.html#exists_on_disk-instance_method" title="PhysicalFile#exists_on_disk (method)">#exists_on_disk</a></span>, <span class='object_link'><a href="PhysicalFile.html#file_contents-instance_method" title="PhysicalFile#file_contents (method)">#file_contents</a></span>, <span class='object_link'><a href="PhysicalFile.html#full_name-instance_method" title="PhysicalFile#full_name (method)">#full_name</a></span>, <span class='object_link'><a href="PhysicalFile.html#matches_file%3F-instance_method" title="PhysicalFile#matches_file? (method)">#matches_file?</a></span>, <span class='object_link'><a href="PhysicalFile.html#matches_file_comp%3F-instance_method" title="PhysicalFile#matches_file_comp? (method)">#matches_file_comp?</a></span>, <span class='object_link'><a href="PhysicalFile.html#matches_file_uncomp%3F-instance_method" title="PhysicalFile#matches_file_uncomp? (method)">#matches_file_uncomp?</a></span>, <span class='object_link'><a href="PhysicalFile.html#read_physical-instance_method" title="PhysicalFile#read_physical (method)">#read_physical</a></span>, <span class='object_link'><a href="PhysicalFile.html#same_modification_as-instance_method" title="PhysicalFile#same_modification_as (method)">#same_modification_as</a></span>, <span class='object_link'><a href="PhysicalFile.html#same_size_as-instance_method" title="PhysicalFile#same_size_as (method)">#same_size_as</a></span>, <span class='object_link'><a href="PhysicalFile.html#write_comp-instance_method" title="PhysicalFile#write_comp (method)">#write_comp</a></span>, <span class='object_link'><a href="PhysicalFile.html#write_test_data-instance_method" title="PhysicalFile#write_test_data (method)">#write_test_data</a></span>, <span class='object_link'><a href="PhysicalFile.html#write_uncomp-instance_method" title="PhysicalFile#write_uncomp (method)">#write_uncomp</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="HRRTUtility.html" title="HRRTUtility (module)">HRRTUtility</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="HRRTUtility.html#clean_name-instance_method" title="HRRTUtility#clean_name (method)">#clean_name</a></span>, <span class='object_link'><a href="HRRTUtility.html#create_hrrt_file-instance_method" title="HRRTUtility#create_hrrt_file (method)">#create_hrrt_file</a></span>, <span class='object_link'><a href="HRRTUtility.html#hostname-instance_method" title="HRRTUtility#hostname (method)">#hostname</a></span>, <span class='object_link'><a href="HRRTUtility.html#make_date-instance_method" title="HRRTUtility#make_date (method)">#make_date</a></span>, <span class='object_link'><a href="HRRTUtility.html#make_time-instance_method" title="HRRTUtility#make_time (method)">#make_time</a></span>, <span class='object_link'><a href="HRRTUtility.html#matches_hrrt_name-instance_method" title="HRRTUtility#matches_hrrt_name (method)">#matches_hrrt_name</a></span>, <span class='object_link'><a href="HRRTUtility.html#parse_date-instance_method" title="HRRTUtility#parse_date (method)">#parse_date</a></span>, <span class='object_link'><a href="HRRTUtility.html#parse_datetime-instance_method" title="HRRTUtility#parse_datetime (method)">#parse_datetime</a></span>, <span class='object_link'><a href="HRRTUtility.html#parse_filename-instance_method" title="HRRTUtility#parse_filename (method)">#parse_filename</a></span>, <span class='object_link'><a href="HRRTUtility.html#parse_time-instance_method" title="HRRTUtility#parse_time (method)">#parse_time</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="MyLogging.html" title="MyLogging (module)">MyLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="MyLogging.html#configure_logger_for-class_method" title="MyLogging.configure_logger_for (method)">configure_logger_for</a></span>, <span class='object_link'><a href="MyLogging.html#file_line-instance_method" title="MyLogging#file_line (method)">#file_line</a></span>, <span class='object_link'><a href="MyLogging.html#log_debug-instance_method" title="MyLogging#log_debug (method)">#log_debug</a></span>, <span class='object_link'><a href="MyLogging.html#log_error-instance_method" title="MyLogging#log_error (method)">#log_error</a></span>, <span class='object_link'><a href="MyLogging.html#log_info-instance_method" title="MyLogging#log_info (method)">#log_info</a></span>, <span class='object_link'><a href="MyLogging.html#logger_for-class_method" title="MyLogging.logger_for (method)">logger_for</a></span>, <span class='object_link'><a href="MyLogging.html#logit-instance_method" title="MyLogging#logit (method)">#logit</a></span>, <span class='object_link'><a href="MyLogging.html#meth-instance_method" title="MyLogging#meth (method)">#meth</a></span>, <span class='object_link'><a href="MyLogging.html#mylogger-instance_method" title="MyLogging#mylogger (method)">#mylogger</a></span>, <span class='object_link'><a href="MyLogging.html#set_log_level-instance_method" title="MyLogging#set_log_level (method)">#set_log_level</a></span></p>
 <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
   
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    - (<tt><span class='object_link'><a href="" title="HRRTFile (class)">HRRTFile</a></span></tt>) <strong>initialize</strong>(match) 
+    - (<tt><span class='object_link'><a href="" title="HRRTFile (class)">HRRTFile</a></span></tt>) <strong>initialize</strong> 
   
 
   
@@ -779,37 +1047,13 @@ match</p>
       <pre class="lines">
 
 
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116</pre>
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 103</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 87</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-    <span class='id identifier rubyid_raise'>raise</span>
-  <span class='kw'>else</span>
-    <span class='ivar'>@subject_name_last</span>  <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:last</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span>
-    <span class='ivar'>@subject_name_first</span> <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:first</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span>
-    <span class='ivar'>@subject_history</span>    <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:hist</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span>
-    <span class='ivar'>@scan_date</span>  <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>date</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:date</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='id identifier rubyid_make_date'>make_date</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-    <span class='ivar'>@scan_time</span>  <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>time</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:time</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='id identifier rubyid_make_time'>make_time</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-    <span class='ivar'>@scan_type</span>  <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span>
-    <span class='ivar'>@scan_extn</span>  <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:extn</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
-    <span class='ivar'>@datetime</span>   <span class='op'>=</span> <span class='ivar'>@scan_date</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_</span><span class='tstring_end'>&#39;</span></span> <span class='op'>+</span> <span class='ivar'>@scan_time</span>
-  <span class='kw'>end</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -822,484 +1066,11 @@ match</p>
     <h2>Instance Attribute Details</h2>
     
       
-      <span id=""></span>
+      <span id="scan=-instance_method"></span>
       <div class="method_details first">
-  <h3 class="signature first" id="datetime-instance_method">
+  <h3 class="signature first" id="scan-instance_method">
   
-    - (<tt>Object</tt>) <strong>datetime</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute datetime</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-51
-52
-53</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 51</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_datetime'>datetime</span>
-  <span class='ivar'>@datetime</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="file_modified-instance_method">
-  
-    - (<tt>Object</tt>) <strong>file_modified</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute file_modified</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-49
-50
-51</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 49</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_file_modified'>file_modified</span>
-  <span class='ivar'>@file_modified</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="file_name-instance_method">
-  
-    - (<tt>Object</tt>) <strong>file_name</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute file_name</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-46
-47
-48</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 46</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_file_name'>file_name</span>
-  <span class='ivar'>@file_name</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="file_path-instance_method">
-  
-    - (<tt>Object</tt>) <strong>file_path</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute file_path</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-47
-48
-49</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 47</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_file_path'>file_path</span>
-  <span class='ivar'>@file_path</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="file_size-instance_method">
-  
-    - (<tt>Object</tt>) <strong>file_size</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute file_size</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-48
-49
-50</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 48</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_file_size'>file_size</span>
-  <span class='ivar'>@file_size</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="scan_date-instance_method">
-  
-    - (<tt>Object</tt>) <strong>scan_date</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute scan_date</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-41
-42
-43</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 41</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_scan_date'>scan_date</span>
-  <span class='ivar'>@scan_date</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="scan_extn-instance_method">
-  
-    - (<tt>Object</tt>) <strong>scan_extn</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute scan_extn</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-44
-45
-46</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 44</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_scan_extn'>scan_extn</span>
-  <span class='ivar'>@scan_extn</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="scan_time-instance_method">
-  
-    - (<tt>Object</tt>) <strong>scan_time</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute scan_time</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-42
-43
-44</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 42</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_scan_time'>scan_time</span>
-  <span class='ivar'>@scan_time</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="scan_type-instance_method">
-  
-    - (<tt>Object</tt>) <strong>scan_type</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute scan_type</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-43
-44
-45</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 43</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_scan_type'>scan_type</span>
-  <span class='ivar'>@scan_type</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="subject_history-instance_method">
-  
-    - (<tt>Object</tt>) <strong>subject_history</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute subject_history</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-39
-40
-41</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 39</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_subject_history'>subject_history</span>
-  <span class='ivar'>@subject_history</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="subject_name_first-instance_method">
-  
-    - (<tt>Object</tt>) <strong>subject_name_first</strong>  <span class="extras">(readonly)</span>
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns the value of attribute subject_name_first</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-38
-39
-40</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 38</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_subject_name_first'>subject_name_first</span>
-  <span class='ivar'>@subject_name_first</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      
-      <span id=""></span>
-      <div class="method_details ">
-  <h3 class="signature " id="subject_name_last-instance_method">
-  
-    - (<tt>Object</tt>) <strong>subject_name_last</strong>  <span class="extras">(readonly)</span>
+    - (<tt>Object</tt>) <strong>scan</strong> 
   
 
   
@@ -1329,10 +1100,10 @@ match</p>
 39</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 37</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 37</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_subject_name_last'>subject_name_last</span>
-  <span class='ivar'>@subject_name_last</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_scan'>scan</span>
+  <span class='ivar'>@scan</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1347,9 +1118,39 @@ match</p>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="matches_name-class_method">
+  <h3 class="signature first" id="all_records_in_database-class_method">
   
-    + (<tt>MatchData</tt>) <strong>matches_name</strong>(infile) 
+    + (<tt>Object</tt>) <strong>all_records_in_database</strong> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+77
+78
+79</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 77</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_all_records_in_database'>all_records_in_database</span>
+  <span class='id identifier rubyid_all_records_in_table'>all_records_in_table</span><span class='lparen'>(</span><span class='const'>DB_TABLE</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="archive_format-class_method">
+  
+    + (<tt>Object</tt>) <strong>archive_format</strong> 
   
 
   
@@ -1358,51 +1159,13 @@ match</p>
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Analyze infile name for HRRT pattern.</p>
+<p>Return the archive format of this class</p>
 
 
   </div>
 </div>
 <div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
   
-    <li>
-      
-        <span class='name'>infile</span>
-      
-      
-        <span class='type'>(<tt>String</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>input file name</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>MatchData</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>object of name parts if match, else nil.</p>
-</div>
-      
-    </li>
-  
-</ul>
 
 </div><table class="source_code">
   <tr>
@@ -1410,21 +1173,156 @@ match</p>
       <pre class="lines">
 
 
-63
-64
-65
-66
-67
-68</pre>
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 73</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_matches_name'>matches_name</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-  <span class='kw'>unless</span> <span class='id identifier rubyid_m'>m</span> <span class='op'>=</span> <span class='const'>NAME_PATTERN_STD</span><span class='period'>.</span><span class='id identifier rubyid_match'>match</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_m'>m</span> <span class='op'>=</span> <span class='const'>NAME_PATTERN_ACS</span><span class='period'>.</span><span class='id identifier rubyid_match'>match</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_archive_format'>archive_format</span>
+  <span class='kw'>self</span><span class='op'>::</span><span class='const'>ARCHIVE_FORMAT</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="extn-class_method">
+  
+    + (<tt>Object</tt>) <strong>extn</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return the file extension of this class</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+65
+66
+67</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 65</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_extn'>extn</span>
+  <span class='kw'>self</span><span class='op'>::</span><span class='const'>SUFFIX</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="make_test_files-class_method">
+  
+    + (<tt>Object</tt>) <strong>make_test_files</strong>(scan) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <hr>
+
+<p>Class methods</p>
+<hr>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+43
+44
+45
+46
+47
+48
+49
+50
+51</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 43</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_make_test_files'>make_test_files</span><span class='lparen'>(</span><span class='id identifier rubyid_scan'>scan</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_test_files'>test_files</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='id identifier rubyid_scan'>scan</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rbrace'>}</span>
+  <span class='const'>CLASSES</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_theclass'>theclass</span><span class='op'>|</span>
+    <span class='id identifier rubyid_newfile'>newfile</span> <span class='op'>=</span> <span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_const_get'>const_get</span><span class='lparen'>(</span><span class='id identifier rubyid_theclass'>theclass</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+    <span class='id identifier rubyid_newfile'>newfile</span><span class='period'>.</span><span class='id identifier rubyid_scan'>scan</span> <span class='op'>=</span> <span class='id identifier rubyid_scan'>scan</span>
+    <span class='id identifier rubyid_test_files'>test_files</span><span class='lbracket'>[</span><span class='id identifier rubyid_newfile'>newfile</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id identifier rubyid_newfile'>newfile</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_newfile'>newfile</span>
   <span class='kw'>end</span>
-  <span class='id identifier rubyid_m'>m</span>
+  <span class='id identifier rubyid_test_files'>test_files</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="new_from_details-class_method">
+  
+    + (<tt>Object</tt>) <strong>new_from_details</strong>(details) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create new HRRTFile and fill in its details (come from database)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+55
+56
+57
+58
+59</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 55</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_from_details'>new_from_details</span><span class='lparen'>(</span><span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_newfile'>newfile</span> <span class='op'>=</span> <span class='const'>HRRTFile</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='id identifier rubyid_newfile'>newfile</span><span class='period'>.</span><span class='id identifier rubyid_fill_in_details'>fill_in_details</span><span class='lparen'>(</span><span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_newfile'>newfile</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1438,117 +1336,9 @@ match</p>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="make_date-instance_method">
+  <h3 class="signature first" id="acs_name-instance_method">
   
-    - (<tt>string</tt>) <strong>make_date</strong>(match) 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Create date in standard format YYMMDD from MatchData object</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>match</span>
-      
-      
-        <span class='type'>(<tt>MatchData</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>result of regex match against file name patterns. Must contain the labels
-<em>yr</em>, <strong>mo</strong>, __dy__</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>string</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>Date in YYMMDD format</p>
-</div>
-      
-    </li>
-  
-</ul>
-<p class="tag_title">Raises:</p>
-<ul class="raise">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>foo</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>if the required labels are not present.</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-81
-82
-83
-84
-85
-86
-87
-88</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 81</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_make_date'>make_date</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span> <span class='op'>&amp;</span> <span class='const'>NEEDED_NAMES_DATE</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_eql?'>eql?</span><span class='lparen'>(</span><span class='const'>NEEDED_NAMES_DATE</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_date'>date</span> <span class='op'>=</span> <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>HRRT_DATE_FMT</span><span class='comma'>,</span> <span class='label'>yr:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:yr</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span> <span class='op'>%</span> <span class='int'>100</span><span class='comma'>,</span> <span class='label'>mo:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:mo</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>dy:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:dy</span><span class='rbracket'>]</span><span class='rparen'>)</span>
-  <span class='kw'>else</span>
-    <span class='id identifier rubyid_raise'>raise</span>
-  <span class='kw'>end</span>
-  <span class='id identifier rubyid_date'>date</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="make_time-instance_method">
-  
-    - (<tt>Object</tt>) <strong>make_time</strong>(match) 
+    - (<tt>Object</tt>) <strong>acs_name</strong> 
   
 
   
@@ -1557,7 +1347,7 @@ match</p>
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Create time in standard format HHMMSS from MatchData object</p>
+<p>Return name of this file in ACS format</p>
 
 
   </div>
@@ -1571,25 +1361,17 @@ match</p>
       <pre class="lines">
 
 
-92
-93
-94
-95
-96
-97
-98
-99</pre>
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 92</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 142</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_make_time'>make_time</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span> <span class='op'>&amp;</span> <span class='const'>NEEDED_NAMES_TIME</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_eql?'>eql?</span><span class='lparen'>(</span><span class='const'>NEEDED_NAMES_TIME</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_time'>time</span> <span class='op'>=</span> <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>HRRT_TIME_FMT</span><span class='comma'>,</span> <span class='label'>hr:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:hr</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>mn:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:mn</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>sc:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:sc</span><span class='rbracket'>]</span><span class='rparen'>)</span>
-  <span class='kw'>else</span>
-    <span class='id identifier rubyid_raise'>raise</span>
-  <span class='kw'>end</span>
-  <span class='id identifier rubyid_time'>time</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_acs_name'>acs_name</span>
+  <span class='id identifier rubyid_details'>details</span> <span class='op'>=</span> <span class='id identifier rubyid_get_details'>get_details</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>NAME_FORMAT_ACS</span><span class='comma'>,</span> <span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1597,9 +1379,103 @@ match</p>
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="print_summary-instance_method">
+  <h3 class="signature " id="add_to_database-instance_method">
   
-    - (<tt>Object</tt>) <strong>print_summary</strong>(short = false) 
+    - (<tt>Object</tt>) <strong>add_to_database</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Add record of this File to database. Adds Scan record, if necessary, which
+in turn adds Subject record.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+235
+236
+237
+238
+239
+240
+241
+242</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 235</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_to_database'>add_to_database</span>
+  <span class='id identifier rubyid_calculate_crc32'>calculate_crc32</span> <span class='kw'>unless</span> <span class='ivar'>@file_crc32</span>
+  <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_ensure_in_database'>ensure_in_database</span>
+  <span class='id identifier rubyid_db_params'>db_params</span> <span class='op'>=</span> <span class='id identifier rubyid_make_database_params'>make_database_params</span><span class='lparen'>(</span><span class='const'>REQUIRED_FIELDS</span> <span class='op'>+</span> <span class='lbracket'>[</span><span class='symbol'>:file_crc32</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_db_params'>db_params</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_make_time_params'>make_time_params</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_db_params'>db_params</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='label'>scan_id:</span> <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_add_record_to_database'>add_record_to_database</span><span class='lparen'>(</span><span class='id identifier rubyid_db_params'>db_params</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="archive_format-instance_method">
+  
+    - (<tt>Object</tt>) <strong>archive_format</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return archive format of this object&#39;s class This base class works in
+all derived classes</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+111
+112
+113</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 111</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_archive_format'>archive_format</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_archive_format'>archive_format</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="create_test_data-instance_method">
+  
+    - (<tt>Object</tt>) <strong>create_test_data</strong> 
   
 
   
@@ -1611,41 +1487,33 @@ match</p>
       <pre class="lines">
 
 
-128
-129
-130
-131
-132
-133
-134
-135
-136
-137
-138</pre>
+260
+261
+262
+263
+264
+265
+266</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 128</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 260</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_print_summary'>print_summary</span><span class='lparen'>(</span><span class='id identifier rubyid_short'>short</span> <span class='op'>=</span> <span class='kw'>false</span><span class='rparen'>)</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_short'>short</span>
-    <span class='id identifier rubyid_printf'>printf</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%-8s%-8s%-10s%-12s%-12s%-4s%-8s%10d%15s\n</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='ivar'>@scan_date</span><span class='comma'>,</span> <span class='ivar'>@scan_time</span><span class='comma'>,</span> <span class='ivar'>@subject_history</span><span class='comma'>,</span> <span class='ivar'>@subject_name_first</span><span class='comma'>,</span> <span class='ivar'>@subject_name_last</span><span class='comma'>,</span> <span class='ivar'>@scan_type</span><span class='comma'>,</span> <span class='ivar'>@scan_extn</span><span class='comma'>,</span> <span class='ivar'>@file_size</span><span class='comma'>,</span> <span class='ivar'>@file_modified</span><span class='period'>.</span><span class='id identifier rubyid_strfscan_time'>strfscan_time</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%y%m%d_%H%M%S</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='kw'>else</span>
-    <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>scan_time: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_time'>time</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>scan_date: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_scan_date'>scan_date</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>subject_history: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_subject_history'>subject_history</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>subject_name_first: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_subject_name_first'>subject_name_first</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>subject_name_last: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_subject_name_last'>subject_name_last</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span></pre>
+<span class='kw'>def</span> <span class='id identifier rubyid_create_test_data'>create_test_data</span>
+  <span class='id identifier rubyid_create_test_file_names'>create_test_file_names</span>
+  <span class='id identifier rubyid_write_test_data'>write_test_data</span>
+  <span class='id identifier rubyid_read_physical'>read_physical</span><span class='lparen'>(</span><span class='id identifier rubyid_full_name'>full_name</span><span class='rparen'>)</span>
+
+<span class='comment'>#    log_debug(File.join(@file_path, @file_name))
+</span><span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="read_physical-instance_method">
+  <h3 class="signature " id="create_test_file_names-instance_method">
   
-    - (<tt>Object</tt>) <strong>read_physical</strong>(infile) 
+    - (<tt>Object</tt>) <strong>create_test_file_names</strong> 
   
 
   
@@ -1654,8 +1522,7 @@ match</p>
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Read in to this object the physical characteristics of the file it
-represents</p>
+<p>Fill in @file_path and @file_name for this File object</p>
 
 
   </div>
@@ -1669,23 +1536,783 @@ represents</p>
       <pre class="lines">
 
 
-120
-121
-122
-123
+270
+271
+272
+273</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 270</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_create_test_file_names'>create_test_file_names</span>
+  <span class='ivar'>@file_path</span> <span class='op'>=</span> <span class='id identifier rubyid_test_data_path'>test_data_path</span>
+  <span class='ivar'>@file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_acs_name'>acs_name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="datetime-instance_method">
+  
+    - (<tt>Object</tt>) <strong>datetime</strong> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+184
+185
+186</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 184</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_datetime'>datetime</span>
+  <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="details-instance_method">
+  
+    - (<tt>Object</tt>) <strong>details</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return hash of details stored in this File object</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+180
+181
+182</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 180</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_details'>details</span>
+  <span class='lbrace'>{</span><span class='label'>extn:</span> <span class='id identifier rubyid_extn'>extn</span><span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="ensure_in_database-instance_method">
+  
+    - (<tt>Object</tt>) <strong>ensure_in_database</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check that this File exists in database Fills in its @id field</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+226
+227
+228
+229
+230</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 226</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_ensure_in_database'>ensure_in_database</span>
+  <span class='comment'># Search database without crc32 field, since we may not have calculated it
+</span>  <span class='comment'># Any matching record will have crc32 (required)
+</span>  <span class='id identifier rubyid_add_to_database'>add_to_database</span> <span class='kw'>unless</span> <span class='id identifier rubyid_present_in_database?'>present_in_database?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="extn-instance_method">
+  
+    - (<tt>Object</tt>) <strong>extn</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return extension of this object&#39;s class</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+98
+99
+100</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 98</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_extn'>extn</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_extn'>extn</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="fill_in_details-instance_method">
+  
+    - (<tt>Object</tt>) <strong>fill_in_details</strong>(details) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Incoming record: :series_id=&gt;0,
+:name=&gt;“TESTTWO-first-4002008-2014.11.6.7.58.36_TX.l64.hdr”,
+:path=&gt;“/Users/ahc/data/hrrt_acs/TESTTWO_first/Transmission”,
+:host=&gt;“andy.local”, :crc32=&gt;“534B6E32”, :size=&gt;653,
+:modified=&gt;1415311116</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+168
+169
+170
+171
+172
+173
+174</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 168</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fill_in_details'>fill_in_details</span><span class='lparen'>(</span><span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span>
+  <span class='const'>PHYSICAL_FILE_DETAILS</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_varname'>varname</span><span class='op'>|</span>
+    <span class='comment'>#    details.each do |key, value|
+</span><span class='comment'>#      puts &quot;instance_variable_set(@#{varname}, #{details[varname]})&quot;
+</span>    <span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>@</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_varname'>varname</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='id identifier rubyid_varname'>varname</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="find_in_database-instance_method">
+  
+    - (<tt>Object</tt>) <strong>find_in_database</strong>(fields) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Search for required fields including any given as parameters. Need to be
+able to search without crc for quick search using mod time.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+254
+255
+256
+257
+258</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 254</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_find_in_database'>find_in_database</span><span class='lparen'>(</span><span class='id identifier rubyid_fields'>fields</span><span class='rparen'>)</span>
+  <span class='comment'>#    required_fields = [:name, :path, :size, :modified, :host] + fields
+</span>  <span class='comment'>#    find_records_in_database(*required_fields)
+</span>  <span class='id identifier rubyid_find_records_in_database'>find_records_in_database</span><span class='lparen'>(</span><span class='const'>REQUIRED_FIELDS</span> <span class='op'>+</span> <span class='id identifier rubyid_fields'>fields</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_details-instance_method">
+  
+    - (<tt>Object</tt>) <strong>get_details</strong>(clean = true) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return a hash of details relevant to this File. From self: extn() From
+subject: :last, :first, :history From scan: :date, :time, :type</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+154
+155
+156</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 154</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_get_details'>get_details</span><span class='lparen'>(</span><span class='id identifier rubyid_clean'>clean</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_subject'>subject</span><span class='period'>.</span><span class='id identifier rubyid_details'>details</span><span class='lparen'>(</span><span class='id identifier rubyid_clean'>clean</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_scan'>scan</span><span class='period'>.</span><span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_details'>details</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="id-instance_method">
+  
+    - (<tt>Object</tt>) <strong>id</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>def db_field_name(var_name)</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>db_field_name: Bad var_name </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_var_name'>var_name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='const'>DB_MAP</span><span class='period'>.</span><span class='id identifier rubyid_has_key?'>has_key?</span><span class='lparen'>(</span><span class='id identifier rubyid_var_name'>var_name</span><span class='rparen'>)</span>
+<span class='const'>DB_MAP</span><span class='lbracket'>[</span><span class='id identifier rubyid_var_name'>var_name</span><span class='rbracket'>]</span>
+</code></pre>
+
+<p>end</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
 124
 125
 126</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_File.rb', line 120</span>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 124</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_read_physical'>read_physical</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_stat'>stat</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_stat'>stat</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-  <span class='ivar'>@file_name</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-  <span class='ivar'>@file_path</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_dirname'>dirname</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
-  <span class='ivar'>@file_size</span> <span class='op'>=</span> <span class='id identifier rubyid_stat'>stat</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
-  <span class='ivar'>@file_modified</span> <span class='op'>=</span> <span class='id identifier rubyid_stat'>stat</span><span class='period'>.</span><span class='id identifier rubyid_mtime'>mtime</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_id'>id</span>
+  <span class='ivar'>@id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="name_in_archive-instance_method">
+  
+    - (<tt>String</tt>) <strong>name_in_archive</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Name to be used for this HRRTFile object in archive.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Name of the file in this archive.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+209
+210
+211</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 209</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_name_in_archive'>name_in_archive</span>
+  <span class='id identifier rubyid_standard_name'>standard_name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="print_summary-instance_method">
+  
+    - (<tt>Object</tt>) <strong>print_summary</strong>(short = true) 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+192
+193
+194</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 192</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_print_summary'>print_summary</span><span class='lparen'>(</span><span class='id identifier rubyid_short'>short</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_log_info'>log_info</span><span class='lparen'>(</span><span class='id identifier rubyid_summary'>summary</span><span class='lparen'>(</span><span class='id identifier rubyid_short'>short</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="remove_from_database-instance_method">
+  
+    - (<tt>Object</tt>) <strong>remove_from_database</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Delete record of this File from database.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+246
+247
+248
+249</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 246</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remove_from_database'>remove_from_database</span>
+  <span class='id identifier rubyid_db_params'>db_params</span> <span class='op'>=</span> <span class='id identifier rubyid_make_database_params'>make_database_params</span><span class='lparen'>(</span><span class='const'>REQUIRED_FIELDS</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_delete_record_from_database'>delete_record_from_database</span><span class='lparen'>(</span><span class='id identifier rubyid_db_params'>db_params</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="scan_date-instance_method">
+  
+    - (<tt>Object</tt>) <strong>scan_date</strong> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+188
+189
+190</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 188</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_scan_date'>scan_date</span>
+  <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_scan_date'>scan_date</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="standard_name-instance_method">
+  
+    - (<tt>Object</tt>) <strong>standard_name</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return name of this file in standard format</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+132
+133
+134
+135
+136</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 132</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_standard_name'>standard_name</span>
+  <span class='comment'>#    puts &quot;************************************** XXXXXXXXXXX hrrt_file standard_name calling get_details(clean = true)&quot;
+</span>  <span class='comment'>#    pp get_details(true)
+</span>  <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>NAME_FORMAT_STD</span><span class='comma'>,</span> <span class='id identifier rubyid_get_details'>get_details</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="subject-instance_method">
+  
+    - (<tt>Object</tt>) <strong>subject</strong> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+90
+91
+92</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 90</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_subject'>subject</span>
+  <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_subject'>subject</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="summary-instance_method">
+  
+    - (<tt>Object</tt>) <strong>summary</strong>(short = true) 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+196
+197
+198
+199
+200
+201
+202
+203</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 196</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_summary'>summary</span><span class='lparen'>(</span><span class='id identifier rubyid_short'>short</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_summary'>summary</span> <span class='op'>=</span> <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%-50s %10d</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='ivar'>@file_name</span><span class='comma'>,</span> <span class='ivar'>@file_size</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='op'>!</span><span class='id identifier rubyid_short'>short</span>
+    <span class='id identifier rubyid_summary'>summary</span> <span class='op'>+=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Subject: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_subject'>subject</span><span class='period'>.</span><span class='id identifier rubyid_summary'>summary</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_summary'>summary</span> <span class='op'>+=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Scan: </span><span class='embexpr_beg'>#{</span><span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_summary'>summary</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_summary'>summary</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="test_data_contents-instance_method">
+  
+    - (<tt>Object</tt>) <strong>test_data_contents</strong> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+285
+286
+287</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 285</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_test_data_contents'>test_data_contents</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>0</span><span class='tstring_end'>&#39;</span></span> <span class='op'>*</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='op'>::</span><span class='const'>TEST_DATA_SIZE</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="test_data_path-instance_method">
+  
+    - (<tt>Object</tt>) <strong>test_data_path</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return path to test data file for this File object</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+279
+280
+281
+282
+283</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 279</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_test_data_path'>test_data_path</span>
+  <span class='id identifier rubyid_file_path'>file_path</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='const'>TEST_DATA_PATH</span><span class='comma'>,</span> <span class='id identifier rubyid_subject'>subject</span><span class='period'>.</span><span class='id identifier rubyid_summary'>summary</span><span class='lparen'>(</span><span class='symbol'>:summ_fmt_name</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_file_path'>file_path</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_file_path'>file_path</span><span class='comma'>,</span> <span class='const'>TRANSMISSION</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='ivar'>@scan</span><span class='period'>.</span><span class='id identifier rubyid_scan_type'>scan_type</span> <span class='op'>==</span> <span class='const'>HRRTScan</span><span class='op'>::</span><span class='const'>TYPE_TX</span>
+  <span class='id identifier rubyid_file_path'>file_path</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="write_physical-instance_method">
+  
+    - (<tt>Object</tt>) <strong>write_physical</strong>(outfile) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+  <div class="note notetag">
+    <strong>Note:</strong>
+    <div class='inline'>
+<p>overload this method to write compressed file</p>
+</div>
+  </div>
+
+
+<p>Write this file to disk. By default, write uncompressed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>outfile</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>File name to write to</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+219
+220
+221</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_file.rb', line 219</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_write_physical'>write_physical</span><span class='lparen'>(</span><span class='id identifier rubyid_outfile'>outfile</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_write_uncomp'>write_uncomp</span><span class='lparen'>(</span><span class='id identifier rubyid_outfile'>outfile</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1697,7 +2324,7 @@ represents</p>
 </div>
 
     <div id="footer">
-  Generated on Mon Aug 31 16:20:09 2015 by
+  Generated on Wed Oct 14 14:29:46 2015 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.8.7.6 (ruby-2.2.2).
 </div>

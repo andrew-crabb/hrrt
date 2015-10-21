@@ -10,7 +10,10 @@ class HRRTFileL64 < HRRTFile
   # Definitions
   # ------------------------------------------------------------
 
+  SUFFIX = 'l64'
   ARCHIVE_SUFFIX = '7z'
+  ARCHIVE_FORMAT = FORMAT_COMPRESSED
+  TEST_DATA_SIZE = 10**6
 
   # ------------------------------------------------------------
   # Accssors
@@ -24,35 +27,35 @@ class HRRTFileL64 < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize(filename)
+  def initialize(params = {}, required_keys = nil)
     super
-    @archive_format = FORMAT_COMPRESSED
-  end
-
-  # Name to be used for this HRRTFile object in archive.
-  #
-  # @return [String] Name of the file in this archive.
-
-  def name_in_archive
-    standard_name + '.' + ARCHIVE_SUFFIX
   end
 
   # Compress and write this file to disk.
-  #
-  # @param outfile [String] File name to write to
 
-  def write_physical(outfile)
-    write_physical_compressed(outfile)
+  def write_physical
+    write_comp(full_name)
   end
 
-  # Test this file against given archive
-  # Test CRC checksum against that stored in archive file
+  # Return true if this file is archive copy of source file
+  # @note Default is to compare uncompressed: overload to test compressed files
   #
-  # @param archive_file_name [String] File to test against
-  # @todo Add database integration.
+  # @return [Boolean]
 
-  def present_in_archive?(archive_file_name)
-    present_in_archive_compressed?(archive_file_name)
+  def is_copy_of?(source_file)
+    is_compressed_copy_of?(source_file)
+  end
+
+  # Duplicate the given file, using already-filled @file_path and @file_name
+  #
+  # @attr source_file [String]
+
+  def copy_file(source_file)
+    write_comp(source_file)
+  end
+
+  def standard_name
+    "#{super}.#{ARCHIVE_SUFFIX}"
   end
 
 end
