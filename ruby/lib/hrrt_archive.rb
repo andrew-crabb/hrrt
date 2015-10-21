@@ -17,7 +17,6 @@ class HRRTArchive
   def initialize
     log_debug
     @archive_files = {}
-    pp @archive_files
   end
 
   # Archive given file
