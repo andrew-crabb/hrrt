@@ -46,7 +46,8 @@ class HRRTFile
   attr_accessor :file_name
   attr_accessor :file_size
   attr_accessor :file_modified
-
+  attr_accessor :file_class
+  attr_accessor :file_crc32
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
@@ -82,11 +83,12 @@ class HRRTFile
 
   def archive_copy(archive)
     archive_copy = self.clone
-    archive_copy.file_name = standard_name
+    archive_copy.file_name = archive.name_in_archive(self)
     archive_copy.file_path = archive.path_in_archive(self)
-    archive_copy.read_physical
+    # archive_copy.read_physical
+    archive.read_physical(archive_copy)
     archive_copy.archive = archive
-    #    log_debug(archive_copy.summary)
+        log_debug(archive_copy.summary)
     archive_copy
   end
 
@@ -133,13 +135,20 @@ class HRRTFile
     sprintf(NAME_FORMAT_STD, get_details(true))
   end
 
+  # Return name of this file in datetime format
+  #
+  # @return filename [String]
+
+  def datetime_name
+    sprintf(NAME_FORMAT_AWS, get_details(true))
+  end
+
   # Return name of this file in ACS format
   #
   # @return filename [String]
 
   def acs_name
-    details = get_details(false)
-    sprintf(NAME_FORMAT_ACS, details)
+    sprintf(NAME_FORMAT_ACS, get_details(false))
   end
 
   # Return a hash of details relevant to this File.
@@ -174,11 +183,9 @@ class HRRTFile
   end
 
   def summary(short = true)
-    if file_size
-      summary = sprintf("%-40s %-40s %10d %10d", file_path, file_name, file_size, file_modified)
-    else
-      summary = sprintf("%-40s %-40s <not read from disk>", file_path, file_name)
-    end
+    size_str = file_size     ? printf("%d", file_size)     : "<nil>"
+    mod_str  = file_modified ? printf("%d", file_modified) : "<nil>"
+    summary = sprintf("%-40s %-40s %10s %10s", file_path, file_name, size_str, mod_str)
     if !short
       summary += "Subject: #{subject.summary}"
       summary += "Scan: #{@scan.summary}"
@@ -188,11 +195,11 @@ class HRRTFile
 
   # Duplicate given file, update records of new file, update record
 
-  def store_copy_of(source_file)
-    copy_file(source_file)
-    read_physical
-    ensure_in_database
-  end
+  # def store_copy_of(source_file)
+  #   copy_file(source_file)
+  #   read_physical
+  #   ensure_in_database
+  # end
 
   # Duplicate the given file, using already-filled @file_path and @file_name
   #

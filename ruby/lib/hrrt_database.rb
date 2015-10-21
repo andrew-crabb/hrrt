@@ -79,7 +79,7 @@ module HRRTDatabase
       present = true
       @id = ds.first[:id]
     end
-    log_info("#{self.class::DB_TABLE} #{summary}: #{present}" + (present ? ", id = #{id}" : ""))
+    log_info(present.to_s + (present ? ", id = #{id}" : "") + " #{self.class::DB_TABLE} #{summary}")
     present
   end
 

@@ -67,50 +67,30 @@ class HRRTArchiveLocal < HRRTArchive
   # @return [String] Name of the path in this archive.
   # @raise Error if date string is not parsed.
 
+  def initialize
+  	log_debug
+  	super
+  end
+
   def path_in_archive(f)
     raise unless m = parse_date(f.scan_date)
     sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
   end
 
-  # Return fully qualified name of HRRTFile object in this archive.
-  #
-  # @param f [HRRTFile]
-
-  def full_archive_name(f)
-    fqn = nil
-    if ((path = path_in_archive(f)) && (name = f.name_in_archive))
-      fqn = File.join(path, name)
-    else
-      raise
-    end
-    fqn
+  def name_in_archive(f)
+  	f.standard_name
   end
 
-  # Store HRRTFile object in this archive.
-  #
-  # @param f [HRRTFile] The file to store
-
-  def store_file(source_file, dest_file)
-    log_info("source #{source_file.full_name}, dest #{dest_file.full_name}")
-
-    unless MyOpts.get(:dummy)
-      FileUtils.mkdir_p(dest_file.file_path)
-      # f.write_physical(full_archive_name(f))
-      dest_file.make_archive_copy(source_file)
-    end
+  def read_physical(f)
+    f.read_physical
   end
 
-  # Verify HRRTFile object in this archive.
-  #
-  # @param f [HRRTFile] The file to verify
-  # @raise [NotImplementedError]
-
-  def verify_file(f)
-    File.open(full_archive_name(f), "rb") do |file|
-      SevenZipRuby::Reader.verify(file)
-      # => true/false
-    end
+  def store_copy(source, dest)
+    dest.copy_file(source_file)
+    dest.read_physical
+    dest.ensure_in_database
   end
+
 
   # Note: Hard-coded to avoid mistakenly listing true archive
 

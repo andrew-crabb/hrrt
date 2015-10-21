@@ -31,14 +31,6 @@ class HRRTFileL64 < HRRTFile
     super
   end
 
-  # Name to be used for this HRRTFile object in archive.
-  #
-  # @return [String] Name of the file in this archive.
-
-  # def name_in_archive
-  #   standard_name + '.' + ARCHIVE_SUFFIX
-  # end
-
   # Compress and write this file to disk.
 
   def write_physical

@@ -112,15 +112,22 @@ class HRRT
 
   def archive
     log_debug("-------------------- begin --------------------")
-    log_info("#{@hrrt_files.length} scans")
-    @archive_local = HRRTArchiveLocal.new
-    @archive_files = @archive_local.archive_files(@hrrt_files)
+    archive_local
+    archive_aws
     log_debug("-------------------- end --------------------")
   end
 
+  def archive_local
+    @archive_local ||= HRRTArchiveLocal.new
+    # @archive_local.archive_files(@hrrt_files)
+    hrrt_files_each { |f| @archive_local.archive_file(f) }
+  end
+
   def archive_aws
-    @archive_aws = HRRTArchiveAWS.new
+    log_debug("-------------------- begin --------------------")
+    @archive_aws ||= HRRTArchiveAWS.new
     @archive_aws.print_summary
+    hrrt_files_each { |f| @archive_aws.archive_file(f) }
   end
 
   def hrrt_files_each
@@ -193,7 +200,7 @@ class HRRT
   def all_files_are_archived?
     ret = true
     hrrt_files_each do |f|
-      archive_file = @archive_files[f.datetime][f.class]
+      archive_file = @archive_files_local[f.datetime][f.class]
       unless archive_file.is_copy_of?(f)
         log_error("ERROR: No archive file for source file #{f.full_name}")
         ret = false
