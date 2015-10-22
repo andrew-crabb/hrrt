@@ -40,32 +40,9 @@ class HRRTArchiveLocal < HRRTArchive
     self.files_in_test_archive.count == 0
   end
 
-  # Test whether given HRRTFile object is stored in this archive
-  #
-  # @param f [HRRTFile] The file to test for.
-  # @return [true, false] true if present, else false.
-
-  ### NOTE: You can do a lot better than this by examining the 7zip file header.
-  ### This will give you CRC checksum, original file size and modified time.
-  ###   Path = TESTTWO_FIRST_4002008_PET_150319_085346_TX.l64
-  ###   Size = 10000000
-  ###   Packed Size = 1480
-  ###   Modified = 2015-09-02 13:38:19
-  ###   Attributes = ....A
-  ###   CRC = EBBDA4B0   (note this is crc32 of original file)
-  ###   Encrypted = -
-  ###   Method = LZMA:12m
-  ###   Block = 0
-
   def self.archive_root
     MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
   end
-
-  # Name to be used for this HRRTFile object in this archive.
-  #
-  # @param f [HRRTFile] The file to return the name of.
-  # @return [String] Name of the path in this archive.
-  # @raise Error if date string is not parsed.
 
   def initialize
   	log_debug
@@ -77,13 +54,13 @@ class HRRTArchiveLocal < HRRTArchive
     log_debug("#{self.class.archive_root}: #{@all_files.count} files")
   end
 
-  def path_in_archive(f)
+  def file_path_for(f)
     raise unless m = parse_date(f.scan_date)
     sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
   end
 
-  def name_in_archive(f)
-  	f.standard_name
+  def file_name_for(f)
+    sprintf(NAME_FORMAT_STD, f.get_details(true))
   end
 
   def read_physical(f)
@@ -95,7 +72,6 @@ class HRRTArchiveLocal < HRRTArchive
     dest.read_physical
     dest.ensure_in_database
   end
-
 
   # Note: Hard-coded to avoid mistakenly listing true archive
 

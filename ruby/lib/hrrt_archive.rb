@@ -7,8 +7,6 @@ require_relative './my_logging'
 require_relative './hrrt_scan'
 require_relative './hrrt_utility'
 
-
-
 include MyLogging
 include HRRTUtility
 
@@ -16,9 +14,17 @@ include HRRTUtility
 
 class HRRTArchive
 
+  attr_reader :subjects
+  attr_reader :scans
+  attr_reader :test_scans
+  attr_reader :test_subjects
+
   def initialize
     log_debug
     @archive_files = {}
+    @test_files = {}
+    @test_scans = {}
+    @test_subjects = {} 
     @hrrt_files = {}
     @scans = {}
     @subjects = {}
@@ -85,14 +91,6 @@ class HRRTArchive
     end
   end
 
-  # Archive given file
-
-  def archive_file(source_file)
-    log_debug(source_file.full_name)
-    @archive_files[source_file.datetime] ||= Hash.new
-    @archive_files[source_file.datetime][source_file.class] = store_copy_of(source_file)
-  end
-
   def make_test_data
     log_debug("-------------------- begin --------------------")
     @test_subjects = HRRTSubject::make_test_subjects
@@ -115,6 +113,18 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
+  def perform_archive
+    hrrt_files_each { |f| archive_file(f) }
+  end
+
+  # Archive given file
+
+  def archive_file(source_file)
+    log_debug(source_file.full_name)
+    @archive_files[source_file.datetime] ||= Hash.new
+    @archive_files[source_file.datetime][source_file.class] = store_copy_of(source_file)
+  end
+
   # Store a disk-based copy of given file on this archive.
   # Local and AWS archives will keep their own @archive_files local variable
   #
@@ -124,9 +134,7 @@ class HRRTArchive
   def store_copy_of(source_file)
     log_debug(source_file.file_name)
     dest = source_file.archive_copy(self)
-
     unless dest.is_copy_of?(source_file)
-      #      dest.store_copy_of(source_file)
       store_copy(source_file, dest)
     end
     dest
@@ -154,20 +162,6 @@ class HRRTArchive
   end
 
   def read_physical(f)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  # Name to be used for this HRRTFile object in this archive.
-  #
-  # @abstract
-  # @param f [HRRTFile] The file to return the name of.
-  # @raise [NotImplementedError]
-
-  def path_in_archive(f)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  def name_in_archive(f)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

@@ -47,7 +47,7 @@ class HRRTFileL64Hdr < HRRTFile
     mode_erb             =  HRRTScan::SCAN_TYPES[@scan.scan_type]
     study_time_erb       = sprintf(HDR_TIME_FMT, details)
     study_date_erb       = sprintf(HDR_DATE_FMT, details)
-    file_name_erb        = acs_name
+    file_name_erb        = file_name
 
     contents = file_contents(HDR_FILE_ERB)
     renderer = ERB.new(contents)

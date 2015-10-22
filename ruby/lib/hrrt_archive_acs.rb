@@ -45,14 +45,14 @@ class HRRTArchiveACS < HRRTArchive
     end
   end
 
-  def self.file_path_for(f)
+  def file_path_for(f)
     file_path = File.join(get_path, f.subject.summary(:summ_fmt_name))
     file_path = File.join(file_path, TRANSMISSION) if f.scan.scan_type == HRRTScan::TYPE_TX
     file_path
   end
 
-  def self.file_name_for(f)
-
+  def file_name_for(f)
+    sprintf(NAME_FORMAT_ACS, f.get_details(false))
   end
 
 end

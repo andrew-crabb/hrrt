@@ -26,61 +26,53 @@ class HRRT
   # @!attribute [r] scans
   # Return array of all HRRTScan objects.
   # @return [Array<HRRTScan>]
-  attr_reader   :subjects
-  attr_reader   :scans
-  attr_reader   :all_files
-  attr_reader   :hrrt_files
-  attr_reader   :test_subjects
-  attr_reader   :test_scans
-  attr_reader   :test_files
-  attr_accessor :input_dir
+  # attr_reader   :subjects
+  # attr_reader   :scans
+  # attr_reader   :all_files
+  # attr_reader   :hrrt_files
+  # attr_reader   :test_subjects
+  # attr_reader   :test_scans
+  # attr_reader   :test_files
+  # attr_accessor :input_dir
+
+  attr_reader :archive_acs
+  attr_reader :archive_local
+  attr_reader :archive_aws
 
   def initialize
     log_debug("initialize")
-    @test_files = {}
-    @test_scans = {}
+    @archive_acs   = HRRTArchiveACS.new
+    @archive_local = HRRTArchiveLocal.new
   end
 
   def parse
     log_debug("-------------------- begin --------------------")
-    @archive_acs ||= HRRTArchiveACS.new
     @archive_acs.parse
-
-    @archive_local ||= HRRTArchiveLocal.new
     @archive_local.parse
     # @archive_aws ||= HRRTArchiveAWS.new
     # @archive_aws.parse
-
-    # This functionality all gets moved to the HRRTArchive base class.
-
-    # @archive_acs.read_files
-    # process_files
-    # process_scans
-
-    #    print_summary  if MyOpts.get(:verbose)
-    #    print_files_summary if MyOpts.get(:vverbose)
     log_debug("-------------------- end --------------------")
   end
 
   def archive
     log_debug("-------------------- begin --------------------")
-    archive_local
-    archive_aws
+    @archive_local.perform_archive
+    @archive_aws.perform_archive
     log_debug("-------------------- end --------------------")
   end
 
-  def archive_local
-    @archive_local ||= HRRTArchiveLocal.new
-    # @archive_local.archive_files(@hrrt_files)
-    hrrt_files_each { |f| @archive_local.archive_file(f) }
-  end
+  # def archive_local
+  #   @archive_local ||= HRRTArchiveLocal.new
+  #   # @archive_local.archive_files(@hrrt_files)
+  #   hrrt_files_each { |f| @archive_local.archive_file(f) }
+  # end
 
-  def archive_aws
-    log_debug("-------------------- begin --------------------")
-    @archive_aws ||= HRRTArchiveAWS.new
-    @archive_aws.print_summary
-    hrrt_files_each { |f| @archive_aws.archive_file(f) }
-  end
+  # def archive_aws
+  #   log_debug("-------------------- begin --------------------")
+  #   @archive_aws ||= HRRTArchiveAWS.new
+  #   @archive_aws.print_summary
+  #   hrrt_files_each { |f| @archive_aws.archive_file(f) }
+  # end
 
   def checksum_acs
     log_debug("-------------------- begin --------------------")
@@ -156,8 +148,8 @@ class HRRT
   end
 
   def print_summary
-    @archive_acs.print_summary if @archive_acs
+    @archive_acs.print_summary   if @archive_acs
     @archive_local.print_summary if @archive_local
-    @archive_aws.print_summary if @archive_aws
+    @archive_aws.print_summary   if @archive_aws
   end
 end

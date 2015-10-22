@@ -47,15 +47,6 @@ class HRRTArchiveAWS < HRRTArchive
     end
   end
 
-
-  def path_in_archive(f)
-    bucket_name
-  end
-
-  def name_in_archive(f)
-    f.datetime_name
-  end
-
   def read_physical(f)
     f_obj = @bucket.object(f.file_name)
     f.file_size     = f_obj.exists? ? f_obj.size          : nil
@@ -72,5 +63,12 @@ class HRRTArchiveAWS < HRRTArchive
     dest.ensure_in_database
   end
 
+  def file_path_for(f)
+    bucket_name
+  end
+
+  def file_name_for(f)
+    sprintf(NAME_FORMAT_AWS, f.get_details(true))
+  end
 
 end
