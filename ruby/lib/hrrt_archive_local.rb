@@ -72,6 +72,11 @@ class HRRTArchiveLocal < HRRTArchive
   	super
   end
 
+  def read_files
+    @all_files = Dir.glob(File.join(self.class.archive_root, "**/*")).select { |f| File.file? f }
+    log_debug("#{self.class.archive_root}: #{@all_files.count} files")
+  end
+
   def path_in_archive(f)
     raise unless m = parse_date(f.scan_date)
     sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)

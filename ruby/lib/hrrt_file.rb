@@ -21,26 +21,16 @@ class HRRTFile
   SUFFIX = nil
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
-  # Move these to a config file later.
-  TEST_DATA_PATH = File.join(Dir.home, 'data/hrrt_acs')
-  TRANSMISSION = 'Transmission'
-
-  # Map from database field to object variable name.
-
   DB_TABLE = :file
   REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
+  CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
 
-  # @return [HRRTScan] The Scan object this File belongs to
   attr_accessor :scan
-
-  # @return [HRRTArchive] The Archive object this file is archived in, or nil
   attr_accessor :archive
-
-  # Following attributes need to be set when empty File object created from database.
   attr_accessor :hostname
   attr_accessor :file_path
   attr_accessor :file_name
@@ -48,15 +38,15 @@ class HRRTFile
   attr_accessor :file_modified
   attr_accessor :file_class
   attr_accessor :file_crc32
+
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
 
-  def self.make_test_files(scan)
+  def self.make_test_files(params)
     test_files = {scan.datetime => {}}
     CLASSES.each do |theclass|
-      newfile = Object.const_get(theclass).new({}, {})
-      newfile.scan = scan
+      newfile = Object.const_get(theclass).new(params, params.keys)
       newfile.create_test_data
       test_files[newfile.datetime][newfile.class] = newfile
     end
@@ -65,6 +55,17 @@ class HRRTFile
 
   def self.all_records_in_database
     all_records_in_table(DB_TABLE)
+  end
+
+  def self.class_for_file(details)
+    theclass = nil
+    CLASSES.each do |classtype|
+      if details[:extn] == Object.const_get(classtype)::SUFFIX
+        theclass = classtype
+        break
+      end
+    end
+    theclass
   end
 
   # ------------------------------------------------------------
@@ -228,6 +229,7 @@ class HRRTFile
     puts "db_params:"
     pp db_params
     db_params.merge!(scan_id: @scan.id)
+    db_params.merge!(archive: @archive.class)
     add_record_to_database(db_params)
   end
 
@@ -242,13 +244,11 @@ class HRRTFile
   # Need to be able to search without crc for quick search using mod time.
 
   def find_in_database(fields)
-    #    required_fields = [:name, :path, :size, :modified, :host] + fields
-    #    find_records_in_database(*required_fields)
     find_records_in_database(REQUIRED_FIELDS + fields)
   end
 
   def create_test_data
-    create_test_file_names
+    create_file_names
     write_test_data
     read_physical
     #    log_debug("************ host #{hostname}, name #{full_name}")
@@ -256,19 +256,9 @@ class HRRTFile
 
   # Fill in @file_path and @file_name for this File object
 
-  def create_test_file_names
-    @file_path = test_data_path
-    @file_name = acs_name
-  end
-
-  # Return path to test data file for this File object
-  #
-  # @return path [String]
-
-  def test_data_path
-    file_path = File.join(TEST_DATA_PATH, subject.summary(:summ_fmt_name))
-    file_path = File.join(file_path, TRANSMISSION) if @scan.scan_type == HRRTScan::TYPE_TX
-    file_path
+  def create_file_names
+    @file_path = @archive.file_path_for(self)
+    @file_name = @archive.file_name_for(self)
   end
 
   def test_data_contents

@@ -16,27 +16,27 @@ module HRRTUtility
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = %r{
-    (?<name_last>\w+)		# subject
-    _(?<name_first>\w*)		# subject
-    _(?<history>\w*)		# subject
-    _(?<mod>PET)			# constant
-    _(?<scan_date>\d{6})	# scan
-    _(?<scan_time>\d{6})	# scan
-    _(?<scan_type>\w{2})	# scan
-    \.(?<extn>[\w\.]+)		# file
+    (?<name_last>\w+)   # subject
+    _(?<name_first>\w*)   # subject
+    _(?<history>\w*)    # subject
+    _(?<mod>PET)      # constant
+    _(?<scan_date>\d{6})  # scan
+    _(?<scan_time>\d{6})  # scan
+    _(?<scan_type>\w{2})  # scan
+    \.(?<extn>[\w\.]+)    # file
   }x
   NAME_PATTERN_ACS = %r{
-    (?<name_last>[^-]+\s*)			# subject
-    -(?<name_first>\s*[^-]*\s*)		# subject
-    -(?<history>\s*[^-]*\s*)		# subject
+    (?<name_last>[^-]+\s*)      # subject
+    -(?<name_first>\s*[^-]*\s*)   # subject
+    -(?<history>\s*[^-]*\s*)    # subject
     -(?<yr>\d{4}\s*)
     \.(?<mo>\d{1,2})
     \.(?<dy>\d{1,2})
     \.(?<hr>\d{1,2})
     \.(?<mn>\d{1,2})
     \.(?<sc>\d{1,2})
-    _(?<scan_type>\w{2})			# scan
-    \.(?<extn>[\w\.]+)				# file
+    _(?<scan_type>\w{2})      # scan
+    \.(?<extn>[\w\.]+)        # file
   }x
 
   # printf formatting strings for file names in standard and ACS format.
@@ -56,7 +56,8 @@ module HRRTUtility
   NEEDED_NAMES_DATE = %w(yr mo dy)
   NEEDED_NAMES_TIME = %w(hr mn sc)
 
-  CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
+  # For directory name
+  TRANSMISSION = 'Transmission'
 
   # ------------------------------------------------------------
   # Methods
@@ -77,19 +78,19 @@ module HRRTUtility
   # @param infile [String] Input file
   # @return [HRRTFile]
 
-  def create_hrrt_file(details, infile)
+  def create_hrrt_file(details, scan)
     hrrt_file = nil
-    CLASSES.each do |classtype|
-      if details[:extn] == Object.const_get(classtype)::SUFFIX
-        params = {
-          file_path: File.dirname(infile),
-          file_name: File.basename(infile),
-        }
-        # Create an HRRTFile filling in only file path and name, then read other details.
-        hrrt_file = Object.const_get(classtype).new(params, params.keys)
-        hrrt_file.read_physical
-        break
-      end
+    classtype = HRRTFile::class_for_file(details)
+    if classtype
+      params = {
+        file_path: details[:file_path],
+        file_name: details[:file_name],
+        scan:      scan,
+        archive:   self,
+      }
+      # Create an HRRTFile filling in only file path and name, then read other details.
+      hrrt_file = Object.const_get(classtype).new(params, params.keys)
+      hrrt_file.read_physical
     end
     hrrt_file
   end
@@ -101,11 +102,11 @@ module HRRTUtility
   def parse_filename(filename)
     details = nil
     #    log_debug(filename)
-    if match = matches_hrrt_name(File.basename(filename))
+    if match = matches_hrrt_name(filename)
       details = {
-        scan_date:       match.names.include?('scan_date') ? match[:scan_date] : make_date(match),
-        scan_time:       match.names.include?('scan_time') ? match[:scan_time] : make_time(match),
-        scan_type:       match[:scan_type].upcase,
+        scan_date:  match.names.include?('scan_date') ? match[:scan_date] : make_date(match),
+        scan_time:  match.names.include?('scan_time') ? match[:scan_time] : make_time(match),
+        scan_type:  match[:scan_type].upcase,
         extn:       match[:extn].downcase,
         name_last:  match[:name_last].upcase,
         name_first: match[:name_first].upcase,
@@ -114,6 +115,8 @@ module HRRTUtility
       # Derived fields
       details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')
       details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
+      details[:file_name]       = File.basename(filename)
+      details[:file_path]       = File.dirname(filename)
     else
       log_debug("No match: '#{File.basename(filename)}'")
     end
@@ -138,7 +141,7 @@ module HRRTUtility
   end
 
   def required_fields
-  	self.class::REQUIRED_FIELDS
+    self.class::REQUIRED_FIELDS
   end
 
   # Ensure that all keys from REQUIRED_FIELDS are present in params
