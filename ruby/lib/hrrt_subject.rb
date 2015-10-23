@@ -4,6 +4,7 @@ require 'json'
 require 'pp'
 
 require_relative '../lib/my_logging'
+require_relative './hrrt_database'
 
 include MyLogging
 
@@ -103,10 +104,6 @@ class HRRTSubject
 
   def print_summary(format = :summ_fmt_short)
     puts "#{self.class.name}: #{summary(format)}"
-  end
-
-  def ensure_in_database
-    add_to_database unless present_in_database?
   end
 
   def add_to_database

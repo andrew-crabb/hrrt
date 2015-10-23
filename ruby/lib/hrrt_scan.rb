@@ -126,24 +126,17 @@ class HRRTScan
   end
 
   def summary
-    "#{datetime} #{@subject.summary} #{file_size}"
+    file_count = @files ? @files.count : 0
+    "#{datetime} #{@subject.summary} #{file_count} files totalling #{file_size}"
   end
 
   # ------------------------------------------------------------
   # Database-related methods
   # ------------------------------------------------------------
 
-  # Check that this Scan exists in database
-  # Fills in its @id field
-
-  def ensure_in_database
-    add_to_database unless present_in_database?
-  end
-
   def add_to_database
-    @subject.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS)
-    db_params.merge!(subject_id: @subject.id)
+    @subject_id ||= @subject.ensure_in_database
+    db_params = make_database_params(REQUIRED_FIELDS + [:subject_id])
     log_debug
     pp db_params
     add_record_to_database(db_params)

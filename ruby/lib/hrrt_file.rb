@@ -76,7 +76,9 @@ class HRRTFile
 
   def initialize(params = {}, required_keys = nil)
     set_params(params, required_keys)
-    log_debug(full_name)
+    @archive_class = @archive.class.to_s
+#    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
+    log_debug("#{full_name}")
   end
 
   # Return a copy of the given file.
@@ -113,6 +115,14 @@ class HRRTFile
     is_uncompressed_copy_of?(source_file)
   end
 
+
+  def make_copy_of(source)
+    copy_file(source)
+    read_physical
+    ensure_in_database
+  end
+
+
   # Return archive format of this object's class
   # This base class works in all derived classes
   #
@@ -124,14 +134,6 @@ class HRRTFile
 
   def id
     @id
-  end
-
-  # Return name of this file in standard format
-  #
-  # @return filename [String]
-
-  def standard_name
-    sprintf(NAME_FORMAT_STD, get_details(true))
   end
 
   # Return a hash of details relevant to this File.
@@ -161,6 +163,14 @@ class HRRTFile
     @scan.scan_date
   end
 
+  def scan_id
+    @scan.id
+  end
+
+  def archive_class
+    @archive.class.to_s
+  end
+
   def print_summary(short = true)
     log_info(summary(short))
   end
@@ -181,16 +191,9 @@ class HRRTFile
   # @attr source_file [String]
 
   def copy_file(source_file)
+    log_debug("******************** this must be referred to teh archive for correct type of copy ********************")
+####################    @archive.write_file(source_file, self)
     write_uncomp(source_file)
-  end
-
-  # Check that this File exists in database
-  # Fills in its @id field
-
-  def ensure_in_database
-    # Search database without crc32 field, since we may not have calculated it
-    # Any matching record will have crc32 (required)
-    add_to_database unless present_in_database?
   end
 
   # Add record of this File to database.
@@ -198,12 +201,12 @@ class HRRTFile
 
   def add_to_database
     calculate_crc32 unless @file_crc32
-    @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class])
+    @scan_id ||= @scan.ensure_in_database
+    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class, :scan_id, :archive_class])
+    # db_params.merge!(scan_id: @scan.id)
+    # db_params.merge!(archive: @archive.class.to_s)
     puts "db_params:"
     pp db_params
-    db_params.merge!(scan_id: @scan.id)
-    db_params.merge!(archive: @archive.class)
     add_record_to_database(db_params)
   end
 

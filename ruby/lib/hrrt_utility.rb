@@ -164,6 +164,10 @@ module HRRTUtility
   # Call check_params() on given params, then call accessor for each key-value pair
 
   def set_params(params, required_keys = nil)
+    # log_debug("required_keys:")
+    # pp required_keys
+    # log_debug("params:")
+    # pp params
     my_params = check_params(params, required_keys)
     my_params.each { |key, value| send "#{key}=", value }
   end

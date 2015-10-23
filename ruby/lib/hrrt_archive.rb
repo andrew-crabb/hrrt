@@ -24,7 +24,7 @@ class HRRTArchive
     @archive_files = {}
     @test_files = {}
     @test_scans = {}
-    @test_subjects = {} 
+    @test_subjects = {}
     @hrrt_files = {}
     @scans = {}
     @subjects = {}
@@ -40,7 +40,7 @@ class HRRTArchive
   end
 
   def read_files
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
+    fail NotImplementedError, "Method #{__method__} must be implemented in derived class (#{self.class})"
   end
 
   # New way of doing it: Start at the top (Subject -> Scan -> File)
@@ -95,6 +95,7 @@ class HRRTArchive
     log_debug("-------------------- begin --------------------")
     @test_subjects = HRRTSubject::make_test_subjects
     @test_subjects.each do |bad_subject, good_subject|
+      #      log_debug(good_subject.summary)
       delete_subject_test_directory(bad_subject)
       test_scans = HRRTScan::make_test_scans(bad_subject)
       test_scans.each do |type, scan|
@@ -135,7 +136,8 @@ class HRRTArchive
     log_debug(source_file.file_name)
     dest = source_file.archive_copy(self)
     unless dest.is_copy_of?(source_file)
-      store_copy(source_file, dest)
+      dest.make_copy_of(source_file)
+      # store_copy(source_file, dest)
     end
     dest
   end
@@ -151,11 +153,65 @@ class HRRTArchive
   end
 
   def print_summary
-    log_info("========== Scan Summary: #{self.class} ==========")
+    log_info("========== #{self.class} summary start ==========")
+    nfiles = 0
     @scans.each do |datetime, scan|
       scan.print_summary
+      nfiles += scan.files.count
+    end
+    log_info("========== #{self.class} summary end (#{nfiles} files) ==========")
+  end
+
+  # ------------------------------------------------------------
+  # Database methods
+  # ------------------------------------------------------------
+
+  # Synchronize contents of database for this archive, with parsed local results.
+  # Relies upon parse() being run first
+
+  def sync_database_with_archive
+    sync_archive_to_database
+    sync_database_to_archive
+  end
+
+  # Ensure that contents of this archive are correctly present in the database
+  # Note: Only uses 'file' table, and does not check database against archive
+
+  def sync_archive_to_database
+    hrrt_files_each do |file|
+      file.ensure_in_database
     end
   end
+
+  # Ensure that every record in the database, is present in the archive.
+  # Note: Only uses 'file' table, and does not check archive against database
+
+  def sync_database_to_archive
+    database_records_this_archive.each do |file_record|
+      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
+#       puts "file_values: "
+#       pp file_values
+      test_file = HRRTFile.new(file_values)
+      unless test_file.exists_on_disk?
+        test_file.remove_from_database
+      end
+
+    end
+  end
+
+  def database_records_this_archive
+    params = {
+      table:         HRRTFile::DB_TABLE,
+      archive_class: self.class.to_s,
+    }
+    records = records_for(params)
+    log_debug("#{self.class.to_s}: #{records.count} records")
+    records
+  end
+
+  # ------------------------------------------------------------
+  # Abstract methods to be implemented in derived classes
+  # ------------------------------------------------------------
 
   def store_copy(source, dest)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
@@ -166,10 +222,6 @@ class HRRTArchive
   end
 
   def archive_is_empty
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  def checksum
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

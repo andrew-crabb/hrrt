@@ -40,6 +40,11 @@ class HRRTArchiveAWS < HRRTArchive
     )
   end
 
+  def read_files
+  	@all_files = @bucket.objects.map { |obj| obj.key }
+  	# UP TO HERE.  GET REMAINING DETAILS FROM AWS OBJECT METADATA
+  end
+
   def print_summary
     log_info("List of objects in bucket #{@bucket.name}:")
     @bucket.objects.each do |summ|

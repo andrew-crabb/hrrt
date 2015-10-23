@@ -67,40 +67,4 @@ class HRRTArchiveLocal < HRRTArchive
     f.read_physical
   end
 
-  def store_copy(source, dest)
-    dest.copy_file(source_file)
-    dest.read_physical
-    dest.ensure_in_database
-  end
-
-  # Note: Hard-coded to avoid mistakenly listing true archive
-
-  def files_in_archive
-    root = self.class.archive_root
-    Dir.chdir(root)
-    found_files = Dir['**/*'].reject {|fn| File.directory?(fn) }
-    found_files = [] unless found_files
-    log_debug("root is #{root}: #{found_files.count} files found")
-    found_files
-  end
-
-  # Build a File object of every file in the archive
-
-  def inventory_archive_contents
-    allfiles = files_in_archive
-    log_debug("#{allfiles.count} files found")
-    allfiles.each do |thefile|
-      puts thefile
-    end
-  end
-
-  # Ensure that every file in the archive is in the database
-
-  def checksum
-    inventory_archive_contents
-    @archive_files.each do |file|
-      file.ensure_in_database
-    end
-  end
-
 end

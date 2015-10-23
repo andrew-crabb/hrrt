@@ -43,47 +43,25 @@ class HRRT
     log_debug("initialize")
     @archive_acs   = HRRTArchiveACS.new
     @archive_local = HRRTArchiveLocal.new
+    @archive_aws   = HRRTArchiveAWS.new
   end
 
   def parse
     log_debug("-------------------- begin --------------------")
     @archive_acs.parse
     @archive_local.parse
-    # @archive_aws ||= HRRTArchiveAWS.new
-    # @archive_aws.parse
+    @archive_aws.parse
     log_debug("-------------------- end --------------------")
   end
 
   def archive
     log_debug("-------------------- begin --------------------")
-    @archive_local.perform_archive
-    @archive_aws.perform_archive
+    @archive_acs.hrrt_files_each do |file|
+      @archive_local.archive_file(file)
+    end
+    #    @archive_local.perform_archive
+    #    @archive_aws.perform_archive
     log_debug("-------------------- end --------------------")
-  end
-
-  # def archive_local
-  #   @archive_local ||= HRRTArchiveLocal.new
-  #   # @archive_local.archive_files(@hrrt_files)
-  #   hrrt_files_each { |f| @archive_local.archive_file(f) }
-  # end
-
-  # def archive_aws
-  #   log_debug("-------------------- begin --------------------")
-  #   @archive_aws ||= HRRTArchiveAWS.new
-  #   @archive_aws.print_summary
-  #   hrrt_files_each { |f| @archive_aws.archive_file(f) }
-  # end
-
-  def checksum_acs
-    log_debug("-------------------- begin --------------------")
-    hrrt_files_each { |f| f.ensure_in_database }
-    log_debug("-------------------- end --------------------")
-  end
-
-  # Create test data
-
-  def make_test_data
-  	@archive_acs.make_test_data
   end
 
   def archive_is_empty
@@ -95,7 +73,6 @@ class HRRT
   def clear_test_archive
     HRRTArchiveLocal.clear_test_archive
   end
-
 
   # @todo: Add non-local archive
 
@@ -114,18 +91,17 @@ class HRRT
   # Check database contents against disk contents.
   # Remove
 
-  def check_database_against_archives
+  def sync_database_with_archives
     log_debug("-------------------- begin --------------------")
+    #    [@archive_acs, @archive_local, @archive_aws].each do |archive|
 
-    # This bit is new and will not work.........yet...
+    # I think it might be a bit ambitious to try to treat AWS archive the same as the others.
 
-    [@archive_acs, @archive_local, @archive_aws].each do |archive|
-      archive.sync_database_to_self
+    log_debug("XXXXXXXXXX skipping AWS archive XXXXXXXXXX")
+    [@archive_acs, @archive_local].each do |archive|
+      archive.sync_database_with_archive
     end
-    # [input_dir, HRRTArchiveLocal.archive_root].each do |thedir|
-    #   sync_database_to_directory(thedir)
-    # end
-    check_subjects_scans
+    #    check_subjects_scans
     log_debug("-------------------- end --------------------")
   end
 

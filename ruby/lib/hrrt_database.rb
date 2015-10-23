@@ -71,6 +71,14 @@ module HRRTDatabase
   # Generic methods (will work on any table)
   # ------------------------------------------------------------
 
+  # Check that this item exists in database
+  # Fills in its @id field
+
+  def ensure_in_database
+    add_to_database unless present_in_database?
+    @id
+  end
+
   def present_in_database?(fields = [])
 
     ds = find_records_in_database(self.class::REQUIRED_FIELDS + fields)
@@ -97,6 +105,9 @@ module HRRTDatabase
     db_params
   end
 
+  # Insert this record into the database.
+  # Sets @id field.
+
   def add_record_to_database(db_params)
     @id = db[self.class::DB_TABLE].insert(db_params)
     log_info("class #{self.class}: inserted new record id #{@id}")
@@ -119,6 +130,14 @@ module HRRTDatabase
     db[thetable]
   end
 
+  def records_for(params)
+    raise("Param 'table' missing") unless params.keys.include?(:table)
+    ds = db[params[:table]]
+    params.reject! { |key, val| key == :table }
+    ds = ds.where(params) unless params.keys.empty?
+    ds
+  end
+
   # ------------------------------------------------------------
   # Non generic methods (will work on only 'file' table)
   # ------------------------------------------------------------
@@ -128,23 +147,23 @@ module HRRTDatabase
     log_info("Delete contents of #{DB_NAME_TEST} (hard coded name)")
   end
 
-  # Check database against given directory.
-  # Remove any database records not on disk
-
-  def sync_database_to_directory(input_dir)
-
-    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: get_hostname)
-    ds.each do |file_record|
-      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-      # puts "file_values: "
-      # pp file_values
-      test_file = HRRTFile.new(file_values)
-      unless test_file.exists_on_disk?
-        test_file.remove_from_database
-      end
-    end
-    log_debug("-------------------- end --------------------")
-  end
+#  # Check database against given directory.
+#  # Remove any database records not on disk
+#
+#  def sync_database_to_directory(input_dir)
+#
+#    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: get_hostname)
+#    ds.each do |file_record|
+#      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
+#      # puts "file_values: "
+#      # pp file_values
+#      test_file = HRRTFile.new(file_values)
+#      unless test_file.exists_on_disk?
+#        test_file.remove_from_database
+#      end
+#    end
+#    log_debug("-------------------- end --------------------")
+#  end
 
 
   # Update Subject and Scan tables against File
