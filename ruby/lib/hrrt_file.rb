@@ -19,6 +19,7 @@ class HRRTFile
   # ------------------------------------------------------------
 
   SUFFIX = nil
+  ARCHIVE_SUFFIX = nil
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
   DB_TABLE = :file
@@ -60,8 +61,12 @@ class HRRTFile
   def self.class_for_file(details)
     theclass = nil
     CLASSES.each do |classtype|
-      if details[:extn] == Object.const_get(classtype)::SUFFIX
-        theclass = classtype
+      suffix 	     = Object.const_get(classtype)::SUFFIX
+      archive_suffix = Object.const_get(classtype)::ARCHIVE_SUFFIX
+      pattern  = "#{suffix}"
+      pattern += "(\.#{archive_suffix})?" if archive_suffix
+      if details[:extn] =~ Regexp.new("#{pattern}$")
+          theclass = classtype
         break
       end
     end
@@ -77,7 +82,7 @@ class HRRTFile
   def initialize(params = {}, required_keys = nil)
     set_params(params, required_keys)
     @archive_class = @archive.class.to_s
-#    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
+    #    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
     log_debug("#{full_name}")
   end
 
@@ -115,13 +120,9 @@ class HRRTFile
     is_uncompressed_copy_of?(source_file)
   end
 
-
-  def make_copy_of(source)
-    copy_file(source)
-    read_physical
-    ensure_in_database
+  def copy_file(source_file)
+    write_uncomp(source_file)
   end
-
 
   # Return archive format of this object's class
   # This base class works in all derived classes
@@ -186,16 +187,6 @@ class HRRTFile
     summary
   end
 
-  # Duplicate the given file, using already-filled @file_path and @file_name
-  #
-  # @attr source_file [String]
-
-  def copy_file(source_file)
-    log_debug("******************** this must be referred to teh archive for correct type of copy ********************")
-####################    @archive.write_file(source_file, self)
-    write_uncomp(source_file)
-  end
-
   # Add record of this File to database.
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
@@ -236,6 +227,7 @@ class HRRTFile
   def create_file_names
     @file_path = @archive.file_path_for(self)
     @file_name = @archive.file_name_for(self)
+    #    @file_name += ".#{self.class::ARCHIVE_SUFFIX}" if self.class::ARCHIVE_SUFFIX
   end
 
   def test_data_contents

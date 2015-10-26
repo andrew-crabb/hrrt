@@ -59,7 +59,7 @@ class HRRT
     @archive_acs.hrrt_files_each do |file|
       @archive_local.archive_file(file)
     end
-    #    @archive_local.perform_archive
+    @archive_local.parse
     #    @archive_aws.perform_archive
     log_debug("-------------------- end --------------------")
   end
@@ -77,9 +77,12 @@ class HRRT
   # @todo: Add non-local archive
 
   def all_files_are_archived?
+    log_debug("-------------------- begin --------------------")
     ret = true
-    hrrt_files_each do |f|
-      archive_file = @archive_files_local[f.datetime][f.class]
+    @archive_acs.hrrt_files_each do |f|
+      log_debug "testing acs file #{f.full_name}"
+      archive_file = @archive_local.hrrt_files[f.datetime][f.class]
+      log_debug "testing acs file #{f.full_name} archive file #{archive_file.full_name}"
       unless archive_file.is_copy_of?(f)
         log_error("ERROR: No archive file for source file #{f.full_name}")
         ret = false

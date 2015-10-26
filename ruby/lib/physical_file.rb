@@ -80,27 +80,11 @@ module PhysicalFile
     @file_modified && @file_modified == other_file.file_modified
   end
 
-  # def same_modification_as(other_file)
-  #   same_modification = false
-  #   if exists_on_disk? && File.exist?(other_file.full_name)
-  #     same_modification = @file_modified &&  @file_modified == File.stat(other_file.full_name).mtime.to_i
-  #   end
-  #   same_modification
-  # end
-
   # Return true if both this file and other file exist, and both have matching non-null sizes
 
   def same_size_as(other_file)
     @file_size && @file_size == other_file.file_size
   end
-
-  # def same_size_as(other_file)
-  #   same_size = false
-  #   if exists_on_disk? && File.exist?(other_file.full_name)
-  #     same_size = @file_size && @file_size == File.stat(other_file.full_name).size
-  #   end
-  #   same_size
-  # end
 
   # Test this file against given archive
   # Native format: compare file size and modification time

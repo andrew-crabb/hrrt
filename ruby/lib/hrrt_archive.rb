@@ -18,6 +18,7 @@ class HRRTArchive
   attr_reader :scans
   attr_reader :test_scans
   attr_reader :test_subjects
+  attr_reader :hrrt_files
 
   def initialize
     log_debug
@@ -136,15 +137,18 @@ class HRRTArchive
     log_debug(source_file.file_name)
     dest = source_file.archive_copy(self)
     unless dest.is_copy_of?(source_file)
-      dest.make_copy_of(source_file)
-      # store_copy(source_file, dest)
+      write_file(source_file, dest)
+      dest.read_physical
+      dest.ensure_in_database
     end
     dest
   end
 
   def hrrt_files_each
     @hrrt_files.each do |dtime, files|
-      files.each { |type, file| yield file }
+      files.each do |type, file|
+        yield file
+      end
     end
   end
 
@@ -189,8 +193,8 @@ class HRRTArchive
   def sync_database_to_archive
     database_records_this_archive.each do |file_record|
       file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-#       puts "file_values: "
-#       pp file_values
+      #       puts "file_values: "
+      #       pp file_values
       test_file = HRRTFile.new(file_values)
       unless test_file.exists_on_disk?
         test_file.remove_from_database
@@ -234,6 +238,10 @@ class HRRTArchive
   end
 
   def self.file_name_for(f)
+    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
+  end
+
+  def write_file(source, dest)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

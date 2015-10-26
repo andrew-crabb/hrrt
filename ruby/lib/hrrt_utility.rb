@@ -40,7 +40,7 @@ module HRRTUtility
   }x
 
   # printf formatting strings for file names in standard and ACS format.
-  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
+  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_PET_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
   NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
   NAME_FORMAT_AWS = "%<scan_date>s_%<scan_time>s.%<extn>s"
 

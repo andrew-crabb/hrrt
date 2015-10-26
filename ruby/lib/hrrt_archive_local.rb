@@ -13,6 +13,7 @@ class HRRTArchiveLocal < HRRTArchive
   ARCHIVE_ROOT_TEST = '/data/archive_test'
   ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
   ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
+  ARCHIVE_NAME_FORMAT = NAME_FORMAT_STD
 
   # ------------------------------------------------------------
   # Class methods
@@ -60,11 +61,21 @@ class HRRTArchiveLocal < HRRTArchive
   end
 
   def file_name_for(f)
-    sprintf(NAME_FORMAT_STD, f.get_details(true))
+    file_name = sprintf(NAME_FORMAT_STD, f.get_details(true))
+    file_name += ".#{f.class::ARCHIVE_SUFFIX}" if f.class::ARCHIVE_SUFFIX
+    file_name
   end
 
   def read_physical(f)
     f.read_physical
+  end
+
+  # Create physical copy of source file.
+  # Derived class for different Archive types
+  # Calls derived File method for compressed/uncompressed write
+
+  def write_file(source, dest)
+  	dest.copy_file(source)
   end
 
 end
