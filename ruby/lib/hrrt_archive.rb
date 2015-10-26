@@ -116,7 +116,9 @@ class HRRTArchive
   end
 
   def perform_archive
+    log_debug("-------------------- begin --------------------")
     hrrt_files_each { |f| archive_file(f) }
+    log_debug("-------------------- end --------------------")
   end
 
   # Archive given file
@@ -137,7 +139,7 @@ class HRRTArchive
     log_debug(source_file.file_name)
     dest = source_file.archive_copy(self)
     unless dest.is_copy_of?(source_file)
-      write_file(source_file, dest)
+      store_copy(source_file, dest)
       dest.read_physical
       dest.ensure_in_database
     end
@@ -238,10 +240,6 @@ class HRRTArchive
   end
 
   def self.file_name_for(f)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  def write_file(source, dest)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

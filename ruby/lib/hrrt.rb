@@ -23,18 +23,6 @@ class HRRT
   HRRTSCAN    = "HRRTScan"
   HRRTSUBJECT = "HRRTSubject"
 
-  # @!attribute [r] scans
-  # Return array of all HRRTScan objects.
-  # @return [Array<HRRTScan>]
-  # attr_reader   :subjects
-  # attr_reader   :scans
-  # attr_reader   :all_files
-  # attr_reader   :hrrt_files
-  # attr_reader   :test_subjects
-  # attr_reader   :test_scans
-  # attr_reader   :test_files
-  # attr_accessor :input_dir
-
   attr_reader :archive_acs
   attr_reader :archive_local
   attr_reader :archive_aws
@@ -60,7 +48,10 @@ class HRRT
       @archive_local.archive_file(file)
     end
     @archive_local.parse
-    #    @archive_aws.perform_archive
+    @archive_local.hrrt_files_each do |file|
+      @archive_aws.archive_file(file)
+    end
+    @archive_aws.parse
     log_debug("-------------------- end --------------------")
   end
 

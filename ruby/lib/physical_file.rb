@@ -76,14 +76,14 @@ module PhysicalFile
 
   # Return true if both this file and other file exist, and both have matching non-null modified times
 
-  def same_modification_as(other_file)
-    @file_modified && @file_modified == other_file.file_modified
+  def same_modification_as?(other_file)
+    @file_modified && @file_modified == other_file.file_modified ? true : false
   end
 
   # Return true if both this file and other file exist, and both have matching non-null sizes
 
-  def same_size_as(other_file)
-    @file_size && @file_size == other_file.file_size
+  def same_size_as?(other_file)
+    @file_size && @file_size == other_file.file_size ? true : false
   end
 
   # Test this file against given archive
@@ -94,7 +94,7 @@ module PhysicalFile
 
   def is_uncompressed_copy_of?(source_file)
     #       log_debug(source_file)
-    ret = same_size_as(source_file) && same_modification_as(source_file)
+    ret = same_size_as?(source_file) && same_modification_as?(source_file)
     log_debug("#{ret.to_s}: #{full_name} #{source_file.full_name}")
     ret
   end

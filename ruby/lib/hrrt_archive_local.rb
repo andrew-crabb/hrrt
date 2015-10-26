@@ -74,7 +74,7 @@ class HRRTArchiveLocal < HRRTArchive
   # Derived class for different Archive types
   # Calls derived File method for compressed/uncompressed write
 
-  def write_file(source, dest)
+  def store_copy(source, dest)
   	dest.copy_file(source)
   end
 

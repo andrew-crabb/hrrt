@@ -15,7 +15,9 @@ class HRRTSubject
   # ------------------------------------------------------------
 
   SUMMARY_FMT        = "%<name_last>-12s, %<name_first>-12s %<history>s"
-  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects_1.json")
+#  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects_1.json")
+  TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + "/../etc")
+  TEST_SUBJECTS_FILE = "test_subjects_1.json"
 
   SUMM_FMT_SHORT    = :summ_fmt_short
   SUMM_FMT_FILENAME = :summ_fmt_filename
@@ -41,7 +43,7 @@ class HRRTSubject
   # @return subjects [Hash[HRRTSubject]]
 
   def self.make_test_subjects
-    subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON), symbolize_names: true)
+    subject_data = JSON.parse(File.read(self.test_subjects_file), symbolize_names: true)
     subjects = []
     subject_data.each do |subj|
       subj_in  = HRRTSubject.new(subj[:given])
@@ -49,6 +51,11 @@ class HRRTSubject
       subjects.push([subj_in, subj_out])
     end
     subjects
+  end
+
+  def self.test_subjects_file
+    subjects_file = MyOpts.get(:subjects) || TEST_SUBJECTS_FILE
+    File.join(TEST_SUBJECTS_PATH, subjects_file)
   end
 
   def self.all_records_in_database
