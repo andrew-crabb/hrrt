@@ -26,6 +26,10 @@ class HRRTFile
   REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
   CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(hostname file_path file_name)
+  SUMMARY_FORMAT     = "%-12<hostname>s %-60<file_path>s %-60<file_name>s\n"
+
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
@@ -54,10 +58,6 @@ class HRRTFile
     test_files
   end
 
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
-  end
-
   def self.class_for_file(details)
     theclass = nil
     CLASSES.each do |classtype|
@@ -66,11 +66,19 @@ class HRRTFile
       pattern  = "#{suffix}"
       pattern += "(\.#{archive_suffix})?" if archive_suffix
       if details[:extn] =~ Regexp.new("#{pattern}$")
-          theclass = classtype
+        theclass = classtype
         break
       end
     end
     theclass
+  end
+
+  def self.print_database_summary
+    records = records_for(table: DB_TABLE).order(:hostname, :file_path, :file_name)
+    log_info("-------------------- #{records.count} Files --------------------")
+    records.each do |rec|
+    	printf("%-12<hostname>s %-60<file_path>s %-60<file_name>s\n", rec)
+    end
   end
 
   # ------------------------------------------------------------
@@ -84,6 +92,13 @@ class HRRTFile
     @archive_class = @archive.class.to_s
     #    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
     log_debug("#{full_name}")
+  end
+
+  # Delete this object from its archive, and remove database entry
+
+  def delete
+    @archive.delete(self)
+    remove_from_database
   end
 
   # Return a copy of the given file.
@@ -194,8 +209,6 @@ class HRRTFile
     calculate_crc32 unless @file_crc32
     @scan_id ||= @scan.ensure_in_database
     db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class, :scan_id, :archive_class])
-    # db_params.merge!(scan_id: @scan.id)
-    # db_params.merge!(archive: @archive.class.to_s)
     puts "db_params:"
     pp db_params
     add_record_to_database(db_params)

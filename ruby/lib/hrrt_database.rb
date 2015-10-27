@@ -119,7 +119,7 @@ module HRRTDatabase
     if recs.count == 1
       recs.delete
     else
-      raise
+      raise("Count #{recs.count} is not 1")
     end
   end
 
@@ -139,32 +139,25 @@ module HRRTDatabase
   end
 
   # ------------------------------------------------------------
-  # Non generic methods (will work on only 'file' table)
+  # UGLY methods that take a class name.  Prefer http://goo.gl/ueue9Z
   # ------------------------------------------------------------
 
+  def print_database_summary(classname)
+  	theclass = Object.const_get(classname)
+    records = records_for(table: theclass::DB_TABLE).order(*theclass::SUMMARY_FIELDS)
+    log_info("-------------------- #{classname} #{records.count} records --------------------")
+	headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]
+	printf(theclass::SUMMARY_FORMAT, headings)
+    records.each { |rec| printf(theclass::SUMMARY_FORMAT, rec) }
+  end
+
+  # ------------------------------------------------------------
+  # Non generic methods (will work on only 'file' table)
+  # ------------------------------------------------------------
 
   def clear_test_database
     log_info("Delete contents of #{DB_NAME_TEST} (hard coded name)")
   end
-
-#  # Check database against given directory.
-#  # Remove any database records not on disk
-#
-#  def sync_database_to_directory(input_dir)
-#
-#    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: get_hostname)
-#    ds.each do |file_record|
-#      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-#      # puts "file_values: "
-#      # pp file_values
-#      test_file = HRRTFile.new(file_values)
-#      unless test_file.exists_on_disk?
-#        test_file.remove_from_database
-#      end
-#    end
-#    log_debug("-------------------- end --------------------")
-#  end
-
 
   # Update Subject and Scan tables against File
   # Delete any Scan not linked to from any File

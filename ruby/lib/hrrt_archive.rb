@@ -14,6 +14,8 @@ include HRRTUtility
 
 class HRRTArchive
 
+  ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
+
   attr_reader :subjects
   attr_reader :scans
   attr_reader :test_scans
@@ -22,6 +24,7 @@ class HRRTArchive
 
   def initialize
     log_debug
+    @archive_root = MyOpts.get(:test) ? self.class::ARCHIVE_ROOT_TEST : self.class::ARCHIVE_ROOT
     @archive_files = {}
     @test_files = {}
     @test_scans = {}
@@ -30,6 +33,9 @@ class HRRTArchive
     @scans = {}
     @subjects = {}
   end
+
+  # Read archive content, and make Subject-, Scan- and File-related objects for each found member.
+  # Archive may be production- or test-based.
 
   def parse
     read_files
@@ -40,8 +46,18 @@ class HRRTArchive
     print_files_summary if MyOpts.get(:vverbose)
   end
 
+  # Read contents of this archive.
+  # Default is to read physical file system (based on @archive_root)
+  # Override for non filesystem based archive
+
   def read_files
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class (#{self.class})"
+    @all_files = Dir.glob(File.join(@archive_root, "**/*")).select { |f| File.file? f }
+    log_debug("#{@archive_root}: #{@all_files.count} files")
+  end
+
+  def is_empty?
+    read_files
+    @all_files.count == 0
   end
 
   # New way of doing it: Start at the top (Subject -> Scan -> File)
@@ -146,11 +162,25 @@ class HRRTArchive
     dest
   end
 
+  # Delete this File object from this archive.
+  # Default is for physical file systems: Override for non-filesystems
+
+  def delete(file)
+    log_debug(file.full_name)
+    File.unlink(file.full_name)
+  end
+
+  # Note these are raw files (ie path/file names), not HRRTFile objects
+
+  def all_files_each
+    @all_files.each { |f| yield f }
+  end
+
+  # Apply to all HRRTFile objects
+
   def hrrt_files_each
     @hrrt_files.each do |dtime, files|
-      files.each do |type, file|
-        yield file
-      end
+      files.each { |type, file| yield file }
     end
   end
 
@@ -186,6 +216,12 @@ class HRRTArchive
   def sync_archive_to_database
     hrrt_files_each do |file|
       file.ensure_in_database
+    end
+  end
+
+  def print_database_summary
+    database_records_this_archive.each do |file_record|
+      
     end
   end
 
@@ -227,10 +263,6 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
-  def archive_is_empty
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
   def self.archive_root
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
@@ -241,6 +273,34 @@ class HRRTArchive
 
   def self.file_name_for(f)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
+  end
+
+  def clear_test_archive
+    unless @archive_root == self.class::ARCHIVE_ROOT_TEST
+      log_error("ERROR: Archive root #{@archive_root} not equal to test value #{ARCHIVE_ROOT_TEST}")
+      exit
+    end
+    parse
+    if @hrrt_files.count < ARCHIVE_TEST_MAX
+      hrrt_files_each do |f|
+        f.delete
+#        f = nil
+      end
+      prune_archive
+    else
+      raise("More than #{ARCHIVE_TEST_MAX} files in #{ARCHIVE_ROOT_TEST}: #{testfiles.count}")
+    end
+  end
+
+  # Delete empty directories from this archive.
+  # Default is for physical file system: override for non physical.
+
+  def prune_archive
+    Dir.chdir(@archive_root)
+    Dir['**/*'] \
+      .select { |d| File.directory? d } \
+      .select { |d| (Dir.entries(d) - %w[. ..]).empty? } \
+      .each   { |d| Dir.rmdir d }
   end
 
 end

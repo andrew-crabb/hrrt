@@ -9,8 +9,8 @@ require_relative './hrrt_archive'
 # Class representing the HRRT remote (AWS) file archive
 
 class HRRTArchiveAWS < HRRTArchive
-  PROFILE_NAME      = 'hrrt-recon'
-  PROFILE_NAME_TEST = 'hrrt-recon-test'
+  ARCHIVE_ROOT      = 'hrrt-recon'
+  ARCHIVE_ROOT_TEST = 'hrrt-recon-test'
   BUCKET_NAME       = 'hrrt-recon'
   BUCKET_NAME_TEST  = 'hrrt-recon-test'
 
@@ -23,10 +23,6 @@ class HRRTArchiveAWS < HRRTArchive
     @bucket = @rsrc.bucket(bucket_name)
   end
 
-  def profile_name
-    MyOpts.get(:test) ? PROFILE_NAME_TEST : PROFILE_NAME
-  end
-
   def bucket_name
     MyOpts.get(:test) ? BUCKET_NAME_TEST : BUCKET_NAME
   end
@@ -35,7 +31,7 @@ class HRRTArchiveAWS < HRRTArchive
     Aws.config.update(
       {
         region: 'us-east-1',
-        credentials: Aws::SharedCredentials.new(:profile_name => profile_name)
+        credentials: Aws::SharedCredentials.new(:profile_name => @archive_root)
       }
     )
   end
@@ -45,12 +41,12 @@ class HRRTArchiveAWS < HRRTArchive
   	# UP TO HERE.  GET REMAINING DETAILS FROM AWS OBJECT METADATA
   end
 
-  def print_summary
-    log_info("List of objects in bucket #{@bucket.name}:")
-    @bucket.objects.each do |summ|
-      puts "bucket #{summ.bucket_name}, key #{summ.key}, class #{summ.storage_class}, size #{summ.size}"
-    end
-  end
+#  def print_summary
+#    log_info("List of objects in bucket #{@bucket.name}:")
+#    @bucket.objects.each do |summ|
+#      puts "bucket #{summ.bucket_name}, key #{summ.key}, class #{summ.storage_class}, size #{summ.size}"
+#    end
+#  end
 
   def read_physical(f)
     f_obj = @bucket.object(f.file_name)
@@ -74,6 +70,16 @@ class HRRTArchiveAWS < HRRTArchive
 
   def file_name_for(f)
     sprintf(NAME_FORMAT_AWS, f.get_details(true))
+  end
+
+  def delete(f)
+  	log_debug(f.file_name)
+  	@bucket.object(f.file_name).delete
+  end
+
+  # Not used in AWS since no directory structure.
+
+  def prune_archive
   end
 
 end

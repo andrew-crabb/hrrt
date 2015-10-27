@@ -31,6 +31,10 @@ class HRRTScan
 
   REQUIRED_FIELDS = %i(scan_date scan_time scan_type)
 
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(scan_date scan_time scan_type)
+  SUMMARY_FORMAT     = "%<scan_date>-6s %<scan_time>-6s %<scan_type>s\n"
+
   # ------------------------------------------------------------
   # Accessors
   # ------------------------------------------------------------
@@ -68,10 +72,6 @@ class HRRTScan
       scan_type: type,
     }
     HRRTScan.new(details, subject)
-  end
-
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
   end
 
   # ------------------------------------------------------------

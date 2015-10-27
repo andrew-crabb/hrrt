@@ -14,8 +14,10 @@ class HRRTSubject
   # Definitions
   # ------------------------------------------------------------
 
-  SUMMARY_FMT        = "%<name_last>-12s, %<name_first>-12s %<history>s"
-#  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects_1.json")
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(name_last name_first history)
+  SUMMARY_FORMAT     = "%<name_last>-20s, %<name_first>-20s %<history>s\n"
+
   TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + "/../etc")
   TEST_SUBJECTS_FILE = "test_subjects_1.json"
 
@@ -57,11 +59,6 @@ class HRRTSubject
     subjects_file = MyOpts.get(:subjects) || TEST_SUBJECTS_FILE
     File.join(TEST_SUBJECTS_PATH, subjects_file)
   end
-
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
-  end
-
 
   # ------------------------------------------------------------
   # Instance methods

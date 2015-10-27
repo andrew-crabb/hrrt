@@ -12,8 +12,9 @@ class HRRTArchiveLocal < HRRTArchive
   ARCHIVE_ROOT      = '/data/archive'
   ARCHIVE_ROOT_TEST = '/data/archive_test'
   ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
-  ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
   ARCHIVE_NAME_FORMAT = NAME_FORMAT_STD
+
+  attr_reader :archive_root
 
   # ------------------------------------------------------------
   # Class methods
@@ -26,33 +27,9 @@ class HRRTArchiveLocal < HRRTArchive
     found_files = [] unless found_files
   end
 
-  def self.clear_test_archive
-    testfiles = self.files_in_test_archive
-    nfiles = testfiles ? testfiles.count : 0
-    if nfiles < ARCHIVE_TEST_MAX
-      FileUtils.rm_rf(ARCHIVE_ROOT_TEST)
-      FileUtils.mkdir(ARCHIVE_ROOT_TEST) unless File.directory?(ARCHIVE_ROOT_TEST)
-    else
-      raise("More than #{ARCHIVE_TEST_MAX} files in #{ARCHIVE_ROOT_TEST}: #{nfiles}")
-    end
-  end
-
-  def self.archive_is_empty
-    self.files_in_test_archive.count == 0
-  end
-
-  def self.archive_root
-    MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
-  end
-
   def initialize
   	log_debug
   	super
-  end
-
-  def read_files
-    @all_files = Dir.glob(File.join(self.class.archive_root, "**/*")).select { |f| File.file? f }
-    log_debug("#{self.class.archive_root}: #{@all_files.count} files")
   end
 
   def file_path_for(f)

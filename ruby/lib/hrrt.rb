@@ -36,33 +36,15 @@ class HRRT
 
   def parse
     log_debug("-------------------- begin --------------------")
-    @archive_acs.parse
-    @archive_local.parse
-    @archive_aws.parse
+    archives_each { |archive| archive.parse }
     log_debug("-------------------- end --------------------")
   end
 
   def archive
     log_debug("-------------------- begin --------------------")
-    @archive_acs.hrrt_files_each do |file|
-      @archive_local.archive_file(file)
-    end
-    @archive_local.parse
-    @archive_local.hrrt_files_each do |file|
-      @archive_aws.archive_file(file)
-    end
-    @archive_aws.parse
+    @archive_acs.hrrt_files_each   { |file| @archive_local.archive_file(file) }
+    @archive_local.hrrt_files_each { |file| @archive_aws.archive_file(file)   }
     log_debug("-------------------- end --------------------")
-  end
-
-  def archive_is_empty
-    HRRTArchiveLocal.archive_is_empty
-  end
-
-  # @todo: Add non-local archive
-
-  def clear_test_archive
-    HRRTArchiveLocal.clear_test_archive
   end
 
   # @todo: Add non-local archive
@@ -82,21 +64,24 @@ class HRRT
     ret
   end
 
+  def archives_each
+    [@archive_acs, @archive_local, @archive_aws].each { |archive| yield archive }
+  end
+
   # Check database contents against disk contents.
   # Remove
 
   def sync_database_with_archives
     log_debug("-------------------- begin --------------------")
-    #    [@archive_acs, @archive_local, @archive_aws].each do |archive|
-
-    # I think it might be a bit ambitious to try to treat AWS archive the same as the others.
-
-    log_debug("XXXXXXXXXX skipping AWS archive XXXXXXXXXX")
-    [@archive_acs, @archive_local].each do |archive|
-      archive.sync_database_with_archive
-    end
-    #    check_subjects_scans
+    archives_each { |archive| archive.sync_database_with_archive }
+    check_subjects_scans
     log_debug("-------------------- end --------------------")
+  end
+
+  def archives_are_empty?
+    empty = true
+    archives_each { |archive| empty &= archive.empty? }
+    empty
   end
 
   def count_records_in_database
@@ -107,10 +92,15 @@ class HRRT
     records
   end
 
-  def print_database_summary
-    count_records_in_database.each do |theclass, thecount|
-      printf("%-20s %i\n", theclass, thecount)
+  def print_database_summaries
+    # Print a summary of subjects, and their scans.
+    [HRRTFILE, HRRTSCAN, HRRTSUBJECT].each do |theclass|
+      print_database_summary(theclass)
     end
+    # Print a summary of archives, and their files.
+    #    count_records_in_database.each do |theclass, thecount|
+    #      printf("%-20s %i\n", theclass, thecount)
+    #    end
   end
 
   def database_is_empty
@@ -118,8 +108,11 @@ class HRRT
   end
 
   def print_summary
-    @archive_acs.print_summary   if @archive_acs
-    @archive_local.print_summary if @archive_local
-    @archive_aws.print_summary   if @archive_aws
+    archives_each { |archive| archive.print_summary }
   end
+
+  def clear_test_data
+    archives_each { |archive| archive.clear_test_archive }
+  end
+
 end
