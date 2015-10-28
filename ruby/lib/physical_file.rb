@@ -4,6 +4,7 @@ require_relative './my_logging'
 
 require 'seven_zip_ruby'
 require 'digest/crc32'
+require 'digest/md5'
 require 'shellwords'
 
 include MyLogging
@@ -27,7 +28,8 @@ module PhysicalFile
 
   attr_reader :file_size
   attr_reader :file_modified
-  attr_reader :file_crc32
+  attr_accessor :file_crc32
+  attr_accessor :file_md5
 
   # ------------------------------------------------------------
   # Methods
@@ -36,6 +38,8 @@ module PhysicalFile
   # Read in to this object the physical characteristics of the file it represents
   # Requires @file_path and @file_name to be filled in already
   # Sets file_size and file_modified to nil if file does not exist
+  # Checksums necessary since sometimes this called on cloned object
+  # Checksums not calculated at first since they are expensive
 
   def read_physical
     stat = File.exist?(full_name) ? File.stat(full_name) : nil
@@ -43,7 +47,8 @@ module PhysicalFile
     @file_modified = stat ? stat.mtime.to_i : nil
     @hostname      = get_hostname
     @file_class    = self.class.to_s
-    @file_crc32    = nil      # Necessary since sometimes this called on cloned object
+    @file_crc32    = nil
+    @file_md5      = nil
   end
 
   # Fully qualified name of this file
@@ -119,9 +124,10 @@ module PhysicalFile
     present
   end
 
-  def calculate_crc32
+  def calculate_checksums
     @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
-    log_debug("#{file_name}: #{@file_crc32}")
+    @file_md5 = Digest::MD5.file(full_name).hexdigest
+    log_debug("#{file_name}: CRC #{@file_crc32}, MD5 #{@file_md5}")
   end
 
   def write_test_data
@@ -147,9 +153,9 @@ module PhysicalFile
     if File.exist?(full_name)
       stat = File.stat(full_name)
       exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i
-#      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+      #      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
     else
-#      log_debug("#{exists.to_s}: #{full_name}")
+      #      log_debug("#{exists.to_s}: #{full_name}")
     end
     exists
   end

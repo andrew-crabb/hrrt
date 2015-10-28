@@ -18,10 +18,12 @@ class HRRT
 
   include MyLogging
   include MyOpts
+
   # Class names
   HRRTFILE    = "HRRTFile"
   HRRTSCAN    = "HRRTScan"
   HRRTSUBJECT = "HRRTSubject"
+  CLASSES = [HRRTFILE, HRRTSCAN, HRRTSUBJECT]
 
   attr_reader :archive_acs
   attr_reader :archive_local
@@ -32,40 +34,37 @@ class HRRT
     @archive_acs   = HRRTArchiveACS.new
     @archive_local = HRRTArchiveLocal.new
     @archive_aws   = HRRTArchiveAWS.new
+    @archives = [@archive_acs, @archive_local, @archive_aws]
   end
 
   def parse
     log_debug("-------------------- begin --------------------")
-    archives_each { |archive| archive.parse }
+    @archives.each { |archive| archive.parse }
     log_debug("-------------------- end --------------------")
   end
 
   def archive
     log_debug("-------------------- begin --------------------")
+    @archives.each { |archive| archive.print_files_summary }
+    log_debug("-------------------- step 2 --------------------")
     @archive_acs.hrrt_files_each   { |file| @archive_local.archive_file(file) }
+    log_debug("-------------------- step 3 --------------------")    
     @archive_local.hrrt_files_each { |file| @archive_aws.archive_file(file)   }
     log_debug("-------------------- end --------------------")
   end
 
   # @todo: Add non-local archive
 
-  def all_files_are_archived?
+  def files_are_archived?
+    log_debug
     log_debug("-------------------- begin --------------------")
-    ret = true
-    @archive_acs.hrrt_files_each do |f|
-      log_debug "testing acs file #{f.full_name}"
-      archive_file = @archive_local.hrrt_files[f.datetime][f.class]
-      log_debug "testing acs file #{f.full_name} archive file #{archive_file.full_name}"
-      unless archive_file.is_copy_of?(f)
-        log_error("ERROR: No archive file for source file #{f.full_name}")
-        ret = false
-      end
+    @archives.each do |archive|
+      archive.print_files_summary
     end
-    ret
-  end
 
-  def archives_each
-    [@archive_acs, @archive_local, @archive_aws].each { |archive| yield archive }
+    @archive_acs.files_are_archived?(@archive_local) && \
+      @archive_local.files_are_archived?(@archive_aws)
+    #  	@archives.map { |archive| archive.all_files_are_archived? }.inject(:&)
   end
 
   # Check database contents against disk contents.
@@ -73,46 +72,29 @@ class HRRT
 
   def sync_database_with_archives
     log_debug("-------------------- begin --------------------")
-    archives_each { |archive| archive.sync_database_with_archive }
+    @archives.each { |archive| archive.sync_database_with_archive }
     check_subjects_scans
     log_debug("-------------------- end --------------------")
   end
 
   def archives_are_empty?
-    empty = true
-    archives_each { |archive| empty &= archive.empty? }
-    empty
+    @archives.map { |archive| archive.is_empty? }.inject(:&)
   end
 
-  def count_records_in_database
-    records = {}
-    [HRRTFILE, HRRTSCAN, HRRTSUBJECT].each do |theclass|
-      records[theclass] = Object.const_get(theclass).all_records_in_database.count
-    end
-    records
+  def databases_are_empty?
+    CLASSES.map { |theclass| database_is_empty?(theclass) }.inject(:&)
   end
 
   def print_database_summaries
-    # Print a summary of subjects, and their scans.
-    [HRRTFILE, HRRTSCAN, HRRTSUBJECT].each do |theclass|
-      print_database_summary(theclass)
-    end
-    # Print a summary of archives, and their files.
-    #    count_records_in_database.each do |theclass, thecount|
-    #      printf("%-20s %i\n", theclass, thecount)
-    #    end
-  end
-
-  def database_is_empty
-    count_records_in_database.values.inject(:+) == 0
+    CLASSES.each { |theclass| print_database_summary(theclass) }
   end
 
   def print_summary
-    archives_each { |archive| archive.print_summary }
+    @archives.each { |archive| archive.print_summary }
   end
 
   def clear_test_data
-    archives_each { |archive| archive.clear_test_archive }
+    @archives.each { |archive| archive.clear_test_archive }
   end
 
 end

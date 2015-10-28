@@ -116,11 +116,7 @@ module HRRTDatabase
   def delete_record_from_database(db_params)
     recs = db[self.class::DB_TABLE].where(db_params)
     log_debug(summary)
-    if recs.count == 1
-      recs.delete
-    else
-      raise("Count #{recs.count} is not 1")
-    end
+    recs.delete
   end
 
   # Return dataset of all records for this table in database.
@@ -143,12 +139,17 @@ module HRRTDatabase
   # ------------------------------------------------------------
 
   def print_database_summary(classname)
-  	theclass = Object.const_get(classname)
+    theclass = Object.const_get(classname)
     records = records_for(table: theclass::DB_TABLE).order(*theclass::SUMMARY_FIELDS)
     log_info("-------------------- #{classname} #{records.count} records --------------------")
-	headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]
-	printf(theclass::SUMMARY_FORMAT, headings)
+    headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]
+    printf(theclass::SUMMARY_FORMAT, headings)
     records.each { |rec| printf(theclass::SUMMARY_FORMAT, rec) }
+  end
+
+  def database_is_empty?(classname)
+    theclass = Object.const_get(classname)
+    records_for(table: theclass::DB_TABLE).count == 0
   end
 
   # ------------------------------------------------------------

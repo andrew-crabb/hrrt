@@ -15,8 +15,8 @@ class HRRTArchiveAWS < HRRTArchive
   BUCKET_NAME_TEST  = 'hrrt-recon-test'
 
   def initialize
-  	super
-  	log_debug
+    super
+    log_debug
     log_in
     @rsrc   = Aws::S3::Resource.new
     @client = Aws::S3::Client.new
@@ -37,16 +37,17 @@ class HRRTArchiveAWS < HRRTArchive
   end
 
   def read_files
-  	@all_files = @bucket.objects.map { |obj| obj.key }
-  	# UP TO HERE.  GET REMAINING DETAILS FROM AWS OBJECT METADATA
+    @all_files = @bucket.objects.map { |obj| obj.key }
+    log_debug("#{@all_files.count} objects")
+    # UP TO HERE.  GET REMAINING DETAILS FROM AWS OBJECT METADATA
   end
 
-#  def print_summary
-#    log_info("List of objects in bucket #{@bucket.name}:")
-#    @bucket.objects.each do |summ|
-#      puts "bucket #{summ.bucket_name}, key #{summ.key}, class #{summ.storage_class}, size #{summ.size}"
-#    end
-#  end
+  #  def print_summary
+  #    log_info("List of objects in bucket #{@bucket.name}:")
+  #    @bucket.objects.each do |summ|
+  #      puts "bucket #{summ.bucket_name}, key #{summ.key}, class #{summ.storage_class}, size #{summ.size}"
+  #    end
+  #  end
 
   def read_physical(f)
     f_obj = @bucket.object(f.file_name)
@@ -54,7 +55,8 @@ class HRRTArchiveAWS < HRRTArchive
     f.file_modified = f_obj.exists? ? f_obj.last_modified : nil
     f.hostname      = get_hostname
     f.file_class    = self.class.to_s
-    f.file_crc32    = nil      # Necessary since sometimes this called on cloned object
+    f.file_crc32    = nil
+    f.file_md5      = nil
     log_debug(f.summary)
   end
 
@@ -73,8 +75,13 @@ class HRRTArchiveAWS < HRRTArchive
   end
 
   def delete(f)
-  	log_debug(f.file_name)
-  	@bucket.object(f.file_name).delete
+    log_debug(f.file_name)
+    @bucket.object(f.file_name).delete
+  end
+
+  def calculate_checksums(f)
+    f_obj = @bucket.object(f.file_name)
+
   end
 
   # Not used in AWS since no directory structure.

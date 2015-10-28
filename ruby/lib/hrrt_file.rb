@@ -42,7 +42,6 @@ class HRRTFile
   attr_accessor :file_size
   attr_accessor :file_modified
   attr_accessor :file_class
-  attr_accessor :file_crc32
 
   # ------------------------------------------------------------
   # Class methods
@@ -192,23 +191,20 @@ class HRRTFile
   end
 
   def summary(short = true)
-    size_str = file_size     ? printf("%d", file_size)     : "<nil>"
-    mod_str  = file_modified ? printf("%d", file_modified) : "<nil>"
-    summary = sprintf("%-40s %-40s %10s %10s", file_path, file_name, size_str, mod_str)
-    if !short
-      summary += "Subject: #{subject.summary}"
-      summary += "Scan: #{@scan.summary}"
-    end
-    summary
+    size_str = file_size     ? sprintf("%d", file_size)     : "<nil>"
+    mod_str  = file_modified ? sprintf("%d", file_modified) : "<nil>"
+    summ = sprintf("%-60s %-60s %10s %10s", file_path, file_name, size_str, mod_str)
+#    summ = "#{file_path} #{file_name} #{size_str} #{mod_str}"
+    summ
   end
 
   # Add record of this File to database.
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
   def add_to_database
-    calculate_crc32 unless @file_crc32
+    @archive.calculate_checksums(self) unless @file_crc32 && @file_md5
     @scan_id ||= @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class, :scan_id, :archive_class])
+    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_md5, :file_class, :scan_id, :archive_class])
     puts "db_params:"
     pp db_params
     add_record_to_database(db_params)

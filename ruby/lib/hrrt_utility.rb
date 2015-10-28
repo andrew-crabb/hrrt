@@ -16,10 +16,10 @@ module HRRTUtility
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = %r{
-    (?<name_last>\w+)   # subject
+    (?<name_last>\w+)     # subject
     _(?<name_first>\w*)   # subject
-    _(?<history>\w*)    # subject
-    _(?<mod>PET)      # constant
+    _(?<history>\w*)      # subject
+    _(?<mod>PET)          # constant
     _(?<scan_date>\d{6})  # scan
     _(?<scan_time>\d{6})  # scan
     _(?<scan_type>\w{2})  # scan
@@ -27,7 +27,7 @@ module HRRTUtility
   }x
   NAME_PATTERN_ACS = %r{
     (?<name_last>[^-]+\s*)      # subject
-    -(?<name_first>\s*[^-]*\s*)   # subject
+    -(?<name_first>\s*[^-]*\s*) # subject
     -(?<history>\s*[^-]*\s*)    # subject
     -(?<yr>\d{4}\s*)
     \.(?<mo>\d{1,2})
@@ -37,6 +37,11 @@ module HRRTUtility
     \.(?<sc>\d{1,2})
     _(?<scan_type>\w{2})      # scan
     \.(?<extn>[\w\.]+)        # file
+  }x
+  NAME_PATTERN_AWS = %r{
+    (?<scan_date>\d{6})   # scan
+    _(?<scan_time>\d{6})  # scan
+    \.(?<extn>[\w\.]+)    # file
   }x
 
   # printf formatting strings for file names in standard and ACS format.
@@ -70,7 +75,7 @@ module HRRTUtility
 
   def matches_hrrt_name(infile)
     filename = File.basename(infile)
-    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
+    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename) || NAME_PATTERN_AWS.match(filename)
   end
 
   # Create an HRRTFile-derived object from the input file.
@@ -104,13 +109,13 @@ module HRRTUtility
     #    log_debug(filename)
     if match = matches_hrrt_name(filename)
       details = {
-        scan_date:  match.names.include?('scan_date') ? match[:scan_date] : make_date(match),
-        scan_time:  match.names.include?('scan_time') ? match[:scan_time] : make_time(match),
-        scan_type:  match[:scan_type].upcase,
-        extn:       match[:extn].downcase,
-        name_last:  match[:name_last].upcase,
-        name_first: match[:name_first].upcase,
-        history:    match[:history].upcase,
+        scan_date:  match.names.include?('scan_date')  ? match[:scan_date]         : make_date(match),
+        scan_time:  match.names.include?('scan_time')  ? match[:scan_time]         : make_time(match),
+        scan_type:  match.names.include?('scan_type')  ? match[:scan_type].upcase  : nil,
+        extn:       match.names.include?('extn')       ? match[:extn].downcase     : nil,
+        name_last:  match.names.include?('name_last')  ? match[:name_last].upcase  : nil,
+        name_first: match.names.include?('name_first') ? match[:name_first].upcase : nil,
+        history:    match.names.include?('history')    ? match[:history].upcase    : nil,
       }
       # Derived fields
       details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')

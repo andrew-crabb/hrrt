@@ -25,7 +25,6 @@ class HRRTArchive
   def initialize
     log_debug
     @archive_root = MyOpts.get(:test) ? self.class::ARCHIVE_ROOT_TEST : self.class::ARCHIVE_ROOT
-    @archive_files = {}
     @test_files = {}
     @test_scans = {}
     @test_subjects = {}
@@ -57,7 +56,9 @@ class HRRTArchive
 
   def is_empty?
     read_files
-    @all_files.count == 0
+    empty = @all_files.count == 0
+    log_debug("#{empty.to_s}")
+    empty
   end
 
   # New way of doing it: Start at the top (Subject -> Scan -> File)
@@ -131,18 +132,34 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
-  def perform_archive
+#  def perform_archive
+#    log_debug("-------------------- begin --------------------")
+#    hrrt_files_each { |f| archive_file(f) }
+#    log_debug("-------------------- end --------------------")
+#  end
+
+  def files_are_archived?(dest_archive)
+    log_debug("-------------------- begin: #{self.class} -> #{dest_archive.class} --------------------")
+    ret = true
+    hrrt_files_each do |f|
+      log_debug "testing file #{f.full_name}"
+      archive_file = dest_archive.hrrt_files[f.datetime][f.class]
+      log_debug "testing file #{f.full_name} archive file #{archive_file.full_name}"
+      unless archive_file.is_copy_of?(f)
+        log_error("ERROR: No archive file for source file #{f.full_name}")
+        ret = false
+      end
+    end
     log_debug("-------------------- begin --------------------")
-    hrrt_files_each { |f| archive_file(f) }
-    log_debug("-------------------- end --------------------")
+    ret
   end
 
   # Archive given file
 
   def archive_file(source_file)
     log_debug(source_file.full_name)
-    @archive_files[source_file.datetime] ||= Hash.new
-    @archive_files[source_file.datetime][source_file.class] = store_copy_of(source_file)
+    @hrrt_files[source_file.datetime] ||= Hash.new
+    @hrrt_files[source_file.datetime][source_file.class] = store_copy_of(source_file)
   end
 
   # Store a disk-based copy of given file on this archive.
@@ -185,11 +202,13 @@ class HRRTArchive
   end
 
   def print_files_summary
-    hrrt_files_each { |f| log_info(f.summary) }
+    log_info("-------------------- #{self.class} begin --------------------")
+    hrrt_files_each { |f| f.print_summary }
+    log_info("-------------------- #{self.class} end --------------------")
   end
 
   def print_summary
-    log_info("========== #{self.class} summary start ==========")
+    log_info("========== #{self.class} start: #{@scans.count} scans ==========")
     nfiles = 0
     @scans.each do |datetime, scan|
       scan.print_summary
@@ -221,7 +240,7 @@ class HRRTArchive
 
   def print_database_summary
     database_records_this_archive.each do |file_record|
-      
+
     end
   end
 
@@ -251,6 +270,13 @@ class HRRTArchive
     records
   end
 
+  # Calculate the CRC32 and MD5 checksums for this file/object.
+  # Default is for physical file system: override for non-filesystem
+
+  def calculate_checksums(f)
+    f.calculate_checksums
+  end
+
   # ------------------------------------------------------------
   # Abstract methods to be implemented in derived classes
   # ------------------------------------------------------------
@@ -263,10 +289,6 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
-  def self.archive_root
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
   def self.file_path_for(f)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
@@ -276,20 +298,18 @@ class HRRTArchive
   end
 
   def clear_test_archive
-    unless @archive_root == self.class::ARCHIVE_ROOT_TEST
-      log_error("ERROR: Archive root #{@archive_root} not equal to test value #{ARCHIVE_ROOT_TEST}")
-      exit
-    end
+    raise("Bad root #{@archive_root}") unless @archive_root == self.class::ARCHIVE_ROOT_TEST
     parse
-    if @hrrt_files.count < ARCHIVE_TEST_MAX
-      hrrt_files_each do |f|
-        f.delete
-#        f = nil
+    raise("Too many files: #{testfiles.count}") if @hrrt_files.count > ARCHIVE_TEST_MAX
+    # Delete each file, its File object, and any scantime with no File objects.
+    @hrrt_files.each do |dtime, files|
+      files.each do |type, file|
+        file.delete
+        files.delete(type)
       end
-      prune_archive
-    else
-      raise("More than #{ARCHIVE_TEST_MAX} files in #{ARCHIVE_ROOT_TEST}: #{testfiles.count}")
+      @hrrt_files.delete(dtime) if @hrrt_files[dtime].count == 0
     end
+    prune_archive
   end
 
   # Delete empty directories from this archive.

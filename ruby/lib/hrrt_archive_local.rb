@@ -14,8 +14,6 @@ class HRRTArchiveLocal < HRRTArchive
   ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
   ARCHIVE_NAME_FORMAT = NAME_FORMAT_STD
 
-  attr_reader :archive_root
-
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
@@ -34,7 +32,7 @@ class HRRTArchiveLocal < HRRTArchive
 
   def file_path_for(f)
     raise unless m = parse_date(f.scan_date)
-    sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
+    sprintf(ARCHIVE_PATH_FMT, root: @archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
   end
 
   def file_name_for(f)
