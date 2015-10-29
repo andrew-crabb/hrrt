@@ -51,6 +51,12 @@ class HRRTArchiveLocal < HRRTArchive
 
   def store_copy(source, dest)
   	dest.copy_file(source)
+  	dest.read_physical
+  	dest.ensure_in_database
+  end
+
+  def is_copy?(source, dest)
+  	dest.is_copy_of(source)
   end
 
 end

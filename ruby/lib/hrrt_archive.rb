@@ -54,9 +54,19 @@ class HRRTArchive
     log_debug("#{@archive_root}: #{@all_files.count} files")
   end
 
+  # List of all files
+  # Default is for physical file system: Override for non file system.
+
+  def all_files
+  	@all_files
+  end
+
+  # Default is for physical file system
+  # Override for non physical
+
   def is_empty?
     read_files
-    empty = @all_files.count == 0
+    empty = all_files.count == 0
     log_debug("#{empty.to_s}")
     empty
   end
@@ -66,8 +76,8 @@ class HRRTArchive
 
   def process_files
     log_debug("-------------------- begin --------------------")
-    @all_files.each do |infile|
-      if details = parse_filename(infile)
+    all_files.each do |infile|
+      if details = parse_file(infile)
         subject = subject_for(details)
         scan = scan_for(details, subject)
         add_hrrt_file(details, scan)
@@ -87,6 +97,7 @@ class HRRTArchive
       @scans[details[:scan_summary]] ||= HRRTScan.new(details, subject)
     end
   end
+
 
   # Create new HRRTFile and store in hash with files from same datetime
 
@@ -132,20 +143,20 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
-#  def perform_archive
-#    log_debug("-------------------- begin --------------------")
-#    hrrt_files_each { |f| archive_file(f) }
-#    log_debug("-------------------- end --------------------")
-#  end
+  #  def perform_archive
+  #    log_debug("-------------------- begin --------------------")
+  #    hrrt_files_each { |f| archive_file(f) }
+  #    log_debug("-------------------- end --------------------")
+  #  end
 
   def files_are_archived?(dest_archive)
     log_debug("-------------------- begin: #{self.class} -> #{dest_archive.class} --------------------")
     ret = true
     hrrt_files_each do |f|
-      log_debug "testing file #{f.full_name}"
       archive_file = dest_archive.hrrt_files[f.datetime][f.class]
       log_debug "testing file #{f.full_name} archive file #{archive_file.full_name}"
-      unless archive_file.is_copy_of?(f)
+#      unless archive_file.is_copy_of?(f)
+      unless is_copy?(f, archive_file)
         log_error("ERROR: No archive file for source file #{f.full_name}")
         ret = false
       end
@@ -169,12 +180,10 @@ class HRRTArchive
   # @return archive_file [HRRTFile]
 
   def store_copy_of(source_file)
-    log_debug(source_file.file_name)
+    log_debug(source_file.full_name)
     dest = source_file.archive_copy(self)
     unless dest.is_copy_of?(source_file)
       store_copy(source_file, dest)
-      dest.read_physical
-      dest.ensure_in_database
     end
     dest
   end
@@ -185,12 +194,6 @@ class HRRTArchive
   def delete(file)
     log_debug(file.full_name)
     File.unlink(file.full_name)
-  end
-
-  # Note these are raw files (ie path/file names), not HRRTFile objects
-
-  def all_files_each
-    @all_files.each { |f| yield f }
   end
 
   # Apply to all HRRTFile objects
@@ -277,9 +280,22 @@ class HRRTArchive
     f.calculate_checksums
   end
 
+  # Return details of filename
+  # Default is for physical file system: override for non-filesystem
+
+  def parse_file(f)
+  	parse_filename(f)
+  end
+
   # ------------------------------------------------------------
   # Abstract methods to be implemented in derived classes
   # ------------------------------------------------------------
+
+  # Verifying one File is a copy of another differs between archives.
+
+  def is_copy?(source, dest)
+    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
+  end
 
   def store_copy(source, dest)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"

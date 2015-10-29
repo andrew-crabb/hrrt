@@ -24,6 +24,7 @@ class HRRTFile
   TEST_DATA_SIZE = 10**3
   DB_TABLE = :file
   REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
+  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)
   CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
   # Required for print_database_summary
@@ -76,7 +77,7 @@ class HRRTFile
     records = records_for(table: DB_TABLE).order(:hostname, :file_path, :file_name)
     log_info("-------------------- #{records.count} Files --------------------")
     records.each do |rec|
-    	printf("%-12<hostname>s %-60<file_path>s %-60<file_name>s\n", rec)
+      printf("%-12<hostname>s %-60<file_path>s %-60<file_name>s\n", rec)
     end
   end
 
@@ -194,7 +195,9 @@ class HRRTFile
     size_str = file_size     ? sprintf("%d", file_size)     : "<nil>"
     mod_str  = file_modified ? sprintf("%d", file_modified) : "<nil>"
     summ = sprintf("%-60s %-60s %10s %10s", file_path, file_name, size_str, mod_str)
-#    summ = "#{file_path} #{file_name} #{size_str} #{mod_str}"
+    unless short
+      (REQUIRED_FIELDS + OTHER_FIELDS).sort.map { |fld|  printf("%-15s: %s\n", fld, self.send(fld)) }
+    end
     summ
   end
 
@@ -202,9 +205,10 @@ class HRRTFile
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
   def add_to_database
+  	log_debug(full_name)
     @archive.calculate_checksums(self) unless @file_crc32 && @file_md5
     @scan_id ||= @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_md5, :file_class, :scan_id, :archive_class])
+    db_params = make_database_params(REQUIRED_FIELDS + OTHER_FIELDS)
     puts "db_params:"
     pp db_params
     add_record_to_database(db_params)
