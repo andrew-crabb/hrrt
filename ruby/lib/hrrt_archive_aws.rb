@@ -61,8 +61,14 @@ class HRRTArchiveAWS < HRRTArchive
     dest_object = @bucket.object(dest_file.file_name)
     params = {
       metadata: {
-        "file_md5" => source_file.file_md5,
-        "file_crc32" => source_file.file_crc32,
+        file_md5:           source_file.file_md5,
+        file_crc32:         source_file.file_crc32,
+        scan_date:          source_file.scan.scan_date,
+        scan_time:          source_file.scan.scan_time,
+        scan_type:          source_file.scan.scan_type,
+        subject_name_last:  source_file.scan.subject.name_last,
+        subject_name_first: source_file.scan.subject.name_first,
+        subject_history:    source_file.scan.subject.history,
       },
     }
     pp params
@@ -98,20 +104,20 @@ class HRRTArchiveAWS < HRRTArchive
   def parse_file(f)
 
 
-resp = @client.head_object({
-  bucket: bucket_name,
-  key: f.key,
-})
-	puts resp.metadata
+    resp = @client.head_object({
+                                 bucket: bucket_name,
+                                 key: f.key,
+    })
+    puts resp.metadata
 
-#    f_obj = @bucket.object(f)
-#    log_debug(f)
-#    puts f_obj.class
-#    metadata = f_obj.metadata
-#    log_debug(f)
-#    pp metadata
-    puts "exiting"
-    exit
+    #    f_obj = @bucket.object(f)
+    #    log_debug(f)
+    #    puts f_obj.class
+    #    metadata = f_obj.metadata
+    #    log_debug(f)
+    #    pp metadata
+#    puts "exiting"
+#    exit
   end
 
   # Not used in AWS since no directory structure.
