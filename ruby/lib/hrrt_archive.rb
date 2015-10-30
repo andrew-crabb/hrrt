@@ -86,6 +86,13 @@ class HRRTArchive
     log_debug("-------------------- end --------------------")
   end
 
+  # Return details of filename
+  # Default is for physical file system: override for non-filesystem
+
+  def parse_file(f)
+  	parse_filename(f)
+  end
+
   def subject_for(details)
     if details
       @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
@@ -278,13 +285,6 @@ class HRRTArchive
 
   def calculate_checksums(f)
     f.calculate_checksums
-  end
-
-  # Return details of filename
-  # Default is for physical file system: override for non-filesystem
-
-  def parse_file(f)
-  	parse_filename(f)
   end
 
   # ------------------------------------------------------------
