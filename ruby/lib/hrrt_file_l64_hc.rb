@@ -13,6 +13,7 @@ class HRRTFileL64Hc < HRRTFile
   SUFFIX = 'hc'
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
+  ARCHIVE_SUFFIX = nil
 
   # ------------------------------------------------------------
   # Accssors

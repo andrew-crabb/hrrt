@@ -38,8 +38,8 @@ class HRRTFile
   attr_accessor :scan
   attr_accessor :archive
   attr_accessor :hostname
-  attr_accessor :file_path
-  attr_accessor :file_name
+  #  attr_accessor :file_path
+  #  attr_accessor :file_name
   attr_accessor :file_size
   attr_accessor :file_modified
   attr_accessor :file_class
@@ -76,9 +76,7 @@ class HRRTFile
   def self.print_database_summary
     records = records_for(table: DB_TABLE).order(:hostname, :file_path, :file_name)
     log_info("-------------------- #{records.count} Files --------------------")
-    records.each do |rec|
-      printf("%-12<hostname>s %-60<file_path>s %-60<file_name>s\n", rec)
-    end
+    records.each { |rec| printf(SUMMARY_FORMAT, rec) }
   end
 
   # ------------------------------------------------------------
@@ -88,10 +86,21 @@ class HRRTFile
   # Create a new HRRT_File object from a MatchData object from a previous name match
 
   def initialize(params = {}, required_keys = nil)
+  	log_debug
+  	pp params
+  	pp required_keys
     set_params(params, required_keys)
     @archive_class = @archive.class.to_s
     #    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
     log_debug("#{full_name}")
+  end
+
+  def file_name
+    @archive.file_name(self)
+  end
+
+  def file_path
+    @archive.file_path(self)
   end
 
   # Delete this object from its archive, and remove database entry
@@ -105,24 +114,18 @@ class HRRTFile
   # Retain @scan, @file_name and @file_path, but read in physical parameters
 
   def archive_copy(archive)
-    archive_copy = self.clone
-    archive_copy.archive = archive
-    archive_copy.create_file_names
-    archive.read_physical(archive_copy)
+    params = {
+      scan: @scan,
+      archive: archive,
+    }
+    archive_copy = self.class.new(params, params.keys)
+	archive.read_physical(archive_copy)
     log_debug(archive_copy.summary)
     archive_copy
   end
 
   def subject
     @scan.subject
-  end
-
-  # Return extension of this object's class
-  #
-  # @return extn [String]
-
-  def extn
-    self.class::SUFFIX
   end
 
   # Return true if this file is archive copy of source file
@@ -168,7 +171,7 @@ class HRRTFile
   # @return details [Hash]
 
   def details
-    {extn: extn}
+    {extn: self.class::SUFFIX}
   end
 
   def datetime
@@ -205,7 +208,7 @@ class HRRTFile
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
   def add_to_database
-  	log_debug(full_name)
+    log_debug(full_name)
     @archive.calculate_checksums(self) unless @file_crc32 && @file_md5
     @scan_id ||= @scan.ensure_in_database
     db_params = make_database_params(REQUIRED_FIELDS + OTHER_FIELDS)
@@ -229,18 +232,9 @@ class HRRTFile
   end
 
   def create_test_data
-    create_file_names
     write_test_data
     read_physical
     #    log_debug("************ host #{hostname}, name #{full_name}")
-  end
-
-  # Fill in @file_path and @file_name for this File object
-
-  def create_file_names
-    @file_path = @archive.file_path_for(self)
-    @file_name = @archive.file_name_for(self)
-    #    @file_name += ".#{self.class::ARCHIVE_SUFFIX}" if self.class::ARCHIVE_SUFFIX
   end
 
   def test_data_contents

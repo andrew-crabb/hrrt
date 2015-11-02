@@ -98,10 +98,9 @@ module HRRTDatabase
 
   def make_database_params(fields)
     db_params = {}
-    fields.each do |field|
-      # field_name = db_field_name(field)
-      db_params[field] = instance_variable_get("@#{field}")
-    end
+    fields.each { |field| db_params[field] = send(field) }
+    log_debug
+    pp db_params
     db_params
   end
 

@@ -33,6 +33,12 @@ class HRRTArchive
     @subjects = {}
   end
 
+  def file_name(f)
+    f_name = sprintf(self.class::FILE_NAME_FORMAT, f.get_details(self.class::FILE_NAME_CLEAN))
+    log_debug(f_name)
+    f_name
+  end
+
   # Read archive content, and make Subject-, Scan- and File-related objects for each found member.
   # Archive may be production- or test-based.
 
@@ -58,7 +64,7 @@ class HRRTArchive
   # Default is for physical file system: Override for non file system.
 
   def all_files
-  	@all_files
+    @all_files
   end
 
   # Default is for physical file system
@@ -77,7 +83,9 @@ class HRRTArchive
   def process_files
     log_debug("-------------------- begin --------------------")
     all_files.each do |infile|
-      if details = parse_file(infile)
+      if details = details_from_file(infile)
+        log_debug("Details :")
+        pp details
         subject = subject_for(details)
         scan = scan_for(details, subject)
         add_hrrt_file(details, scan)
@@ -89,22 +97,21 @@ class HRRTArchive
   # Return details of filename
   # Default is for physical file system: override for non-filesystem
 
-  def parse_file(f)
-  	parse_filename(f)
+  def details_from_file(f)
+    parse_filename(f)
   end
 
   def subject_for(details)
     if details
-      @subjects[details[:subject_summary]] ||= HRRTSubject.new(details)
+      @subjects[subject_summary(details)] ||= HRRTSubject.new(details)
     end
   end
 
   def scan_for(details, subject)
     if details
-      @scans[details[:scan_summary]] ||= HRRTScan.new(details, subject)
+      @scans[scan_summary(details)] ||= HRRTScan.new(details, subject)
     end
   end
-
 
   # Create new HRRTFile and store in hash with files from same datetime
 
@@ -113,8 +120,28 @@ class HRRTArchive
       @hrrt_files[hrrt_file.datetime] ||= {}
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
-      log_error("No matching class for #{details[:file_name]}")
+      log_error("No matching class: #{details.to_s}")
     end
+  end
+
+  # Create an HRRTFile-derived object from the input file.
+  #
+  # @param infile [String] Input file
+  # @return [HRRTFile]
+
+  def create_hrrt_file(details, scan)
+    hrrt_file = nil
+    classtype = HRRTFile::class_for_file(details)
+    if classtype
+      params = {
+        scan:      scan,
+        archive:   self,
+      }
+      # Create an HRRTFile filling in only file path and name, then read other details.
+      hrrt_file = Object.const_get(classtype).new(params, params.keys)
+      hrrt_file.read_physical
+    end
+    hrrt_file
   end
 
   # Assign to each scan its files.
@@ -162,7 +189,7 @@ class HRRTArchive
     hrrt_files_each do |f|
       archive_file = dest_archive.hrrt_files[f.datetime][f.class]
       log_debug "testing file #{f.full_name} archive file #{archive_file.full_name}"
-#      unless archive_file.is_copy_of?(f)
+      #      unless archive_file.is_copy_of?(f)
       unless is_copy?(f, archive_file)
         log_error("ERROR: No archive file for source file #{f.full_name}")
         ret = false
@@ -177,7 +204,7 @@ class HRRTArchive
   def archive_file(source_file)
     log_debug(source_file.full_name)
     @hrrt_files[source_file.datetime] ||= Hash.new
-    @hrrt_files[source_file.datetime][source_file.class] = store_copy_of(source_file)
+    @hrrt_files[source_file.datetime][source_file.class] = ensure_copy_of(source_file)
   end
 
   # Store a disk-based copy of given file on this archive.
@@ -186,7 +213,7 @@ class HRRTArchive
   # @param source_file [HRRTFile]
   # @return archive_file [HRRTFile]
 
-  def store_copy_of(source_file)
+  def ensure_copy_of(source_file)
     log_debug(source_file.full_name)
     dest = source_file.archive_copy(self)
     unless dest.is_copy_of?(source_file)
@@ -243,29 +270,32 @@ class HRRTArchive
   # Note: Only uses 'file' table, and does not check database against archive
 
   def sync_archive_to_database
+    log_info("-------------------- #{self.class} begin --------------------")
     hrrt_files_each do |file|
       file.ensure_in_database
     end
-  end
-
-  def print_database_summary
-    database_records_this_archive.each do |file_record|
-
-    end
+    log_info("-------------------- #{self.class} end --------------------")
   end
 
   # Ensure that every record in the database, is present in the archive.
   # Note: Only uses 'file' table, and does not check archive against database
 
   def sync_database_to_archive
+    log_info("-------------------- #{self.class} begin --------------------")
     database_records_this_archive.each do |file_record|
       file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-      #       puts "file_values: "
-      #       pp file_values
+             puts "file_values: "
+             pp file_values
       test_file = HRRTFile.new(file_values)
       unless test_file.exists_on_disk?
         test_file.remove_from_database
       end
+    end
+    log_info("-------------------- #{self.class} end --------------------")
+  end
+
+  def print_database_summary
+    database_records_this_archive.each do |file_record|
 
     end
   end
@@ -305,11 +335,7 @@ class HRRTArchive
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
-  def self.file_path_for(f)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  def self.file_name_for(f)
+  def file_path(f)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

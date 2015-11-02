@@ -11,9 +11,17 @@ class HRRTArchiveACS < HRRTArchive
 
   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')
   ARCHIVE_ROOT      = "/mnt/hrrt/SCS_SCANS"
+  FILE_NAME_FORMAT  = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
+  FILE_NAME_CLEAN  = false
 
   def initialize
     super
+  end
+
+  def file_path(f)
+    file_path = File.join(@archive_root, f.subject.summary(:summ_fmt_name))
+    file_path = File.join(file_path, TRANSMISSION) if f.scan.scan_type == HRRTScan::TYPE_TX
+    file_path
   end
 
   # Delete this file from disk, and its containing directory if possible
@@ -30,16 +38,6 @@ class HRRTArchiveACS < HRRTArchive
         Dir.unlink("#{fullpath}") if Dir.exists? fullpath
       end
     end
-  end
-
-  def file_path_for(f)
-    file_path = File.join(@archive_root, f.subject.summary(:summ_fmt_name))
-    file_path = File.join(file_path, TRANSMISSION) if f.scan.scan_type == HRRTScan::TYPE_TX
-    file_path
-  end
-
-  def file_name_for(f)
-    sprintf(NAME_FORMAT_ACS, f.get_details(false))
   end
 
 end

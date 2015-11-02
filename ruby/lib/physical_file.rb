@@ -20,8 +20,6 @@ module PhysicalFile
   FORMAT_NATIVE     = :format_native
   FORMAT_COMPRESSED = :format_compressed
 
-  PHYSICAL_FILE_DETAILS = %i(file_name file_path hostname file_size file_modified)
-
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
@@ -47,8 +45,8 @@ module PhysicalFile
     @file_modified = stat ? stat.mtime.to_i : nil
     @hostname      = get_hostname
     @file_class    = self.class.to_s
-    @file_crc32    = nil
-    @file_md5      = nil
+##    @file_crc32    = nil
+##    @file_md5      = nil
   end
 
   # Fully qualified name of this file

@@ -14,6 +14,8 @@ class HRRTArchiveAWS < HRRTArchive
   BUCKET_NAME       = 'hrrt-recon'
   BUCKET_NAME_TEST  = 'hrrt-recon-test'
   AWS_HOSTNAME      = 'AWS'
+  FILE_NAME_FORMAT = "%<scan_date>s_%<scan_time>s.%<extn>s"
+  FILE_NAME_CLEAN  = true
 
   def initialize
     super
@@ -23,6 +25,15 @@ class HRRTArchiveAWS < HRRTArchive
     @client = Aws::S3::Client.new
     @bucket = @rsrc.bucket(bucket_name)
   end
+
+  def file_name(f)
+    super + (f.class::ARCHIVE_SUFFIX ? f.class::ARCHIVE_SUFFIX  : '')
+  end
+
+  def file_path(f)
+    bucket_name
+  end
+
 
   def bucket_name
     MyOpts.get(:test) ? BUCKET_NAME_TEST : BUCKET_NAME
@@ -41,51 +52,45 @@ class HRRTArchiveAWS < HRRTArchive
     # Moved to all_files().  Left for completeness (called in base class sometimes)
   end
 
+  # Return all Objects in this Bucket
+  #
+  # @return [AWSObject]
+
   def all_files
     @bucket.objects
   end
 
   def read_physical(f)
     f_obj = @bucket.object(f.file_name)
-    f.file_size     = f_obj.exists? ? f_obj.size          : nil
-    f.file_modified = f_obj.exists? ? f_obj.last_modified.to_i : nil
+    metadata = file_metadata(f.file_name)
+    raise unless f_obj.exists?
+    f.file_size     = f_obj.size
     f.hostname      = AWS_HOSTNAME
-    #    f.file_class    = f.class.to_s
-    f.file_crc32    = nil
-    f.file_md5      = nil
+    f.file_modified ||= metadata[:file_modified]
+    f.file_crc32    ||= metadata[:file_crc32]
+    f.file_md5      ||= metadata[:file_md5]
     log_debug(f.summary)
   end
 
   def store_copy(source_file, dest_file)
     log_debug("---------- begin source #{source_file.class} dest #{dest_file.class} ----------")
     dest_object = @bucket.object(dest_file.file_name)
-    params = {
-      metadata: {
-        file_md5:           source_file.file_md5,
-        file_crc32:         source_file.file_crc32,
-        scan_date:          source_file.scan.scan_date,
-        scan_time:          source_file.scan.scan_time,
-        scan_type:          source_file.scan.scan_type,
-        subject_name_last:  source_file.scan.subject.name_last,
-        subject_name_first: source_file.scan.subject.name_first,
-        subject_history:    source_file.scan.subject.history,
-      },
-    }
-    pp params
+    params = { metadata: metadata_from_file(source_file) }
     dest_object.upload_file(source_file.full_name, params) or raise("upload_file(#{source_file.full_name})")
     read_physical(dest_file)
-    %i(file_md5 file_crc32).each { |key | dest_file.send("#{key}=", source_file.send(key)) }
     log_debug
     dest_file.summary(false)
     dest_file.ensure_in_database
   end
 
-  def file_path_for(f)
-    bucket_name
-  end
-
-  def file_name_for(f)
-    sprintf(NAME_FORMAT_AWS, f.get_details(true))
+  def metadata_from_file(source_file)
+    metadata = {}
+    %i(file_md5 file_crc32 extn file_modified).each      { |key| metadata[key] = source_file.send(key) }
+    %i(scan_date scan_time scan_type).each { |key| metadata[key] = source_file.scan.send(key) }
+    %i(name_last name_first history).each  { |key| metadata[key] = source_file.scan.subject.send(key) }
+    log_debug(source_file.file_name)
+    pp metadata
+    metadata
   end
 
   def delete(f)
@@ -94,30 +99,42 @@ class HRRTArchiveAWS < HRRTArchive
   end
 
   def calculate_checksums(f)
-    f_obj = @bucket.object(f.file_name)
-    raise("Implement me please: #{__method__}")
+    log_debug("No action: Successfully stored objects contain checksums from source")
   end
 
-  # Return details of file name
-  # On AWS, not all details are stored in file name, so get these from metadata
-
-  def parse_file(f)
-
-
+  def file_metadata(f)
     resp = @client.head_object({
                                  bucket: bucket_name,
                                  key: f.key,
     })
-    puts resp.metadata
+    metadata = resp ? resp.metadata : nil
+    log_debug(metadata.to_s)
+    metadata
+  end
 
-    #    f_obj = @bucket.object(f)
-    #    log_debug(f)
-    #    puts f_obj.class
-    #    metadata = f_obj.metadata
-    #    log_debug(f)
-    #    pp metadata
-#    puts "exiting"
-#    exit
+  # Return details of AWS object
+  # On AWS, details come from metadata, not file name.
+  #
+  # @param infile [AWSObject]
+  # @return details [Array]
+
+  def details_from_file(f)
+    resp = @client.head_object(
+      {
+        bucket: bucket_name,
+        key:    f.key,
+    })
+    puts resp.metadata
+    details = nil
+    if resp
+      details = {}
+      %i(file_md5 file_crc32 extn).each      { |key| details[key] = resp.metadata[key.to_s] }	# File
+      %i(scan_date scan_time scan_type).each { |key| details[key] = resp.metadata[key.to_s] }	# Scan
+      %i(name_last name_first history).each  { |key| details[key] = resp.metadata[key.to_s] }	# Subject
+    end
+    log_debug("xxx details:")
+    pp details
+    details
   end
 
   # Not used in AWS since no directory structure.

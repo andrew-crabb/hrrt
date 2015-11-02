@@ -45,9 +45,6 @@ module HRRTUtility
   }x
 
   # printf formatting strings for file names in standard and ACS format.
-  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_PET_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
-  NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
-  NAME_FORMAT_AWS = "%<scan_date>s_%<scan_time>s.%<extn>s"
 
   HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
   HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
@@ -69,36 +66,16 @@ module HRRTUtility
   # ------------------------------------------------------------
 
   # Analyze infile name for HRRT pattern.
+  # Note does not parse NAME_PATTERN_AWS.  AWS::parse_file() does this.
   #
   # @param infile [String] input file name
   # @return [MatchData] object of name parts if match, else nil.
 
   def matches_hrrt_name(infile)
     filename = File.basename(infile)
-    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename) || NAME_PATTERN_AWS.match(filename)
+    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
   end
 
-  # Create an HRRTFile-derived object from the input file.
-  #
-  # @param infile [String] Input file
-  # @return [HRRTFile]
-
-  def create_hrrt_file(details, scan)
-    hrrt_file = nil
-    classtype = HRRTFile::class_for_file(details)
-    if classtype
-      params = {
-        file_path: details[:file_path],
-        file_name: details[:file_name],
-        scan:      scan,
-        archive:   self,
-      }
-      # Create an HRRTFile filling in only file path and name, then read other details.
-      hrrt_file = Object.const_get(classtype).new(params, params.keys)
-      hrrt_file.read_physical
-    end
-    hrrt_file
-  end
 
   # Extract subject name and date/time from file name
   #
@@ -117,16 +94,23 @@ module HRRTUtility
         name_first: match.names.include?('name_first') ? match[:name_first].upcase : nil,
         history:    match.names.include?('history')    ? match[:history].upcase    : nil,
       }
-      # Derived fields
-      details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')
-      details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
-      details[:file_name]       = File.basename(filename)
-      details[:file_path]       = File.dirname(filename)
     else
       log_debug("No match: '#{File.basename(filename)}'")
     end
     #    pp details
     details
+  end
+
+  # Return datetime YYMMDD_HHMMSS from parsed file name details
+
+  def scan_summary(details)
+    details.values_at(:scan_date, :scan_time).join('_')
+  end
+
+  # Return subject name LAST_FIRST_HIST from parsed file name details
+
+  def subject_summary(details)
+    details.values_at(:name_last, :name_first, :history).join('_')
   end
 
   # Create date in standard format YYMMDD from MatchData object
