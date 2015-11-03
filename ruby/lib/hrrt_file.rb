@@ -48,24 +48,24 @@ class HRRTFile
   # Class methods
   # ------------------------------------------------------------
 
-  def self.make_test_files(params)
-    test_files = {params[:scan].datetime => {}}
+  def self.make_test_files(scan, archive)
+    test_files = {scan.datetime => {}}
     CLASSES.each do |theclass|
-      newfile = Object.const_get(theclass).new(params, params.keys)
+      newfile = Object.const_get(theclass).new(scan, archive)
       newfile.create_test_data
       test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
   end
 
-  def self.class_for_file(details)
+  def self.class_for_file(extn)
     theclass = nil
     CLASSES.each do |classtype|
       suffix 	     = Object.const_get(classtype)::SUFFIX
       archive_suffix = Object.const_get(classtype)::ARCHIVE_SUFFIX
       pattern  = "#{suffix}"
       pattern += "(\.#{archive_suffix})?" if archive_suffix
-      if details[:extn] =~ Regexp.new("#{pattern}$")
+      if extn =~ Regexp.new("#{pattern}$")
         theclass = classtype
         break
       end
@@ -83,30 +83,48 @@ class HRRTFile
   # Object methods
   # ------------------------------------------------------------
 
-  # Create a new HRRT_File object from a MatchData object from a previous name match
+  class << self
+    def create(extn, scan, archive)
+      hrrtfile = nil
+      if scan && (classtype = self.class_for_file(extn))
+        hrrtfile = Object.const_get(classtype).new(scan, archive)
+      end
+      hrrtfile
+    end
 
-  def initialize(params = {}, required_keys = nil)
-  	log_debug
-  	pp params
-  	pp required_keys
-    set_params(params, required_keys)
-    @archive_class = @archive.class.to_s
-    #    log_debug("#{full_name}: scan #{params[:scan].id}, archive #{params[:archive].class.to_s}")
-    log_debug("#{full_name}")
+#    private :new
+  end
+
+
+  # Create a new HRRT_File object from a MatchData object from a previous name match
+  # ------------------------------------------------------------
+  # Conjecture: you should only need Scan and Archive to create an HRRTFile
+  # ------------------------------------------------------------
+
+  def initialize(scan, archive)
+    @scan = scan
+    @archive = archive
+    @storage = Object.const_get(@archive.class::STORAGE_CLASS).new(self)
+    log_debug(@storage.full_name)
   end
 
   def file_name
-    @archive.file_name(self)
+    @storage.file_name
   end
 
   def file_path
     @archive.file_path(self)
   end
 
+  def read_physical
+  	@storage.read_physical
+  end
+
   # Delete this object from its archive, and remove database entry
 
   def delete
-    @archive.delete(self)
+    @storage.delete
+    #    @archive.delete(self)
     remove_from_database
   end
 
@@ -119,7 +137,7 @@ class HRRTFile
       archive: archive,
     }
     archive_copy = self.class.new(params, params.keys)
-	archive.read_physical(archive_copy)
+    archive.read_physical(archive_copy)
     log_debug(archive_copy.summary)
     archive_copy
   end
@@ -208,8 +226,8 @@ class HRRTFile
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
   def add_to_database
-    log_debug(full_name)
-    @archive.calculate_checksums(self) unless @file_crc32 && @file_md5
+    log_debug(@storage.full_name)
+    @storage.calculate_checksums
     @scan_id ||= @scan.ensure_in_database
     db_params = make_database_params(REQUIRED_FIELDS + OTHER_FIELDS)
     puts "db_params:"
@@ -232,9 +250,9 @@ class HRRTFile
   end
 
   def create_test_data
-    write_test_data
-    read_physical
-    #    log_debug("************ host #{hostname}, name #{full_name}")
+    @storage.write_test_data
+    @storage.read_physical
+    #    log_debug("************ host #{hostname}, name #{@storage.full_name}")
   end
 
   def test_data_contents

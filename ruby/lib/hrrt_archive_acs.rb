@@ -11,8 +11,9 @@ class HRRTArchiveACS < HRRTArchive
 
   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')
   ARCHIVE_ROOT      = "/mnt/hrrt/SCS_SCANS"
-  FILE_NAME_FORMAT  = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
   FILE_NAME_CLEAN  = false
+  FILE_NAME_FORMAT  = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
+  STORAGE_CLASS = "StorageFile"
 
   def initialize
     super

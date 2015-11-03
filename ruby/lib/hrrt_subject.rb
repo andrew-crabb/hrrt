@@ -48,9 +48,9 @@ class HRRTSubject
     subject_data = JSON.parse(File.read(self.test_subjects_file), symbolize_names: true)
     subjects = []
     subject_data.each do |subj|
-      subj_in  = HRRTSubject.new(subj[:given])
-      subj_out = HRRTSubject.new(subj[:answer])
-      subjects.push([subj_in, subj_out])
+      subj_in  = HRRTSubject.create(subj[:given])
+      subj_out = HRRTSubject.create(subj[:answer])
+      subjects.push([subj_in, subj_out]) if (subj_in && subj_out)
     end
     subjects
   end
@@ -63,6 +63,16 @@ class HRRTSubject
   # ------------------------------------------------------------
   # Instance methods
   # ------------------------------------------------------------
+
+  class << self
+    def create(params)
+      log_debug
+      pp params
+      (params && (params.keys & KEYS_SUBJECT).size == KEYS_SUBJECT.size) ? new(params) : nil
+    end
+
+    private :new
+  end
 
   # Create new HRRTSubject
   #

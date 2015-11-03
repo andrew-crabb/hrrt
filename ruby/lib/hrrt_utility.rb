@@ -13,6 +13,12 @@ module HRRTUtility
   # Definitions
   # ------------------------------------------------------------
 
+  KEYS_SUBJECT  = %i(name_last name_first history)
+  KEYS_SCAN     = %i(scan_date scan_time scan_type)
+  KEYS_PHYSICAL = %i(file_size hostname file_modified file_class)
+  KEYS_CHECKSUM = %i(file_crc32 file_md5)
+  KEYS_KEYS     = KEYS_SUBJECT + KEYS_SCAN + KEYS_PHYSICAL + KEYS_CHECKSUM
+
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = %r{
@@ -74,31 +80,6 @@ module HRRTUtility
   def matches_hrrt_name(infile)
     filename = File.basename(infile)
     NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
-  end
-
-
-  # Extract subject name and date/time from file name
-  #
-  # @param filename [String]
-
-  def parse_filename(filename)
-    details = nil
-    #    log_debug(filename)
-    if match = matches_hrrt_name(filename)
-      details = {
-        scan_date:  match.names.include?('scan_date')  ? match[:scan_date]         : make_date(match),
-        scan_time:  match.names.include?('scan_time')  ? match[:scan_time]         : make_time(match),
-        scan_type:  match.names.include?('scan_type')  ? match[:scan_type].upcase  : nil,
-        extn:       match.names.include?('extn')       ? match[:extn].downcase     : nil,
-        name_last:  match.names.include?('name_last')  ? match[:name_last].upcase  : nil,
-        name_first: match.names.include?('name_first') ? match[:name_first].upcase : nil,
-        history:    match.names.include?('history')    ? match[:history].upcase    : nil,
-      }
-    else
-      log_debug("No match: '#{File.basename(filename)}'")
-    end
-    #    pp details
-    details
   end
 
   # Return datetime YYMMDD_HHMMSS from parsed file name details

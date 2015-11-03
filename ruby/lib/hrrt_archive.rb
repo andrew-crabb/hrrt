@@ -6,6 +6,8 @@ require 'rsync'
 require_relative './my_logging'
 require_relative './hrrt_scan'
 require_relative './hrrt_utility'
+require_relative './storage_aws'
+require_relative './storage_file'
 
 include MyLogging
 include HRRTUtility
@@ -33,48 +35,24 @@ class HRRTArchive
     @subjects = {}
   end
 
-  def file_name(f)
-    f_name = sprintf(self.class::FILE_NAME_FORMAT, f.get_details(self.class::FILE_NAME_CLEAN))
-    log_debug(f_name)
-    f_name
-  end
-
   # Read archive content, and make Subject-, Scan- and File-related objects for each found member.
   # Archive may be production- or test-based.
 
   def parse
-    read_files
     process_files
     process_scans
-
     print_summary  if MyOpts.get(:verbose)
     print_files_summary if MyOpts.get(:vverbose)
-  end
-
-  # Read contents of this archive.
-  # Default is to read physical file system (based on @archive_root)
-  # Override for non filesystem based archive
-
-  def read_files
-    @all_files = Dir.glob(File.join(@archive_root, "**/*")).select { |f| File.file? f }
-    log_debug("#{@archive_root}: #{@all_files.count} files")
   end
 
   # List of all files
   # Default is for physical file system: Override for non file system.
 
   def all_files
-    @all_files
-  end
-
-  # Default is for physical file system
-  # Override for non physical
-
-  def is_empty?
-    read_files
-    empty = all_files.count == 0
-    log_debug("#{empty.to_s}")
-    empty
+    all_files = Dir.glob(File.join(@archive_root, "**/*")).select { |f| File.file? f }
+    count = @all_files ? @all_files.count : 0
+    log_debug("#{@archive_root}: #{count} files")
+    all_files
   end
 
   # New way of doing it: Start at the top (Subject -> Scan -> File)
@@ -83,65 +61,36 @@ class HRRTArchive
   def process_files
     log_debug("-------------------- begin --------------------")
     all_files.each do |infile|
-      if details = details_from_file(infile)
-        log_debug("Details :")
-        pp details
-        subject = subject_for(details)
-        scan = scan_for(details, subject)
-        add_hrrt_file(details, scan)
-      end
+      details = Object.const_get(self.class::STORAGE_CLASS).read_details(infile)
+      subject = subject_for(details)
+      scan = scan_for(details, subject)
+      add_hrrt_file(details, scan)
     end
     log_debug("-------------------- end --------------------")
   end
 
-  # Return details of filename
-  # Default is for physical file system: override for non-filesystem
-
-  def details_from_file(f)
-    parse_filename(f)
-  end
-
   def subject_for(details)
-    if details
-      @subjects[subject_summary(details)] ||= HRRTSubject.new(details)
-    end
+    subject = HRRTSubject.create(details)
+    @subjects[subject.summary] = subject if subject
+    subject
   end
 
   def scan_for(details, subject)
-    if details
-      @scans[scan_summary(details)] ||= HRRTScan.new(details, subject)
-    end
+    scan = HRRTScan.create(details, subject)
+    @scans[scan.datetime] = scan if scan
+    scan
   end
 
   # Create new HRRTFile and store in hash with files from same datetime
 
   def add_hrrt_file(details, scan)
-    if hrrt_file = create_hrrt_file(details, scan)
+    if hrrt_file = HRRTFile.create(details[:extn], scan, self)
+      hrrt_file.read_physical
       @hrrt_files[hrrt_file.datetime] ||= {}
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
       log_error("No matching class: #{details.to_s}")
     end
-  end
-
-  # Create an HRRTFile-derived object from the input file.
-  #
-  # @param infile [String] Input file
-  # @return [HRRTFile]
-
-  def create_hrrt_file(details, scan)
-    hrrt_file = nil
-    classtype = HRRTFile::class_for_file(details)
-    if classtype
-      params = {
-        scan:      scan,
-        archive:   self,
-      }
-      # Create an HRRTFile filling in only file path and name, then read other details.
-      hrrt_file = Object.const_get(classtype).new(params, params.keys)
-      hrrt_file.read_physical
-    end
-    hrrt_file
   end
 
   # Assign to each scan its files.
@@ -154,6 +103,10 @@ class HRRTArchive
     end
   end
 
+  def is_empty?
+    all_files.count == 0
+  end
+
   def make_test_data
     log_debug("-------------------- begin --------------------")
     @test_subjects = HRRTSubject::make_test_subjects
@@ -162,11 +115,7 @@ class HRRTArchive
       delete_subject_test_directory(bad_subject)
       test_scans = HRRTScan::make_test_scans(bad_subject)
       test_scans.each do |type, scan|
-        params = {
-          scan:    scan,
-          archive: self,
-        }
-        @test_files[scan.summary] = HRRTFile::make_test_files(params)
+        @test_files[scan.summary] = HRRTFile::make_test_files(scan, self)
       end
       @test_scans[good_subject.summary] = test_scans
     end
@@ -220,14 +169,6 @@ class HRRTArchive
       store_copy(source_file, dest)
     end
     dest
-  end
-
-  # Delete this File object from this archive.
-  # Default is for physical file systems: Override for non-filesystems
-
-  def delete(file)
-    log_debug(file.full_name)
-    File.unlink(file.full_name)
   end
 
   # Apply to all HRRTFile objects
@@ -284,8 +225,8 @@ class HRRTArchive
     log_info("-------------------- #{self.class} begin --------------------")
     database_records_this_archive.each do |file_record|
       file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-             puts "file_values: "
-             pp file_values
+      puts "file_values: "
+      pp file_values
       test_file = HRRTFile.new(file_values)
       unless test_file.exists_on_disk?
         test_file.remove_from_database
@@ -308,13 +249,6 @@ class HRRTArchive
     records = records_for(params)
     log_debug("#{self.class.to_s}: #{records.count} records")
     records
-  end
-
-  # Calculate the CRC32 and MD5 checksums for this file/object.
-  # Default is for physical file system: override for non-filesystem
-
-  def calculate_checksums(f)
-    f.calculate_checksums
   end
 
   # ------------------------------------------------------------
@@ -346,8 +280,8 @@ class HRRTArchive
     # Delete each file, its File object, and any scantime with no File objects.
     @hrrt_files.each do |dtime, files|
       files.each do |type, file|
-        file.delete
-        files.delete(type)
+        file.delete             # Physical entity (file or AWS)
+        files.delete(type)      # HRRTFile object
       end
       @hrrt_files.delete(dtime) if @hrrt_files[dtime].count == 0
     end

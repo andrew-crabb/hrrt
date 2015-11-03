@@ -14,6 +14,7 @@ class HRRTArchiveLocal < HRRTArchive
   ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
   FILE_NAME_FORMAT = "%<name_last>s_%<name_first>s_%<history>s_PET_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
   FILE_NAME_CLEAN  = true
+  STORAGE_CLASS = "StorageFile"
 
   # ------------------------------------------------------------
   # Class methods
@@ -29,10 +30,6 @@ class HRRTArchiveLocal < HRRTArchive
   def initialize
   	log_debug
   	super
-  end
-
-  def file_name(f)
-    super + (f.class::ARCHIVE_SUFFIX ? ".#{f.class::ARCHIVE_SUFFIX}"  : '')
   end
 
   def file_path(f)

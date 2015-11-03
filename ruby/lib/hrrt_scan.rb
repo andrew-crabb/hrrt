@@ -71,17 +71,29 @@ class HRRTScan
       scan_time: datetime.strftime("%H%M%S"),
       scan_type: type,
     }
-    HRRTScan.new(details, subject)
+    HRRTScan.create(details, subject)
   end
 
   # ------------------------------------------------------------
   # Instance methods
   # ------------------------------------------------------------
 
+  class << self
+    def create(params, subject)
+      scan = nil
+      if params && subject && (params.keys & KEYS_SCAN).size == KEYS_SCAN.size
+        scan = new(params, subject)
+      end
+      scan
+    end
+
+    private :new
+  end
+
   # Create new Scan and fill in its files
 
   def initialize(params, subject)
-  	set_params(params)
+    set_params(params)
     @subject = subject
     log_debug("Date: #{datetime} Subject: #{subject.summary}")
   end

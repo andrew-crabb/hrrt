@@ -33,30 +33,6 @@ module PhysicalFile
   # Methods
   # ------------------------------------------------------------
 
-  # Read in to this object the physical characteristics of the file it represents
-  # Requires @file_path and @file_name to be filled in already
-  # Sets file_size and file_modified to nil if file does not exist
-  # Checksums necessary since sometimes this called on cloned object
-  # Checksums not calculated at first since they are expensive
-
-  def read_physical
-    stat = File.exist?(full_name) ? File.stat(full_name) : nil
-    @file_size     = stat ? stat.size       : nil
-    @file_modified = stat ? stat.mtime.to_i : nil
-    @hostname      = get_hostname
-    @file_class    = self.class.to_s
-##    @file_crc32    = nil
-##    @file_md5      = nil
-  end
-
-  # Fully qualified name of this file
-  #
-  # @return full_name [String]
-
-  def full_name
-    file_path ? File.join(file_path, file_name) : ""
-  end
-
   def write_uncomp(source_file)
     Dir.chdir(source_file.file_path)
     FileUtils.mkdir_p(file_path)
@@ -120,20 +96,6 @@ module PhysicalFile
     end
     log_debug("#{present.to_s}: #{full_name} #{source_file.full_name}")
     present
-  end
-
-  def calculate_checksums
-    @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
-    @file_md5 = Digest::MD5.file(full_name).hexdigest
-    log_debug("#{file_name}: CRC #{@file_crc32}, MD5 #{@file_md5}")
-  end
-
-  def write_test_data
-    #    log_debug(File.join(@file_path, @file_name))
-    FileUtils.mkdir_p(@file_path)
-    f = File.new(full_name,  "w")
-    f.write(test_data_contents)
-    f.close
   end
 
   def file_contents(filename)
