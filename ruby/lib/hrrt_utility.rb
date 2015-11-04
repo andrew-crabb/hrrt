@@ -52,8 +52,8 @@ module HRRTUtility
 
   # printf formatting strings for file names in standard and ACS format.
 
-  HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
-  HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
+  DATE_PATT = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
+  TIME_PATT = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
 
   HRRT_DATE_FMT = "%<yr>02d%<mo>02d%<dy>02d"  # 150824
   HRRT_TIME_FMT = "%<hr>02d%<mn>02d%<sc>02d"  # 083500
@@ -71,28 +71,67 @@ module HRRTUtility
   # Methods
   # ------------------------------------------------------------
 
-  # Analyze infile name for HRRT pattern.
-  # Note does not parse NAME_PATTERN_AWS.  AWS::parse_file() does this.
-  #
-  # @param infile [String] input file name
-  # @return [MatchData] object of name parts if match, else nil.
+  def details_from_filename(infile)
+    details = nil
 
-  def matches_hrrt_name(infile)
+    log_debug(infile)
     filename = File.basename(infile)
-    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
+    if match = NAME_PATTERN_STD.match(filename)
+      details = time_details_from_std(match)
+    elsif match = NAME_PATTERN_ACS.match(filename)
+      details = time_details_from_acs(match)
+    end
+    details.merge!(details_from_match(match)) if details
+    details
   end
 
-  # Return datetime YYMMDD_HHMMSS from parsed file name details
+  # Add non time-date related details to hash
 
-  def scan_summary(details)
-    details.values_at(:scan_date, :scan_time).join('_')
+  def details_from_match(match)
+    details = {}
+    keys = %i(scan_type extn name_last name_first history)
+    keys.each { |key| details[key] = match.names.include?(key.to_s) ? match[key].upcase  : nil }
+    details
   end
 
-  # Return subject name LAST_FIRST_HIST from parsed file name details
+  # Return date-time related details from match results (standard format YYMMDD_HHMMSS)
 
-  def subject_summary(details)
-    details.values_at(:name_last, :name_first, :history).join('_')
+  def time_details_from_std(match)
+    ret = parse_datetime(DATE_PATT, match[:scan_date]).merge(parse_datetime(TIME_PATT, match[:scan_time]))
+#    log_debug
+#    pp ret
+    ret
   end
+
+  # Return date-time related details from match results (ACS format Y.M.D.H.M.S)
+
+  def time_details_from_acs(match)
+    log_debug
+    details = {}
+    keys = %i(yr mo dy hr mn sc)
+    keys.each { |key| details[key] = match[key] }
+    pp details
+    details
+
+        name_symbols = match.names.map { |name| name.to_sym }
+    capture_ints = match.captures.map { |val| val.to_i }
+    Hash[name_symbols.zip(capture_ints)]
+
+  end
+
+
+  def make_date_from_details(match)
+
+    keys_time = %i(yr mo dy hr mn sc)
+    ret = nil
+    if (match.names & keys_scandate).count == keys_scandate.count
+      ret = make_date_from_scandate
+    elsif (match.names & keys_scandate).count == keys_scandate.count
+
+    end
+    ret
+  end
+
 
   # Create date in standard format YYMMDD from MatchData object
   #
@@ -134,10 +173,6 @@ module HRRTUtility
   # Call check_params() on given params, then call accessor for each key-value pair
 
   def set_params(params, required_keys = nil)
-    # log_debug("required_keys:")
-    # pp required_keys
-    # log_debug("params:")
-    # pp params
     my_params = check_params(params, required_keys)
     my_params.each { |key, value| send "#{key}=", value }
   end
@@ -151,26 +186,6 @@ module HRRTUtility
       raise
     end
     time
-  end
-
-  # Return a MatchData object of date components of given date string.
-  #
-  # @param datestr [String] date in standard YYMMDD format
-  # @return [MatchData] of :yr, :mo, :dy if match; else nil.
-
-  def parse_date(datestr)
-    details = parse_datetime(HRRT_DATE_PATTERN, datestr)
-    details[:yr4] = details[:yr] + 2000
-    details
-  end
-
-  # Return a MatchData object of time components of given time string.
-  #
-  # @param timestr [String] time in standard HHMMSS format
-  # @return [MatchData] of :hr, :mn, :sc if match; else nil.
-
-  def parse_time(timestr)
-    parse_datetime(HRRT_TIME_PATTERN, timestr)
   end
 
   # Return given name component cleaned (keep only alpha and numeric)

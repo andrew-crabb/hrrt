@@ -61,15 +61,16 @@ class HRRTFile
   def self.class_for_file(extn)
     theclass = nil
     CLASSES.each do |classtype|
-      suffix 	     = Object.const_get(classtype)::SUFFIX
+      suffix 	     = Object.const_get(classtype)::SUFFIX.upcase
       archive_suffix = Object.const_get(classtype)::ARCHIVE_SUFFIX
       pattern  = "#{suffix}"
       pattern += "(\.#{archive_suffix})?" if archive_suffix
-      if extn =~ Regexp.new("#{pattern}$")
+      if extn.upcase =~ Regexp.new("#{pattern}$")
         theclass = classtype
         break
       end
     end
+    log_debug("*****  #{theclass.to_s}  *****")
     theclass
   end
 

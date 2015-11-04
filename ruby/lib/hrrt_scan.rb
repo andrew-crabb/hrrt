@@ -93,6 +93,8 @@ class HRRTScan
   # Create new Scan and fill in its files
 
   def initialize(params, subject)
+    log_debug
+    pp params
     set_params(params)
     @subject = subject
     log_debug("Date: #{datetime} Subject: #{subject.summary}")
