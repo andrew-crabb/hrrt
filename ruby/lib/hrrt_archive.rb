@@ -39,10 +39,12 @@ class HRRTArchive
   # Archive may be production- or test-based.
 
   def parse
+    log_debug("-------------------- begin #{self.class} #{__method__} --------------------")
     process_files
     process_scans
     print_summary  if MyOpts.get(:verbose)
     print_files_summary if MyOpts.get(:vverbose)
+    log_debug("-------------------- end  #{self.class} #{__method__} --------------------")
   end
 
   # List of all files
@@ -50,7 +52,7 @@ class HRRTArchive
 
   def all_files
     all_files = Dir.glob(File.join(@archive_root, "**/*")).select { |f| File.file? f }
-    count = @all_files ? @all_files.count : 0
+    count = all_files ? all_files.count : 0
     log_debug("#{@archive_root}: #{count} files")
     all_files
   end
@@ -59,19 +61,22 @@ class HRRTArchive
   # Return Subject for this file name, creating it if necessary
 
   def process_files
-    log_debug("-------------------- begin --------------------")
+    log_debug("begin #{self.class} #{__method__}")
     all_files.each do |infile|
       details = Object.const_get(self.class::STORAGE_CLASS).read_details(infile)
       subject = subject_for(details)
       scan = scan_for(details, subject)
       add_hrrt_file(details, scan)
     end
-    log_debug("-------------------- end --------------------")
+    log_debug("end #{self.class} #{__method__}")
   end
 
   def subject_for(details)
-    subject = HRRTSubject.create(details)
-    @subjects[subject.summary] = subject if subject
+    summary = (HRRTSubject.summary(details, :summ_fmt_filename))
+    unless subject = @subjects[summary]
+      subject = HRRTSubject.create(details)
+      @subjects[summary] = subject if subject
+    end
     subject
   end
 

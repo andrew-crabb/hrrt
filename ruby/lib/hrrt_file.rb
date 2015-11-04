@@ -40,8 +40,8 @@ class HRRTFile
   attr_accessor :hostname
   #  attr_accessor :file_path
   #  attr_accessor :file_name
-  attr_accessor :file_size
-  attr_accessor :file_modified
+#  attr_accessor :file_size
+#  attr_accessor :file_modified
   attr_accessor :file_class
 
   # ------------------------------------------------------------
@@ -257,6 +257,14 @@ class HRRTFile
 
   def test_data_contents
     '0' * self.class::TEST_DATA_SIZE
+  end
+
+  def file_size
+  	@storage.file_size
+  end
+
+  def file_modified
+  	@storage.file_modified
   end
 
 end

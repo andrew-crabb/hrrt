@@ -24,8 +24,8 @@ module PhysicalFile
   # Accssors
   # ------------------------------------------------------------
 
-  attr_reader :file_size
-  attr_reader :file_modified
+#  attr_reader :file_size
+#  attr_reader :file_modified
   attr_accessor :file_crc32
   attr_accessor :file_md5
 

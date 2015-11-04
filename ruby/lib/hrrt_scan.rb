@@ -139,7 +139,7 @@ class HRRTScan
 
   def summary
     file_count = @files ? @files.count : 0
-    "#{datetime} #{@subject.summary} #{file_count} files totalling #{file_size}"
+    "#{datetime} #{@scan_type} : #{@subject.summary} : #{file_count} files totalling #{file_size}"
   end
 
   # ------------------------------------------------------------

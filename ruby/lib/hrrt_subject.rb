@@ -21,11 +21,15 @@ class HRRTSubject
   TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + "/../etc")
   TEST_SUBJECTS_FILE = "test_subjects_1.json"
 
-  SUMM_FMT_SHORT    = :summ_fmt_short
-  SUMM_FMT_FILENAME = :summ_fmt_filename
-
   DB_TABLE = :subject
   REQUIRED_FIELDS = %i(name_last name_first history)
+
+  SUMMARY_FORMATS = {
+    summ_fmt_short:    "%-12<name_last>s %-12<name_first>s %-12<history>s",
+    summ_fmt_filename: "%<name_last>s_%<name_first>s_%<history>s",
+    summ_fmt_name:     "%<name_last>s_%<name_first>s",
+    summ_fmt_names:    "%<name_last>s, %<name_first>s",
+  }
 
   # ------------------------------------------------------------
   # Accessors
@@ -60,14 +64,16 @@ class HRRTSubject
     File.join(TEST_SUBJECTS_PATH, subjects_file)
   end
 
+  def self.summary(details, format = :summ_fmt_short)
+    sprintf(SUMMARY_FORMATS[format], details)
+  end
+
   # ------------------------------------------------------------
   # Instance methods
   # ------------------------------------------------------------
 
   class << self
     def create(params)
-      log_debug
-      pp params
       (params && (params.keys & KEYS_SUBJECT).size == KEYS_SUBJECT.size) ? new(params) : nil
     end
 
@@ -79,8 +85,8 @@ class HRRTSubject
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(params)
-    set_params(params)
-    log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}<")
+    params.select { |key, val| REQUIRED_FIELDS.include? key }.map { |key, val| send "#{key}=", val }
+    log_debug(summary)
   end
 
   # Return hash of subject details.
@@ -88,32 +94,11 @@ class HRRTSubject
   # @param clean [Boolean] Strip all spaces and punctuation from name components.
 
   def details(clean = false)
-    details = {
-      history:    clean ? clean_name(@history)    : @history   ,
-      name_first: clean ? clean_name(@name_first) : @name_first,
-      name_last:  clean ? clean_name(@name_last)  : @name_last ,
-    }
-    details
-  end
-
-  def id
-    @id
+    Hash[(REQUIRED_FIELDS.map { |fld| [fld, clean ? clean_name(send(fld)) : send(fld)] })]
   end
 
   def summary(format = :summ_fmt_short, clean = false)
-    details = details(clean)
-    case format
-    when :summ_fmt_short
-      sprintf("%-12s %-12s %-12s", details[:name_last], details[:name_first], details[:history])
-    when :summ_fmt_filename
-      sprintf("%s_%s_%s", details[:name_last], details[:name_first], details[:history])
-    when :summ_fmt_name
-      sprintf("%s_%s", details[:name_last], details[:name_first])
-    when :summ_fmt_names
-      sprintf("%s, %s", details[:name_last], details[:name_first])
-    else
-      raise
-    end
+    self.class.summary(details(clean), format)
   end
 
   def print_summary(format = :summ_fmt_short)
@@ -124,6 +109,5 @@ class HRRTSubject
     db_params = make_database_params(REQUIRED_FIELDS)
     add_record_to_database(db_params)
   end
-
 
 end
