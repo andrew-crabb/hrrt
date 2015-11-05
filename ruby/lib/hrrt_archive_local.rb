@@ -11,8 +11,8 @@ class HRRTArchiveLocal < HRRTArchive
 
   ARCHIVE_ROOT      = '/data/archive'
   ARCHIVE_ROOT_TEST = '/data/archive_test'
-  ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
-  FILE_NAME_FORMAT = "%<name_last>s_%<name_first>s_%<history>s_PET_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
+  ARCHIVE_PATH_FMT  = "%<root>s/%<year>d/%<month>02d"
+  FILE_NAME_FORMAT = "%<name_last>s_%<name_first>s_%<history>s_PET_%<year2>02d%<month>02d%<day>02d_%<hour>02d%<min>02d%<sec>02d_%<scan_type>s.%<extn>s"
   FILE_NAME_CLEAN  = true
   STORAGE_CLASS = "StorageFile"
 
@@ -33,8 +33,10 @@ class HRRTArchiveLocal < HRRTArchive
   end
 
   def file_path(f)
-    raise unless m = parse_date(f.scan_date)
-    sprintf(ARCHIVE_PATH_FMT, root: @archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
+  	details = expand_time(scan_datetime: f.datetime).merge(root: @archive_root)
+  	log_debug
+  	pp details
+    sprintf(ARCHIVE_PATH_FMT, details)
   end
 
   def read_physical(f)

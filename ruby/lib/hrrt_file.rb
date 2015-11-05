@@ -87,6 +87,7 @@ class HRRTFile
   class << self
     def create(extn, scan, archive)
       hrrtfile = nil
+#      log_debug("scan #{scan.to_s}, extn #{extn}")
       if scan && (classtype = self.class_for_file(extn))
         hrrtfile = Object.const_get(classtype).new(scan, archive)
       end
@@ -197,8 +198,8 @@ class HRRTFile
     @scan.datetime
   end
 
-  def scan_date
-    @scan.scan_date
+  def scan_datetime
+    @scan.scan_datetime
   end
 
   def scan_id

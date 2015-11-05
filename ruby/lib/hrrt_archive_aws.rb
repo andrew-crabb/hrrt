@@ -14,7 +14,7 @@ class HRRTArchiveAWS < HRRTArchive
   BUCKET_NAME       = 'hrrt-recon'
   BUCKET_NAME_TEST  = 'hrrt-recon-test'
   AWS_HOSTNAME      = 'AWS'
-  FILE_NAME_FORMAT = "%<scan_date>s_%<scan_time>s.%<extn>s"
+  FILE_NAME_FORMAT = "%<year2>02d%<month>02d%<day>02d_%<hour>02d%<min>02d%<sec>02d.%<extn>s"
   FILE_NAME_CLEAN  = true
   STORAGE_CLASS = "StorageAWS"
 

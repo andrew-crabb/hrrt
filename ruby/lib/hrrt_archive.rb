@@ -41,7 +41,6 @@ class HRRTArchive
   def parse
     log_debug("-------------------- begin #{self.class} #{__method__} --------------------")
     process_files
-    process_scans
     print_summary  if MyOpts.get(:verbose)
     print_files_summary if MyOpts.get(:vverbose)
     log_debug("-------------------- end  #{self.class} #{__method__} --------------------")
@@ -72,7 +71,7 @@ class HRRTArchive
   end
 
   def subject_for(details)
-    summary = (HRRTSubject.summary(details, :summ_fmt_filename))
+    summary = HRRTSubject.summary(details, :summ_fmt_filename)
     unless subject = @subjects[summary]
       subject = HRRTSubject.create(details)
       @subjects[summary] = subject if subject
@@ -81,8 +80,12 @@ class HRRTArchive
   end
 
   def scan_for(details, subject)
-    scan = HRRTScan.create(details, subject)
-    @scans[scan.datetime] = scan if scan
+    summary = HRRTScan.summary(details)
+    unless scan = @scans[summary]
+      scan = HRRTScan.create(details, subject)
+      @scans[summary] = scan if scan
+    end
+    log_debug("#{summary}: #{scan.to_s}")
     scan
   end
 
@@ -95,16 +98,6 @@ class HRRTArchive
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
       log_error("No matching class: #{details.to_s}")
-    end
-  end
-
-  # Assign to each scan its files.
-  # Must be done after process_files to ensure all files present first.
-
-  def process_scans
-    log_debug
-    @hrrt_files.each do |datetime, files|
-      @scans[datetime].files = files
     end
   end
 
@@ -130,12 +123,6 @@ class HRRTArchive
   def delete_subject_directory(subject)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
-
-  #  def perform_archive
-  #    log_debug("-------------------- begin --------------------")
-  #    hrrt_files_each { |f| archive_file(f) }
-  #    log_debug("-------------------- end --------------------")
-  #  end
 
   def files_are_archived?(dest_archive)
     log_debug("-------------------- begin: #{self.class} -> #{dest_archive.class} --------------------")
@@ -195,7 +182,7 @@ class HRRTArchive
     nfiles = 0
     @scans.each do |datetime, scan|
       scan.print_summary
-      nfiles += scan.files.count
+      nfiles += @hrrt_files[datetime].count
     end
     log_info("========== #{self.class} summary end (#{nfiles} files) ==========")
   end

@@ -74,7 +74,7 @@ class HRRTSubject
 
   class << self
     def create(params)
-      (params && (params.keys & KEYS_SUBJECT).size == KEYS_SUBJECT.size) ? new(params) : nil
+      (params && (params.keys & REQUIRED_FIELDS).size == REQUIRED_FIELDS.size) ? new(params) : nil
     end
 
     private :new
