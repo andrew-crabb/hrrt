@@ -35,6 +35,7 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
+  attr_accessor :id             # From DB: Filled in when found
   attr_accessor :name_last
   attr_accessor :name_first
   attr_accessor :history

@@ -23,8 +23,8 @@ class HRRTFile
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
   DB_TABLE = :file
-  REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
-  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)
+  REQUIRED_FIELDS = %i(file_path file_name file_size file_modified hostname)	# For DB
+  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)	# For DB
   CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
   # Required for print_database_summary
@@ -35,14 +35,9 @@ class HRRTFile
   # Accssors
   # ------------------------------------------------------------
 
+  attr_accessor :id             # From DB: Filled in when found
   attr_accessor :scan
   attr_accessor :archive
-  attr_accessor :hostname
-  #  attr_accessor :file_path
-  #  attr_accessor :file_name
-#  attr_accessor :file_size
-#  attr_accessor :file_modified
-  attr_accessor :file_class
 
   # ------------------------------------------------------------
   # Class methods
@@ -70,7 +65,7 @@ class HRRTFile
         break
       end
     end
-    log_debug("*****  #{theclass.to_s}  *****")
+    #    log_debug("*****  #{theclass.to_s}  *****")
     theclass
   end
 
@@ -87,14 +82,14 @@ class HRRTFile
   class << self
     def create(extn, scan, archive)
       hrrtfile = nil
-#      log_debug("scan #{scan.to_s}, extn #{extn}")
+      #      log_debug("scan #{scan.to_s}, extn #{extn}")
       if scan && (classtype = self.class_for_file(extn))
         hrrtfile = Object.const_get(classtype).new(scan, archive)
       end
       hrrtfile
     end
 
-#    private :new
+    #    private :new
   end
 
 
@@ -110,35 +105,19 @@ class HRRTFile
     log_debug(@storage.full_name)
   end
 
-  def file_name
-    @storage.file_name
-  end
-
-  def file_path
-    @archive.file_path(self)
-  end
-
-  def read_physical
-  	@storage.read_physical
-  end
-
   # Delete this object from its archive, and remove database entry
 
   def delete
     @storage.delete
-    #    @archive.delete(self)
     remove_from_database
   end
 
   # Return a copy of the given file.
-  # Retain @scan, @file_name and @file_path, but read in physical parameters
+  #
+  # @param archive [HRRTArchive] Destination archive
 
   def archive_copy(archive)
-    params = {
-      scan: @scan,
-      archive: archive,
-    }
-    archive_copy = self.class.new(params, params.keys)
+    archive_copy = self.class.new(@scan, archive)
     archive.read_physical(archive_copy)
     log_debug(archive_copy.summary)
     archive_copy
@@ -169,10 +148,6 @@ class HRRTFile
 
   def archive_format
     self.class::ARCHIVE_FORMAT
-  end
-
-  def id
-    @id
   end
 
   # Return a hash of details relevant to this File.
@@ -210,18 +185,15 @@ class HRRTFile
     @archive.class.to_s
   end
 
-  def print_summary(short = true)
-    log_info(summary(short))
+  def print_summary(longer = false)
+    log_info(summary(longer))
   end
 
-  def summary(short = true)
-    size_str = file_size     ? sprintf("%d", file_size)     : "<nil>"
-    mod_str  = file_modified ? sprintf("%d", file_modified) : "<nil>"
-    summ = sprintf("%-60s %-60s %10s %10s", file_path, file_name, size_str, mod_str)
-    unless short
-      (REQUIRED_FIELDS + OTHER_FIELDS).sort.map { |fld|  printf("%-15s: %s\n", fld, self.send(fld)) }
-    end
-    summ
+  def summary(longer = false)
+    bits = []
+    fields = longer ? REQUIRED_FIELDS + OTHER_FIELDS : REQUIRED_FIELDS
+    fields.each { |fld|	bits << (send(fld) || "<nil>") }
+    bits.join " "
   end
 
   # Add record of this File to database.
@@ -231,9 +203,12 @@ class HRRTFile
     log_debug(@storage.full_name)
     @storage.calculate_checksums
     @scan_id ||= @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + OTHER_FIELDS)
-    puts "db_params:"
-    pp db_params
+    fields = REQUIRED_FIELDS + OTHER_FIELDS
+    # Don't need to merge with @storage: method_missing() passes all file_ method calls to @storage
+    #    db_params = make_database_params(fields).merge(@storage.make_database_params(fields))
+    db_params = make_database_params(fields)
+#    log_debug "db_params:"
+#    pp db_params
     add_record_to_database(db_params)
   end
 
@@ -261,12 +236,12 @@ class HRRTFile
     '0' * self.class::TEST_DATA_SIZE
   end
 
-  def file_size
-  	@storage.file_size
-  end
-
-  def file_modified
-  	@storage.file_modified
+  def method_missing(m, *args, &block)
+    if @storage.respond_to?(m)
+      @storage.send(m, *args, &block)
+    else
+      super
+    end
   end
 
 end

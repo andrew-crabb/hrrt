@@ -24,11 +24,6 @@ module PhysicalFile
   # Accssors
   # ------------------------------------------------------------
 
-#  attr_reader :file_size
-#  attr_reader :file_modified
-  attr_accessor :file_crc32
-  attr_accessor :file_md5
-
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
@@ -36,7 +31,7 @@ module PhysicalFile
   def write_uncomp(source_file)
     Dir.chdir(source_file.file_path)
     FileUtils.mkdir_p(file_path)
-    log_debug("source #{source_file.full_name}, dest #{full_name}")
+    log_debug("#{source_file.full_name}  #{full_name}")
     result = Rsync.run(Shellwords.escape(source_file.full_name), full_name, '--times')
     raise "#{result.error}" unless result.success?
   end
@@ -113,9 +108,9 @@ module PhysicalFile
     if File.exist?(full_name)
       stat = File.stat(full_name)
       exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i
-      #      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+            log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
     else
-      #      log_debug("#{exists.to_s}: #{full_name}")
+            log_debug("#{exists.to_s}: #{full_name}")
     end
     exists
   end

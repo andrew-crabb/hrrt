@@ -33,10 +33,12 @@ class HRRTArchiveLocal < HRRTArchive
   end
 
   def file_path(f)
-  	details = expand_time(scan_datetime: f.datetime).merge(root: @archive_root)
-  	log_debug
-  	pp details
-    sprintf(ARCHIVE_PATH_FMT, details)
+  	details = expand_time(scan_datetime: f.scan_datetime).merge(root: @archive_root)
+    file_path = sprintf(ARCHIVE_PATH_FMT, details)
+#  	log_debug("file_path #{file_path}")
+#  	pp details
+
+    file_path
   end
 
   def read_physical(f)

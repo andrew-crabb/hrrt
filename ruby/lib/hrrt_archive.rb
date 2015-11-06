@@ -30,7 +30,7 @@ class HRRTArchive
     @test_files = {}
     @test_scans = {}
     @test_subjects = {}
-    @hrrt_files = {}
+    @hrrt_files = Hash.new{ |h,k| h[k] = {} }
     @scans = {}
     @subjects = {}
   end
@@ -41,8 +41,9 @@ class HRRTArchive
   def parse
     log_debug("-------------------- begin #{self.class} #{__method__} --------------------")
     process_files
-    print_summary  if MyOpts.get(:verbose)
-    print_files_summary if MyOpts.get(:vverbose)
+    sync_database_with_archive
+    print_summary       if MyOpts.get(:verbose) || MyOpts.get(:debug)
+    print_files_summary if MyOpts.get(:verbose) || MyOpts.get(:debug)
     log_debug("-------------------- end  #{self.class} #{__method__} --------------------")
   end
 
@@ -85,24 +86,29 @@ class HRRTArchive
       scan = HRRTScan.create(details, subject)
       @scans[summary] = scan if scan
     end
-    log_debug("#{summary}: #{scan.to_s}")
+    log_debug("#{summary}: Scan #{scan ? scan.summary : "<nil>"}")
     scan
   end
 
   # Create new HRRTFile and store in hash with files from same datetime
 
   def add_hrrt_file(details, scan)
-    if hrrt_file = HRRTFile.create(details[:extn], scan, self)
-      hrrt_file.read_physical
-      @hrrt_files[hrrt_file.datetime] ||= {}
+    if hrrt_file = create_hrrt_file(details, scan)
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
       log_error("No matching class: #{details.to_s}")
     end
   end
 
+  def create_hrrt_file(details, scan)
+    if hrrt_file = HRRTFile.create(details[:extn], scan, self)
+      hrrt_file.read_physical
+    end
+    hrrt_file
+  end
+
   def is_empty?
-    all_files.count == 0
+    all_files.count == 0 && @scans.count == 0
   end
 
   def make_test_data
@@ -110,7 +116,7 @@ class HRRTArchive
     @test_subjects = HRRTSubject::make_test_subjects
     @test_subjects.each do |bad_subject, good_subject|
       #      log_debug(good_subject.summary)
-      delete_subject_test_directory(bad_subject)
+      delete_subject_dir(bad_subject)
       test_scans = HRRTScan::make_test_scans(bad_subject)
       test_scans.each do |type, scan|
         @test_files[scan.summary] = HRRTFile::make_test_files(scan, self)
@@ -118,10 +124,6 @@ class HRRTArchive
       @test_scans[good_subject.summary] = test_scans
     end
     log_debug("-------------------- end --------------------")
-  end
-
-  def delete_subject_directory(subject)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 
   def files_are_archived?(dest_archive)
@@ -144,7 +146,7 @@ class HRRTArchive
 
   def archive_file(source_file)
     log_debug(source_file.full_name)
-    @hrrt_files[source_file.datetime] ||= Hash.new
+    #    @hrrt_files[source_file.datetime] ||= Hash.new
     @hrrt_files[source_file.datetime][source_file.class] = ensure_copy_of(source_file)
   end
 
@@ -155,12 +157,12 @@ class HRRTArchive
   # @return archive_file [HRRTFile]
 
   def ensure_copy_of(source_file)
-    log_debug(source_file.full_name)
-    dest = source_file.archive_copy(self)
-    unless dest.is_copy_of?(source_file)
-      store_copy(source_file, dest)
+    dest_file = source_file.archive_copy(self)
+    log_debug("#{source_file.full_name}  #{dest_file.full_name}")
+    unless dest_file.is_copy_of?(source_file)
+      store_copy(source_file, dest_file)
     end
-    dest
+    dest_file
   end
 
   # Apply to all HRRTFile objects
@@ -172,19 +174,14 @@ class HRRTArchive
   end
 
   def print_files_summary
-    log_info("-------------------- #{self.class} begin --------------------")
+    log_info("--------------- #{self.class} #{__method__} begin ---------------")
     hrrt_files_each { |f| f.print_summary }
     log_info("-------------------- #{self.class} end --------------------")
   end
 
   def print_summary
-    log_info("========== #{self.class} start: #{@scans.count} scans ==========")
-    nfiles = 0
-    @scans.each do |datetime, scan|
-      scan.print_summary
-      nfiles += @hrrt_files[datetime].count
-    end
-    log_info("========== #{self.class} summary end (#{nfiles} files) ==========")
+    log_info("========== #{self.class} #{__method__} begin: #{@scans.count} scans ==========")
+    @scans.each { |datetime, scan| scan.print_summary(true) }
   end
 
   # ------------------------------------------------------------
@@ -219,7 +216,15 @@ class HRRTArchive
       file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
       puts "file_values: "
       pp file_values
-      test_file = HRRTFile.new(file_values)
+
+      details = Object.const_get(self.class::STORAGE_CLASS).read_details(file_values[:file_name])
+      subject = subject_for(details)
+      scan = scan_for(details, subject)
+      #      add_hrrt_file(details, scan)
+
+      puts "UP TO HERE.  CREATE SCAN OBJECT FROM DATABASE DETAILS TO SEND TO FILE CONSTRUCTOR"
+      test_file = create_hrrt_file(details, scan)
+      #      test_file = HRRTFile.new(scan, archive)
       unless test_file.exists_on_disk?
         test_file.remove_from_database
       end
@@ -270,14 +275,19 @@ class HRRTArchive
     parse
     raise("Too many files: #{testfiles.count}") if @hrrt_files.count > ARCHIVE_TEST_MAX
     # Delete each file, its File object, and any scantime with no File objects.
-    @hrrt_files.each do |dtime, files|
-      files.each do |type, file|
-        file.delete             # Physical entity (file or AWS)
-        files.delete(type)      # HRRTFile object
-      end
-      @hrrt_files.delete(dtime) if @hrrt_files[dtime].count == 0
-    end
+    @hrrt_files.each { |dtime, files| delete_files_and_scan(dtime, files) }
     prune_archive
+  end
+
+  def delete_files_and_scan(dtime, files)
+    files.each do |type, file|
+      file.delete             # Physical entity (file or AWS)
+      files.delete(type)      # HRRTFile object
+    end
+    if @hrrt_files[dtime].count == 0
+      @hrrt_files.delete(dtime)
+      @scans.delete(dtime)
+    end
   end
 
   # Delete empty directories from this archive.

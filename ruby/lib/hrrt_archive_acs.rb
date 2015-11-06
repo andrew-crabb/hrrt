@@ -27,7 +27,7 @@ class HRRTArchiveACS < HRRTArchive
 
   # Delete this file from disk, and its containing directory if possible
 
-  def delete_subject_test_directory(subject)
+  def delete_subject_dir(subject)
     file_path = File.join(ARCHIVE_ROOT_TEST, subject.summary(:summ_fmt_name))
     if Dir.exists? file_path
       Dir.chdir file_path

@@ -70,7 +70,7 @@ module HRRTUtility
   def details_from_filename(infile)
     details = nil
 
-    log_debug(infile)
+#    log_debug(infile)
     filename = File.basename(infile)
     if match = NAME_PATTERN_STD.match(filename)
       details = {scan_datetime: datetime_from_std(match)}
@@ -103,7 +103,7 @@ module HRRTUtility
   # Return date-time related details from match results (ACS format Y.M.D.H.M.S)
 
   def datetime_from_acs(match)
-    log_debug
+#    log_debug
     details = {}
     TIME_FIELDS.each { |key| details[key] = match[key] }
     secs = datetime_from_details(details)
@@ -116,10 +116,7 @@ module HRRTUtility
   # @return datetime [Integer]
 
   def datetime_from_details(details)
-    datetime = Time.new(*details.values_at(*TIME_FIELDS)).to_i
-    log_debug("datetime #{datetime}")
-    pp details
-    datetime
+    Time.new(*details.values_at(*TIME_FIELDS)).to_i
   end
 
   def required_fields
@@ -138,11 +135,17 @@ module HRRTUtility
   # Return hash including input hash, with date/time components included separately
 
   def expand_time(details)
-  	time = Time.at(details[:scan_datetime])
+  	time = Time.at(details[:scan_datetime].to_i)
   	times = {}
   	TIME_FIELDS.each { |fld| times[fld] = time.send(fld) }
-  	times[:year2] = times[:year] % 100
-  	times.merge(details)
+  	times[:year] += 2000 if times[:year] < 100
+  	times[:year2] = times[:year] % 100  	
+  	ret = times.merge(details)
+#  	log_debug("scan_datetime #{details[:scan_datetime].to_i} details, times, ret: ")
+#  	pp details
+#  	pp times
+#  	pp ret
+	ret
   end
 
   # Return a Hash of date or time symbols and their integer values

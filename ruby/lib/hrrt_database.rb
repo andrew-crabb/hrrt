@@ -73,21 +73,33 @@ module HRRTDatabase
 
   # Check that this item exists in database
   # Fills in its @id field
+  #
+  # @return id [Integer] DB id of this object
 
   def ensure_in_database
     add_to_database unless present_in_database?
     @id
   end
 
-  def present_in_database?(fields = [])
+  # If @id present, already found in DB.  Else find in DB and fill in @id.
 
-    ds = find_records_in_database(self.class::REQUIRED_FIELDS + fields)
-    present = false
-    if ds.all.length == 1
-      present = true
-      @id = ds.first[:id]
+  def present_in_database?(fields = [])
+  	present = false
+  	if @id.nil?
+  		log_debug("Not already present")
+  	else
+  		log_debug("Already present: id = #{@id}")
+  		present = true
+  	end
+#    unless (present = !@id.nil?)
+    unless (present)
+      ds = find_records_in_database(self.class::REQUIRED_FIELDS + fields)
+      if ds.all.length == 1
+        present = true
+        @id = ds.first[:id]
+      end
     end
-    log_info(present.to_s + (present ? ", id = #{id}" : "") + " #{self.class::DB_TABLE} #{summary}")
+    log_debug(present.to_s + (present ? ", id = #{@id}" : "") + " #{self.class::DB_TABLE} #{summary}")
     present
   end
 
@@ -97,9 +109,11 @@ module HRRTDatabase
   end
 
   def make_database_params(fields)
-    db_params = {}
-    fields.each { |field| db_params[field] = send(field) }
-    log_debug
+  	# Doesn't work since File doesn't respond to eg file_size: goes through method_missing() to @storage.
+  	# But no longer required since File now responds to all Storage methods.
+    # db_params = Hash[ fields.select { |field| respond_to? field}.map { |field| [field, send(field)] }]
+    db_params = Hash[ fields.map { |field| [field, send(field)] }]
+    log_debug("In #{self.class}, fields: #{fields.join(',')}")
     pp db_params
     db_params
   end
@@ -116,6 +130,7 @@ module HRRTDatabase
     recs = db[self.class::DB_TABLE].where(db_params)
     log_debug(summary)
     recs.delete
+    id = nil
   end
 
   # Return dataset of all records for this table in database.
@@ -165,10 +180,10 @@ module HRRTDatabase
 
   def check_subjects_scans
     ds_scan = db[:scan].left_join(:file, :scan_id=>:id).where(Sequel.qualify(:file, :id) => nil)
-    log_info("Deleting #{ds_scan.count} Scans not referenced by a File")
+    log_info("XXX Deleting #{ds_scan.count} Scans not referenced by a File")
     ds_scan.delete
     ds_subj = db[:subject].left_join(:scan, :subject_id=>:id).where(Sequel.qualify(:scan, :id) => nil)
-    log_info("Deleting #{ds_subj.count} Subjects not referenced by a Scan")
+    log_info("XXX Deleting #{ds_subj.count} Subjects not referenced by a Scan")
     ds_subj.delete
   end
 
