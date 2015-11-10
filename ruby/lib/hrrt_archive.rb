@@ -18,8 +18,8 @@ class HRRTArchive
 
   ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
 
-  attr_reader :subjects
-  attr_reader :scans
+  attr_reader :subjects 		# Per-archive, but consistent between archives
+  attr_reader :scans 			# Per-archive, but consistent between archives
   attr_reader :test_scans
   attr_reader :test_subjects
   attr_reader :hrrt_files
@@ -93,18 +93,11 @@ class HRRTArchive
   # Create new HRRTFile and store in hash with files from same datetime
 
   def add_hrrt_file(details, scan)
-    if hrrt_file = create_hrrt_file(details, scan)
+    if hrrt_file = HRRTFile.create(details[:extn], scan, self)
       @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file
     else
       log_error("No matching class: #{details.to_s}")
     end
-  end
-
-  def create_hrrt_file(details, scan)
-    if hrrt_file = HRRTFile.create(details[:extn], scan, self)
-      hrrt_file.read_physical
-    end
-    hrrt_file
   end
 
   def is_empty?
@@ -259,10 +252,6 @@ class HRRTArchive
   end
 
   def store_copy(source, dest)
-    fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
-  end
-
-  def read_physical(f)
     fail NotImplementedError, "Method #{__method__} must be implemented in derived class"
   end
 

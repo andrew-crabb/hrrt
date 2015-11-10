@@ -41,10 +41,6 @@ class HRRTArchiveLocal < HRRTArchive
     file_path
   end
 
-  def read_physical(f)
-    f.read_physical
-  end
-
   # Create physical copy of source file.
   # Derived class for different Archive types
   # Calls derived File method for compressed/uncompressed write

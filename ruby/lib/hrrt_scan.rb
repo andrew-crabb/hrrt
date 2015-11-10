@@ -30,6 +30,7 @@ class HRRTScan
   }
 
   REQUIRED_FIELDS = %i(scan_datetime scan_type)
+  OTHER_FIELDS    = %i(subject_id)
 
   # Required for print_database_summary
   SUMMARY_FIELDS     = %i(scan_date scan_time scan_type)
@@ -51,10 +52,6 @@ class HRRTScan
   attr_accessor :subject        # HRRTSubject object
   attr_accessor :scan_type      # EM or TX
   attr_accessor :scan_datetime  # Seconds since epoch.
-
-  # Database fields
-  attr_accessor :id             # From DB: Filled in when found
-  attr_accessor :subject_id     # From DB: Filled in when found
 
   # ------------------------------------------------------------
   # Class methods
@@ -108,10 +105,14 @@ class HRRTScan
   # ------------------------------------------------------------
 
   # Create new Scan and fill in its files
+  # ensure_in_database includes subject_id: scan is a product of subject.
+  # But subject_id not passed nor stored: no @subject_id or subject_id=. 
+  # subject_id is method calling @subject
 
   def initialize(params, subject)
     REQUIRED_FIELDS.map { |fld| send "#{fld}=", params[fld] }
     @subject = subject
+    ensure_in_database([:subject_id])
     log_debug(summary(true))
 #    pp params
   end
@@ -136,6 +137,12 @@ class HRRTScan
     self.class.scan_time(details)
   end
 
+  # Called by send() in add_to_database
+
+  def subject_id
+  	@subject.id
+  end
+
   def print_summary(long = false)
     log_info(summary(long))
   end
@@ -158,10 +165,8 @@ class HRRTScan
   # Database-related methods
   # ------------------------------------------------------------
 
-  def add_to_database
-  	log_debug("subject_id is #{@subject_id || 'nil'}")
-    @subject_id ||= @subject.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:subject_id])
+  def add_to_database(fields = [])
+    db_params = make_database_params(fields)
     log_debug
     pp db_params
     add_record_to_database(db_params)

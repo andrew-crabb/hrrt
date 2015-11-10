@@ -63,7 +63,7 @@ class HRRTArchiveAWS < HRRTArchive
     params = { metadata: metadata_from_file(source_file) }
     dest_object.upload_file(source_file.full_name, params) or raise("upload_file(#{source_file.full_name})")
 	dest_file.aws_object = dest_object    
-    read_physical(dest_file)
+    dest_file.read_physical
     log_debug
     dest_file.summary(false)
     dest_file.ensure_in_database

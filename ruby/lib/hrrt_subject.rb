@@ -35,7 +35,6 @@ class HRRTSubject
   # Accessors
   # ------------------------------------------------------------
 
-  attr_accessor :id             # From DB: Filled in when found
   attr_accessor :name_last
   attr_accessor :name_first
   attr_accessor :history
@@ -87,6 +86,7 @@ class HRRTSubject
 
   def initialize(params)
     params.select { |key, val| REQUIRED_FIELDS.include? key }.map { |key, val| send "#{key}=", val }
+    ensure_in_database		# Sets @id from existing record matching REQUIRED_FIELDS, or a new record.
     log_debug(summary)
   end
 
@@ -107,7 +107,7 @@ class HRRTSubject
   end
 
   def add_to_database
-    db_params = make_database_params(REQUIRED_FIELDS)
+    db_params = make_database_params
     add_record_to_database(db_params)
   end
 

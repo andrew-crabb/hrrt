@@ -35,7 +35,6 @@ class HRRTFile
   # Accssors
   # ------------------------------------------------------------
 
-  attr_accessor :id             # From DB: Filled in when found
   attr_accessor :scan
   attr_accessor :archive
 
@@ -94,14 +93,15 @@ class HRRTFile
 
 
   # Create a new HRRT_File object from a MatchData object from a previous name match
-  # ------------------------------------------------------------
-  # Conjecture: you should only need Scan and Archive to create an HRRTFile
-  # ------------------------------------------------------------
+  # Ensure checksums here (from DB match or calculate), as needed later.
 
   def initialize(scan, archive)
     @scan = scan
     @archive = archive
     @storage = Object.const_get(@archive.class::STORAGE_CLASS).new(self)
+    read_physical
+    ensure_checksums
+    ensure_in_database([:scan_id])
     log_debug(@storage.full_name)
   end
 
@@ -110,6 +110,14 @@ class HRRTFile
   def delete
     @storage.delete
     remove_from_database
+    @id = nil
+  end
+
+  # Fill in checksums from database, if record exists and timestamps match
+
+  def ensure_checksums
+    checksums = ds = present_in_database? ? ds.select(:file_crc32, :file_md5) : []
+    @storage.calculate_checksums(checksums)
   end
 
   # Return a copy of the given file.
@@ -123,9 +131,9 @@ class HRRTFile
     archive_copy
   end
 
-  def subject
-    @scan.subject
-  end
+#  def subject
+#    @scan.subject
+#  end
 
   # Return true if this file is archive copy of source file
   # @note Default is to compare uncompressed: overload to test compressed files
@@ -169,13 +177,13 @@ class HRRTFile
     {extn: self.class::SUFFIX}
   end
 
-  def datetime
-    @scan.datetime
-  end
-
-  def scan_datetime
-    @scan.scan_datetime
-  end
+#  def datetime
+#    @scan.datetime
+#  end
+#
+#  def scan_datetime
+#    @scan.scan_datetime
+#  end
 
   def scan_id
     @scan.id
@@ -201,29 +209,19 @@ class HRRTFile
 
   def add_to_database
     log_debug(@storage.full_name)
-    @storage.calculate_checksums
-    @scan_id ||= @scan.ensure_in_database
-    fields = REQUIRED_FIELDS + OTHER_FIELDS
-    # Don't need to merge with @storage: method_missing() passes all file_ method calls to @storage
-    #    db_params = make_database_params(fields).merge(@storage.make_database_params(fields))
-    db_params = make_database_params(fields)
-#    log_debug "db_params:"
-#    pp db_params
+    db_params = make_database_params(OTHER_FIELDS)
+    #    log_debug "db_params:"
+    #    pp db_params
     add_record_to_database(db_params)
   end
 
   # Delete record of this File from database.
 
   def remove_from_database
-    db_params = make_database_params(REQUIRED_FIELDS)
+    db_params = make_database_params
+    log_debug(full_name)
+    pp db_params
     delete_record_from_database(db_params)
-  end
-
-  # Search for required fields including any given as parameters.
-  # Need to be able to search without crc for quick search using mod time.
-
-  def find_in_database(fields)
-    find_records_in_database(REQUIRED_FIELDS + fields)
   end
 
   def create_test_data
@@ -237,8 +235,10 @@ class HRRTFile
   end
 
   def method_missing(m, *args, &block)
-    if @storage.respond_to?(m)
+    if @storage.respond_to?(m)     # read_physical
       @storage.send(m, *args, &block)
+    elsif @scan.respond_to?(m)     # subject, datetime, scan_datetime
+      @scan.send(m, *args, &block)
     else
       super
     end

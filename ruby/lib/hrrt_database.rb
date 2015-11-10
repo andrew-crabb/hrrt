@@ -71,47 +71,49 @@ module HRRTDatabase
   # Generic methods (will work on any table)
   # ------------------------------------------------------------
 
+  # Record id in DB
+
+  def id
+    @db_rec ? @db_rec[:id] : nil
+  end
+
   # Check that this item exists in database
   # Fills in its @id field
   #
   # @return id [Integer] DB id of this object
 
-  def ensure_in_database
-    add_to_database unless present_in_database?
-    @id
+  def ensure_in_database(fields = [])
+    add_to_database(fields) unless present_in_database?(fields)
+    id
   end
 
   # If @id present, already found in DB.  Else find in DB and fill in @id.
+  # Uses only REQRIRED_FIELDS.
+  #
+  # @param fields [Hash] Add these fields to REQUIRED_FIELDS when querying DB
+  # @return db_rec [Dataset]
 
   def present_in_database?(fields = [])
-  	present = false
-  	if @id.nil?
-  		log_debug("Not already present")
-  	else
-  		log_debug("Already present: id = #{@id}")
-  		present = true
-  	end
-#    unless (present = !@id.nil?)
-    unless (present)
-      ds = find_records_in_database(self.class::REQUIRED_FIELDS + fields)
+    log_debug(id ? "Already present: id = #{id}" : "Not already present")
+    if (id.nil?)
+      ds = find_records_in_database(fields)
       if ds.all.length == 1
-        present = true
-        @id = ds.first[:id]
+        @db_rec = ds.first
+      else
+        log_error("Wrong number of DB matches: #{ds.count}")
       end
     end
-    log_debug(present.to_s + (present ? ", id = #{@id}" : "") + " #{self.class::DB_TABLE} #{summary}")
-    present
+    log_debug(id.nil?.to_s + (id.nil? ? "" : ", id = #{id}") + " #{self.class::DB_TABLE} #{summary}")
+    @db_rec
   end
 
   def find_records_in_database(fields)
-    db_params = make_database_params(fields)
+    db_params = make_database_params(self.class::REQUIRED_FIELDS + fields)
     db[self.class::DB_TABLE].where(db_params)
   end
 
   def make_database_params(fields)
-  	# Doesn't work since File doesn't respond to eg file_size: goes through method_missing() to @storage.
-  	# But no longer required since File now responds to all Storage methods.
-    # db_params = Hash[ fields.select { |field| respond_to? field}.map { |field| [field, send(field)] }]
+    fields = self.class::REQUIRED_FIELDS + fields
     db_params = Hash[ fields.map { |field| [field, send(field)] }]
     log_debug("In #{self.class}, fields: #{fields.join(',')}")
     pp db_params
@@ -119,18 +121,19 @@ module HRRTDatabase
   end
 
   # Insert this record into the database.
-  # Sets @id field.
+  # Sets @db_rec field.
 
   def add_record_to_database(db_params)
-    @id = db[self.class::DB_TABLE].insert(db_params)
-    log_info("class #{self.class}: inserted new record id #{@id}")
+    id = db[self.class::DB_TABLE].insert(db_params)
+    @db_rec = db[self.class::DB_TABLE][1]
+    log_info("class #{self.class}: inserted new record id #{id}")
   end
 
   def delete_record_from_database(db_params)
     recs = db[self.class::DB_TABLE].where(db_params)
     log_debug(summary)
     recs.delete
-    id = nil
+    @id = nil
   end
 
   # Return dataset of all records for this table in database.
