@@ -71,6 +71,7 @@ my $OPT_CALIBDIR     = 'c';
 my $OPT_CONFFILE     = 'g';
 my $OPT_VALUES_FILE  = 'l';
 my $OPT_NITER        = 'n';
+my $OPT_TESTNORM     = 't';
 
 our %allopts = (
   $OPT_CALIBDIR => {
@@ -100,6 +101,11 @@ our %allopts = (
     $Opts::OPTS_TEXT => 'Maximum iterations to perform',
     $Opts::OPTS_OPTN => 1,
   },
+  $OPT_TESTNORM => {
+    $Opts::OPTS_NAME => 'testnorm',
+    $Opts::OPTS_TYPE => $Opts::OPTS_BOOL,
+    $Opts::OPTS_TEXT => 'Use norm files prefixed with test_ (not norm_)',
+  },
     );
 
 # ------------------------------------------------------------
@@ -114,7 +120,7 @@ if ($opts->{$Opts::OPT_HELP}) {
 
 $g_calib_dir = ($opts->{$OPT_CALIBDIR} // '');
 unless (-d ($g_calib_dir)) {
-  $g_logger->info("ERROR: Calibration dir not present: '$g_calib_dir'");
+  print "ERROR: Calibration dir not present: '$g_calib_dir'\n";
   usage(\%allopts);
   exit;
 }
@@ -153,7 +159,7 @@ $g_logger->debug('g_hrrt_det');
 $g_logger->debug(sub { Dumper($g_hrrt_det)});
 
 # Details of calibration l64 file.
-my $recon = make_recon_obj();
+my $recon = make_recon_obj($O_TEST_NORM => $opts->{$OPT_TESTNORM});
 $recon->print_study_summary();
 
 # erg_ratios stores pairs of erg ratio - roi ratio.
@@ -202,7 +208,7 @@ while ($iter < $opts->{$OPT_NITER}) {
     }
   }
   # Now erg_ratio has not been computed.  Run recon and get and store new roi ratio.
-  $recon = make_recon_obj({$O_ERGRATIO => $erg_ratio});
+  $recon = make_recon_obj({$O_ERGRATIO => $erg_ratio, $O_TEST_NORM => $opts->{$OPT_TESTNORM}});
   do_recon($recon, $iter);
   $erg_ratios->{$erg_ratio} = do_calc_ratio();
   $g_logger->info("Iteration $iter, erg_ratio $erg_ratio, erg_ratios now:");
@@ -262,6 +268,7 @@ sub make_recon_obj {
   if (has_len($argptr)) {
     %recon_opts = (%recon_opts, %{$argptr});
   }
+#  print Dumper(\%recon_opts);
 
   my $recon = HRRTRecon->new(\%recon_opts);
 
@@ -548,7 +555,9 @@ sub select_calibration_date {
   # Get date of scan from EM file.
   my $calibdate = $g_hrrt_det->{'date'}->{'YYYYMMDD'};
   $g_logger->info("date from header: $calibdate");
-  unless (defined($calibdate)) {
+  unless (defined($calib_values{$calibdate})) {
+    print "*****  ERROR: No calibration values for date $calibdate  *****\n";
+    print "Calibration values must be entered in the file $opts->{$OPT_VALUES_FILE}\n";
     $calibdate = prompt(
       'Select Calibration Date:',
       -verb,

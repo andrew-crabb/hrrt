@@ -1505,11 +1505,16 @@ sub identify_norm_file {
     $PFILE_KEY   => $this->{$O_TEST_NORM} ? $K_TEST : $K_NORM,
     $PFILE_SPAN  => $span,
       );
+
+  # $this->{$_LOG}->info("identify_norm_file");
+  # $this->{$_LOG}->info(Dumper(\%paramargs));
+
   my $normfile = $this->identifyParamFile(\%paramargs);
   unless (-s "${normdir}/${normfile}.n") {
     return $this->{$_LOG}->info("No norm file ${normdir}/${normfile}.n\n", 1);
   }
   # return "${normdir}/${normfile}";
+  $this->{$_LOG}->info("identify_norm_file(span $paramargs{$PFILE_SPAN}, key $paramargs{$PFILE_KEY}): returning $normfile");
   return $normfile;
 }
 
@@ -1533,13 +1538,13 @@ sub identifyParamFile {
   my $hdays = daysSinceEpoch($thedate);
 
   # Optional param_suff is fourth group delimited by '_':
-  my $suffstr = ($param_key =~ /norm/i) ? "_${span}" : "";
+  my $suffstr = ($param_key =~ /norm|test/i) ? "_${span}" : "";
   my $paramstr = "^${param_key}_[^\._]+_[^\._]+${suffstr}";
 
   # print "*** paramstr $paramstr ***\n";
   my @pfiles = grep(/$paramstr/, @paramfiles);
   my $np = scalar(@pfiles);
-  # print "*** $np pfiles in $param_dir match '$paramstr': @pfiles\n";
+  # print "************* $np pfiles in $param_dir match '$paramstr': @pfiles\n";
 
   my $paramfile = undef;
   foreach my $pfile (@pfiles) {
