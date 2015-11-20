@@ -4,6 +4,118 @@
 		"selected_items":
 		[
 			[
+				"scan",
+				"scan"
+			],
+			[
+				"subj",
+				"subject_id"
+			],
+			[
+				"dele",
+				"delete_files_and_scan"
+			],
+			[
+				"f",
+				"f"
+			],
+			[
+				"SUMMA",
+				"SUMMARY_FORMAT"
+			],
+			[
+				"SUMM",
+				"SUMMARY_FIELDS"
+			],
+			[
+				"store",
+				"store_copy"
+			],
+			[
+				"subjs",
+				"subjects_file"
+			],
+			[
+				"TEST",
+				"TEST_SUBJECTS_PATH"
+			],
+			[
+				"TE",
+				"TEST_SUBJECTS_FILE"
+			],
+			[
+				"arch",
+				"archive_aws"
+			],
+			[
+				"DB_",
+				"DB_TABLE"
+			],
+			[
+				"ens",
+				"ensure_file_in_archive"
+			],
+			[
+				"su",
+				"subjects"
+			],
+			[
+				"test_f",
+				"test_file"
+			],
+			[
+				"HRRT",
+				"HRRTScan"
+			],
+			[
+				"all",
+				"all_files"
+			],
+			[
+				"hrrt",
+				"hrrt_file"
+			],
+			[
+				"file_",
+				"file_modified"
+			],
+			[
+				"mat",
+				"matches"
+			],
+			[
+				"FOR",
+				"FORMAT_COMPRESSED"
+			],
+			[
+				"matches_",
+				"matches_file_uncomp"
+			],
+			[
+				"crc",
+				"crc32"
+			],
+			[
+				"req",
+				"required_fields"
+			],
+			[
+				"requ",
+				"require_relative"
+			],
+			[
+				"DB",
+				"database"
+			],
+			[
+				"rat",
+				"ratio_ok"
+			],
+			[
+				"ar",
+				"archive_file_name"
+			],
+			[
 				"full_",
 				"full_archive_name"
 			],
@@ -12,16 +124,8 @@
 				"options"
 			],
 			[
-				"store",
-				"store_file"
-			],
-			[
 				"nmae",
 				"name_in_archive"
-			],
-			[
-				"ar",
-				"archive_local"
 			],
 			[
 				"name",
@@ -68,10 +172,6 @@
 				"files_by_datetime"
 			],
 			[
-				"HRRT",
-				"HRRTACSDir"
-			],
-			[
 				"dir",
 				"dirname"
 			],
@@ -84,15 +184,7 @@
 				"file_modified"
 			],
 			[
-				"file_",
-				"file_size"
-			],
-			[
 				"hr",
-				"hrrtfile"
-			],
-			[
-				"hrrt",
 				"hrrtfile"
 			],
 			[
@@ -120,82 +212,143 @@
 	"buffers":
 	[
 		{
-			"file": "bin/hrrt_recon_cron.rb",
+			"file": "/Users/ahc/DEV/hrrt/ruby/test/tc_test01.rb",
 			"settings":
 			{
-				"buffer_size": 1379,
+				"buffer_size": 5762,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "lib/my_logging.rb",
+			"contents": "Searching 47 files for \"mylogger\"\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_cron.rb:\n   28  DIR_ARCHIVE   = \"/data/archive\"\n   29  \n   30: mylogger.datetime_format = \"%Y-%m-%d %H:%M:%S\"\n   31: mylogger.set_log_level(options[:debug] ? Logger::DEBUG : Logger::INFO)\n   32: # puts \"mylogger.level is #{mylogger.level}\"\n   33  \n   34  # ------------------------------------------------------------\n   ..\n   39    indir = (ARGV[0] || DIR_SCS_SCANS)\n   40    unless Dir.exist?(indir)\n   41:     mylogger.error \"Directory #{indir} does not exist!\"\n   42      exit(1)\n   43    end\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_test.rb:\n   75    no_commands do\n   76      def setup_logging\n   77:       mylogger.datetime_format = \"%Y-%m-%d %H:%M:%S\"\n   78:       mylogger.set_log_level(Logger::WARN)\n   79:       mylogger.set_log_level(Logger::DEBUG) if self.options[:debug]\n   80:       mylogger.set_log_level(Logger::INFO)  if self.options[:verbose]\n   81      end\n   82    end\n\n/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb:\n   11    DEFAULT_LEVEL = Logger::INFO\n   12  \n   13:   def mylogger\n   14      @logger ||= MyLogging.logger_for(self.class.name)\n   15      @logger.datetime_format = '%y%m%d %H%M%S '\n   ..\n   45  \n   46    def logit(severity, msg)\n   47:     mylogger\n   48      # /Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_file.rb:102:in `print_summary'\n   49      m = /(?<filename>.+):(?<lineno>\\d+):in `(?<method>.+)'/.match(caller[1])\n\n/Users/ahc/DEV/hrrt/ruby/test/tc_test01.rb:\n   43  \n   44    def setup_logging\n   45:     mylogger.datetime_format = \"%Y-%m-%d %H:%M:%S\"\n   46:     mylogger.set_log_level(Logger::WARN)\n   47:     mylogger.set_log_level(Logger::DEBUG) if @@options[:debug]\n   48:     mylogger.set_log_level(Logger::INFO)  if @@options[:verbose]\n   49    end\n   50  \n   ..\n   54  \n   55    def make_test_data\n   56:     mylogger.info(\"--------------------\" + __method__.to_s + \" begin --------------------\")\n   57      @hrrt.clear_test_data\n   58      assert(@hrrt.archives_are_empty?, \"Archives are not empty\")\n   ..\n   61      @hrrt.archive_acs.make_test_data\n   62      @hrrt.parse\n   63:     mylogger.info(\"--------------------\" + __method__.to_s + \" end --------------------\")\n   64    end\n   65  \n   66    def test_00_parseonly\n   67:     mylogger.info(\"--------------------\" + __method__.to_s + \" begin --------------------\")\n   68      @hrrt.parse\n   69      @hrrt.print_summary\n   70      #    @hrrt.print_files_summary\n   71:     mylogger.info(\"--------------------\" + __method__.to_s + \" end --------------------\")\n   72    end\n   73  \n   74    def test_01_parse\n   75:     mylogger.info(\"--------------------\" + __method__.to_s + \" begin --------------------\")\n   76      make_test_data\n   77      @hrrt.parse\n   78      @hrrt.print_summary\n   79      @hrrt.print_files_summary\n   80:     mylogger.info(\"--------------------\" + __method__.to_s + \" end --------------------\")\n   81    end\n   82  \n   83    def test_02_parse_subjects\n   84:     mylogger.info(\"--------------------\" + __method__.to_s + \"--------------------\")\n   85      make_test_data\n   86      @hrrt.print_summary\n   87  \n   88      @hrrt.archive_acs.test_subjects.each do |bad_subject, good_subject|\n   89:       mylogger.info(\"Testing subject: #{good_subject.summary}\")\n   90        bad_subj_summ = bad_subject.summary(:summ_fmt_filename)\n   91        assert(@hrrt.archive_acs.subjects.has_key?(bad_subj_summ), \"No parsed subject matching '#{bad_subj_summ}'\")\n   ..\n   97  \n   98    def test_03_check_scans\n   99:     mylogger.info(\"--------------------\" + __method__.to_s + \"--------------------\")\n  100      make_test_data\n  101      @hrrt.archive_acs.test_scans.each do |subj_summ, test_scans|\n  ...\n  110  \n  111    def test_04_archive\n  112:     mylogger.info(\"--------------------\" + __method__.to_s + \"--------------------\")\n  113      MyOpts.printoptions\n  114      make_test_data\n  ...\n  120  \n  121    def test_05_database\n  122:     mylogger.info(\"-------------------- \" + __method__.to_s + \" --------------------\")\n  123      make_test_data\n  124      @hrrt.sync_database_with_archives\n  ...\n  144  \n  145    def test_06_aws\n  146:     mylogger.info(\"-------------------- \" + __method__.to_s + \" --------------------\")\n  147  #    make_test_data\n  148  #    @hrrt.archive_aws\n  ...\n  162  \n  163    def test_08_make\n  164:     mylogger.info(\"--------------------\" + __method__.to_s + \"--------------------\")\n  165      MyOpts.printoptions\n  166      make_test_data\n\n28 matches across 4 files\n\n\nSearching 47 files for \"zip\"\n\n/Users/ahc/DEV/hrrt/ruby/Gemfile:\n    3  # gem 'sys-filesystem'\n    4  gem 'rsync'\n    5: gem 'seven_zip_ruby'\n    6  gem 'thor'\n    7  gem 'sequel'\n\n/Users/ahc/DEV/hrrt/ruby/Gemfile.lock:\n   19      rsync (1.0.9)\n   20      sequel (4.27.0)\n   21:     seven_zip_ruby (1.2.4)\n   22      thor (0.19.1)\n   23  \n   ..\n   35    rsync\n   36    sequel\n   37:   seven_zip_ruby\n   38    thor\n   39  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb:\n  157      name_symbols = match.names.map { |name| name.to_sym }\n  158      capture_ints = match.captures.map { |val| val.to_i }\n  159:     Hash[name_symbols.zip(capture_ints)]\n  160    end\n  161  \n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n    3  require_relative './my_logging'\n    4  \n    5: require 'seven_zip_ruby'\n    6  require 'digest/crc32'\n    7  require 'digest/md5'\n    .\n   37      FileUtils.mkdir_p(file_path)\n   38      File.open(full_name, \"wb\") do |file|\n   39:       SevenZipRuby::Writer.open(file) do |szr|\n   40          Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   ..\n   79      if File.exist?(full_name)\n   80        File.open(full_name, \"rb\") do |file|\n   81:         SevenZipRuby::Reader.open(file) do |szr|\n   82            entry = szr.entries.first\n   83            #           puts \"xxx up to here 2: size from 7z = #{entry.size}, my size = #{@file_size}\"\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/Gemfile:\n    3  # gem 'sys-filesystem'\n    4  gem 'rsync'\n    5: gem 'seven_zip_ruby'\n    6  gem 'thor'\n    7  gem 'sequel'\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n    3  require_relative './my_logging'\n    4  \n    5: require 'seven_zip_ruby'\n    6  require 'digest/crc32'\n    7  require 'digest/md5'\n    .\n   37      FileUtils.mkdir_p(file_path)\n   38      File.open(full_name, \"wb\") do |file|\n   39:       SevenZipRuby::Writer.open(file) do |szr|\n   40          Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   ..\n   79      if File.exist?(full_name)\n   80        File.open(full_name, \"rb\") do |file|\n   81:         SevenZipRuby::Reader.open(file) do |szr|\n   82            entry = szr.entries.first\n   83            #           puts \"xxx up to here 2: size from 7z = #{entry.size}, my size = #{@file_size}\"\n\n11 matches across 6 files\n\n\nSearching 47 files for \"Dir\" (case sensitive)\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_cron.rb:\n   38  def get_input_directory\n   39    indir = (ARGV[0] || DIR_SCS_SCANS)\n   40:   unless Dir.exist?(indir)\n   41:     mylogger.error \"Directory #{indir} does not exist!\"\n   42      exit(1)\n   43    end\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_test.rb:\n   45      make_db_connection\n   46      input_dir = directory || get_input_directory\n   47:     @logger.fatal(\"No such directory: #{input_dir}\") unless Dir.exist?(input_dir)\n   48      @hrrt.parse(input_dir)\n   49    end\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb:\n   52  \n   53    def all_files\n   54:     all_files = Dir.glob(File.join(@archive_root, \"**/*\")).select { |f| File.file? f }\n   55      count = all_files ? all_files.count : 0\n   56      log_debug(\"#{@archive_root}: #{count} files\")\n   ..\n  284  \n  285    def prune_archive\n  286:     Dir.chdir(@archive_root)\n  287:     Dir['**/*'] \\\n  288        .select { |d| File.directory? d } \\\n  289:       .select { |d| (Dir.entries(d) - %w[. ..]).empty? } \\\n  290:       .each   { |d| Dir.rmdir d }\n  291    end\n  292  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb:\n   10  class HRRTArchiveACS < HRRTArchive\n   11  \n   12:   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')\n   13    ARCHIVE_ROOT      = \"/mnt/hrrt/SCS_SCANS\"\n   14    FILE_NAME_CLEAN  = false\n   ..\n   30    def delete_subject_dir(subject)\n   31      file_path = File.join(ARCHIVE_ROOT_TEST, subject.summary(:summ_fmt_name))\n   32:     if Dir.exists? file_path\n   33:       Dir.chdir file_path\n   34:       files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   35        files.each { |f| File.unlink(File.join(file_path, f)) }\n   36        [HRRTFile::TRANSMISSION, ''].each do |subdir|\n   37          fullpath = File.join(file_path, subdir)\n   38          log_debug(\"unlink #{fullpath}\")\n   39:         Dir.unlink(\"#{fullpath}\") if Dir.exists? fullpath\n   40        end\n   41      end\n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n   26  \n   27    def write_uncomp(source_file)\n   28:     Dir.chdir(source_file.file_path)\n   29      FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   ..\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40:         Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   42        end\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs.rb:\n   22    def read_dirs(indir)\n   23      @all_files = []\n   24:     Dir.chdir(indir)\n   25:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   26  \n   27:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   28:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   29      all_dirs.each do |subdir|\n   30        read_dir(subdir)\n   ..\n   33  \n   34    def read_dir(subdir)\n   35:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   36    end\n   37  \n   ..\n   45    end\n   46  \n   47:   # Create HRRTACSDir objects from contents of ACS directory\n   48    #\n   49    # @param indir [String] name of directory to scan\n   50:   # @return [Hash<HRRTACSDir>] indexed by directory name.\n   51  \n   52    def scan_dirs(indir)\n   53      @acs_dirs = {}\n   54:     Dir.chdir(indir)\n   55:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   56      all_dirs.each do |subdir|\n   57:       @acs_dirs[subdir] = HRRTACSDir.new(File.join(indir, subdir))\n   58        @acs_dirs[subdir].create_hrrt_files\n   59      end\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs_dir.rb:\n   12  include HRRTUtility\n   13  \n   14: class HRRTACSDir\n   15  \n   16    # attr_reader :files_by_datetime\n   ..\n   23      log_debug(\"#{indir}\")\n   24      @indir = indir\n   25:     Dir.chdir(indir)\n   26:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   27    end\n   28  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n   26  \n   27    def write_uncomp(source_file)\n   28:     Dir.chdir(source_file.file_path)\n   29      FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   ..\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40:         Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   42        end\n\n31 matches across 8 files\n\n\nSearching 47 files for \"Dir.\" (case sensitive)\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_cron.rb:\n   38  def get_input_directory\n   39    indir = (ARGV[0] || DIR_SCS_SCANS)\n   40:   unless Dir.exist?(indir)\n   41      mylogger.error \"Directory #{indir} does not exist!\"\n   42      exit(1)\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_test.rb:\n   45      make_db_connection\n   46      input_dir = directory || get_input_directory\n   47:     @logger.fatal(\"No such directory: #{input_dir}\") unless Dir.exist?(input_dir)\n   48      @hrrt.parse(input_dir)\n   49    end\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb:\n   52  \n   53    def all_files\n   54:     all_files = Dir.glob(File.join(@archive_root, \"**/*\")).select { |f| File.file? f }\n   55      count = all_files ? all_files.count : 0\n   56      log_debug(\"#{@archive_root}: #{count} files\")\n   ..\n  284  \n  285    def prune_archive\n  286:     Dir.chdir(@archive_root)\n  287      Dir['**/*'] \\\n  288        .select { |d| File.directory? d } \\\n  289:       .select { |d| (Dir.entries(d) - %w[. ..]).empty? } \\\n  290:       .each   { |d| Dir.rmdir d }\n  291    end\n  292  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb:\n   10  class HRRTArchiveACS < HRRTArchive\n   11  \n   12:   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')\n   13    ARCHIVE_ROOT      = \"/mnt/hrrt/SCS_SCANS\"\n   14    FILE_NAME_CLEAN  = false\n   ..\n   30    def delete_subject_dir(subject)\n   31      file_path = File.join(ARCHIVE_ROOT_TEST, subject.summary(:summ_fmt_name))\n   32:     if Dir.exists? file_path\n   33:       Dir.chdir file_path\n   34:       files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   35        files.each { |f| File.unlink(File.join(file_path, f)) }\n   36        [HRRTFile::TRANSMISSION, ''].each do |subdir|\n   37          fullpath = File.join(file_path, subdir)\n   38          log_debug(\"unlink #{fullpath}\")\n   39:         Dir.unlink(\"#{fullpath}\") if Dir.exists? fullpath\n   40        end\n   41      end\n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n   26  \n   27    def write_uncomp(source_file)\n   28:     Dir.chdir(source_file.file_path)\n   29      FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   ..\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40:         Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   42        end\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs.rb:\n   22    def read_dirs(indir)\n   23      @all_files = []\n   24:     Dir.chdir(indir)\n   25:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   26  \n   27:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   28:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   29      all_dirs.each do |subdir|\n   30        read_dir(subdir)\n   ..\n   33  \n   34    def read_dir(subdir)\n   35:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   36    end\n   37  \n   ..\n   52    def scan_dirs(indir)\n   53      @acs_dirs = {}\n   54:     Dir.chdir(indir)\n   55:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   56      all_dirs.each do |subdir|\n   57:       @acs_dirs[subdir] = HRRTACSDir.new(File.join(indir, subdir))\n   58        @acs_dirs[subdir].create_hrrt_files\n   59      end\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs_dir.rb:\n   23      log_debug(\"#{indir}\")\n   24      @indir = indir\n   25:     Dir.chdir(indir)\n   26:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   27    end\n   28  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n   26  \n   27    def write_uncomp(source_file)\n   28:     Dir.chdir(source_file.file_path)\n   29      FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   ..\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40:         Dir.chdir(source_file.file_path)\n   41          szr.add_file(source_file.file_name)\n   42        end\n\n26 matches across 8 files\n\n\nSearching 47 files for \"File.\" (case sensitive)\n\n/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_cron.rb:\n   19  options = {}\n   20  OptionParser.new do |opts|\n   21:   opts.banner = \"Usage: #{File.basename($0)} [options]\"\n   22    opts.on(\"-v\", \"--[no-]verbose\", \"Verbose\") { |v| options[:verbose] = v }\n   23    opts.on(\"-d\", \"--dummy\"       , \"Dummy\"  ) { |d| options[:dummy]   = d }\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb:\n   52  \n   53    def all_files\n   54:     all_files = Dir.glob(File.join(@archive_root, \"**/*\")).select { |f| File.file? f }\n   55      count = all_files ? all_files.count : 0\n   56      log_debug(\"#{@archive_root}: #{count} files\")\n   ..\n   94  \n   95    def add_hrrt_file(details, scan)\n   96:     if hrrt_file = HRRTFile.create(details[:extn], scan, self)\n   97        @hrrt_files[hrrt_file.datetime][hrrt_file.class] = hrrt_file\n   98      else\n   ..\n  218        puts \"UP TO HERE.  CREATE SCAN OBJECT FROM DATABASE DETAILS TO SEND TO FILE CONSTRUCTOR\"\n  219        test_file = create_hrrt_file(details, scan)\n  220:       #      test_file = HRRTFile.new(scan, archive)\n  221        unless test_file.exists_on_disk?\n  222          test_file.remove_from_database\n  ...\n  286      Dir.chdir(@archive_root)\n  287      Dir['**/*'] \\\n  288:       .select { |d| File.directory? d } \\\n  289        .select { |d| (Dir.entries(d) - %w[. ..]).empty? } \\\n  290        .each   { |d| Dir.rmdir d }\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb:\n   10  class HRRTArchiveACS < HRRTArchive\n   11  \n   12:   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')\n   13    ARCHIVE_ROOT      = \"/mnt/hrrt/SCS_SCANS\"\n   14    FILE_NAME_CLEAN  = false\n   ..\n   21  \n   22    def file_path(f)\n   23:     file_path = File.join(@archive_root, f.subject.summary(:summ_fmt_name))\n   24:     file_path = File.join(file_path, TRANSMISSION) if f.scan.scan_type == HRRTScan::TYPE_TX\n   25      file_path\n   26    end\n   ..\n   29  \n   30    def delete_subject_dir(subject)\n   31:     file_path = File.join(ARCHIVE_ROOT_TEST, subject.summary(:summ_fmt_name))\n   32      if Dir.exists? file_path\n   33        Dir.chdir file_path\n   34:       files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   35:       files.each { |f| File.unlink(File.join(file_path, f)) }\n   36        [HRRTFile::TRANSMISSION, ''].each do |subdir|\n   37:         fullpath = File.join(file_path, subdir)\n   38          log_debug(\"unlink #{fullpath}\")\n   39          Dir.unlink(\"#{fullpath}\") if Dir.exists? fullpath\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_local.rb:\n   24  \n   25    def self.files_in_test_archive\n   26:     found_files = Find.find(ARCHIVE_ROOT_TEST) { |f| File.file?(f) }\n   27      found_files = [] unless found_files\n   28    end\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb:\n  159    end\n  160  \n  161:   # Return a hash of details relevant to this File.\n  162    # From self: extn()\n  163    # From subject: :last, :first, :history\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb:\n   16    ARCHIVE_FORMAT = FORMAT_NATIVE\n   17  \n   18:   HDR_FILE_ERB = File.absolute_path(File.dirname(__FILE__) + \"/../etc/hrrt.hdr.erb\")\n   19  \n   20    # ------------------------------------------------------------\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb:\n   19    SUMMARY_FORMAT     = \"%<name_last>-20s, %<name_first>-20s %<history>s\\n\"\n   20  \n   21:   TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + \"/../etc\")\n   22    TEST_SUBJECTS_FILE = \"test_subjects_1.json\"\n   23  \n   ..\n   50  \n   51    def self.make_test_subjects\n   52:     subject_data = JSON.parse(File.read(self.test_subjects_file), symbolize_names: true)\n   53      subjects = []\n   54      subject_data.each do |subj|\n   ..\n   62    def self.test_subjects_file\n   63      subjects_file = MyOpts.get(:subjects) || TEST_SUBJECTS_FILE\n   64:     File.join(TEST_SUBJECTS_PATH, subjects_file)\n   65    end\n   66  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb:\n   72  \n   73  #    log_debug(infile)\n   74:     filename = File.basename(infile)\n   75      if match = NAME_PATTERN_STD.match(filename)\n   76        details = {scan_datetime: datetime_from_std(match)}\n\n/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb:\n   31  \n   32    def file_line(match)\n   33:     file_line = sprintf(\"%s:%d\", File.basename(match[:filename]), match[:lineno])\n   34      #    puts \"xxx filewidth #{MyLogging.filewidth}, len #{file_line.length}\"\n   35      MyLogging.filewidth = [MyLogging.filewidth, file_line.length].max\n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n   36      log_debug(\"source #{source_file.full_name}, dest #{full_name}\")\n   37      FileUtils.mkdir_p(file_path)\n   38:     File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40          Dir.chdir(source_file.file_path)\n   ..\n   77    def is_compressed_copy_of?(source_file)\n   78      present = false\n   79:     if File.exist?(full_name)\n   80:       File.open(full_name, \"rb\") do |file|\n   81          SevenZipRuby::Reader.open(file) do |szr|\n   82            entry = szr.entries.first\n   ..\n   91  \n   92    def file_contents(filename)\n   93:     file = File.open(filename)\n   94      contents = file.read\n   95      file.close\n   ..\n  102    def exists_on_disk?\n  103      exists = false\n  104:     if File.exist?(full_name)\n  105:       stat = File.stat(full_name)\n  106        exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i\n  107              log_debug(\"#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}\")\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage.rb:\n   27  \n   28    def full_name\n   29:     file_path ? File.join(file_path, file_name) : \"\"\n   30    end\n   31  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   31  \n   32    def delete\n   33:     if File.exist? full_name\n   34:       File.unlink(full_name)\n   35        log_debug(full_name)\n   36      else\n   ..\n   40  \n   41    def write_test_data\n   42:     #    log_debug(File.join(@file_path, @file_name))\n   43      FileUtils.mkdir_p(file_path)\n   44:     f = File.new(full_name,  \"w\")\n   45      f.write(@parent.test_data_contents)\n   46      f.close\n   ..\n   48  \n   49    def read_physical\n   50:     if (stat = File.exist?(full_name) ? File.stat(full_name) : nil)\n   51        @file_size     = stat.size\n   52        @file_modified = stat.mtime.to_i\n\n/Users/ahc/DEV/hrrt/ruby/test/tc_test01.rb:\n   23        @@options = {subjects: nil}\n   24        OptionParser.new do |opts|\n   25:         opts.banner = \"Usage: #{File.basename($0)} [options]\"\n   26          opts.on(\"-v\", \"--[no-]verbose\", \"Verbose\"  ) { |v| @@options[:verbose]  = v }\n   27          opts.on(\"-d\", \"--dummy\"       , \"Dummy\"    ) { |d| @@options[:dummy]    = d }\n   ..\n  130      #   files.each { |ftype, fdet| num_test_files += fdet.count }\n  131      # end\n  132:     # puts \"HRRTFile.name is #{HRRTFile.name}\"\n  133:     # puts \"records_1[HRRTFile.name] is #{records_1[HRRTFile.name]}\"\n  134      # pp records_1\n  135:     # assert_equal(num_test_files, records_1[HRRTFile.name])\n  136  \n  137      #  # # Test number of scans in database against number created\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs.rb:\n   23      @all_files = []\n   24      Dir.chdir(indir)\n   25:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   26  \n   27:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   28:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   29      all_dirs.each do |subdir|\n   30        read_dir(subdir)\n   ..\n   33  \n   34    def read_dir(subdir)\n   35:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   36    end\n   37  \n   ..\n   53      @acs_dirs = {}\n   54      Dir.chdir(indir)\n   55:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   56      all_dirs.each do |subdir|\n   57:       @acs_dirs[subdir] = HRRTACSDir.new(File.join(indir, subdir))\n   58        @acs_dirs[subdir].create_hrrt_files\n   59      end\n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs_dir.rb:\n   24      @indir = indir\n   25      Dir.chdir(indir)\n   26:     @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   27    end\n   28  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_archive_local.rb:\n   24  \n   25    def self.files_in_test_archive\n   26:     found_files = Find.find(ARCHIVE_ROOT_TEST) { |f| File.file?(f) }\n   27      found_files = [] unless found_files\n   28    end\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n   36      log_debug(\"source #{source_file.full_name}, dest #{full_name}\")\n   37      FileUtils.mkdir_p(file_path)\n   38:     File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n   40          Dir.chdir(source_file.file_path)\n   ..\n   77    def is_compressed_copy_of?(source_file)\n   78      present = false\n   79:     if File.exist?(full_name)\n   80:       File.open(full_name, \"rb\") do |file|\n   81          SevenZipRuby::Reader.open(file) do |szr|\n   82            entry = szr.entries.first\n   ..\n   91  \n   92    def file_contents(filename)\n   93:     file = File.open(filename)\n   94      contents = file.read\n   95      file.close\n   ..\n  102    def exists_on_disk?\n  103      exists = false\n  104:     if File.exist?(full_name)\n  105:       stat = File.stat(full_name)\n  106        exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i\n  107              log_debug(\"#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}\")\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage.rb:\n   27  \n   28    def full_name\n   29:     file_path ? File.join(file_path, file_name) : \"\"\n   30    end\n   31  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage_file.rb:\n   31  \n   32    def delete\n   33:     if File.exist? full_name\n   34:       File.unlink(full_name)\n   35        log_debug(full_name)\n   36      else\n   ..\n   40  \n   41    def write_test_data\n   42:     #    log_debug(File.join(@file_path, @file_name))\n   43      FileUtils.mkdir_p(file_path)\n   44:     f = File.new(full_name,  \"w\")\n   45      f.write(@parent.test_data_contents)\n   46      f.close\n   ..\n   48  \n   49    def read_physical\n   50:     if (stat = File.exist?(full_name) ? File.stat(full_name) : nil)\n   51        @file_size     = stat.size\n   52        @file_modified = stat.mtime.to_i\n\n64 matches across 19 files\n\n\nSearching 47 files for \"File.d\" (case sensitive)\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb:\n  286      Dir.chdir(@archive_root)\n  287      Dir['**/*'] \\\n  288:       .select { |d| File.directory? d } \\\n  289        .select { |d| (Dir.entries(d) - %w[. ..]).empty? } \\\n  290        .each   { |d| Dir.rmdir d }\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb:\n   16    ARCHIVE_FORMAT = FORMAT_NATIVE\n   17  \n   18:   HDR_FILE_ERB = File.absolute_path(File.dirname(__FILE__) + \"/../etc/hrrt.hdr.erb\")\n   19  \n   20    # ------------------------------------------------------------\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb:\n   19    SUMMARY_FORMAT     = \"%<name_last>-20s, %<name_first>-20s %<history>s\\n\"\n   20  \n   21:   TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + \"/../etc\")\n   22    TEST_SUBJECTS_FILE = \"test_subjects_1.json\"\n   23  \n\n/Users/ahc/DEV/hrrt/ruby/unused/hrrt_acs.rb:\n   23      @all_files = []\n   24      Dir.chdir(indir)\n   25:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   26  \n   27      @all_files = Dir.glob(\"**/*\").select { |f| File.file? f }\n   28:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   29      all_dirs.each do |subdir|\n   30        read_dir(subdir)\n   ..\n   53      @acs_dirs = {}\n   54      Dir.chdir(indir)\n   55:     all_dirs = Dir.glob('*').select { |f| File.directory? f }\n   56      all_dirs.each do |subdir|\n   57        @acs_dirs[subdir] = HRRTACSDir.new(File.join(indir, subdir))\n\n6 matches across 4 files\n",
 			"settings":
 			{
-				"buffer_size": 564,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "#! /usr/bin/env ruby\n\nrequire 'pp'\nrequire 'rsync'\n\nrequire_relative './my_logging'\nrequire_relative './HRRT_Scan'\nrequire_relative './HRRT_Utility'\n\ninclude MyLogging\ninclude HRRTUtility\n\n# Class representing an HRRT archive (file backup)\n\nclass HRRTArchive\n\n  def initialize(options)\n    @options = options\n  end\n\n  # Archive all files in the ACS.\n\n  def archive_files(acs)\n    acs.scans_by_datetime.each do |datetime, scan|\n      scan.files.each { |extn, f| archive_file(f) }\n    end\n  end\n\n  # Archive given file\n\n  def archive_file(f)\n    unless present?(f)\n      store_file(f)\n    end\n  end\n\n  # Test whether given HRRTFile object is stored in this archive\n  #\n  # @abstract\n  # @param f [HRRTFile] The file to test for.\n  # @raise [NotImplementedError]\n\n  def present?(f)\n    fail NotImplementedError, \"Method present? must be implemented\"\n  end\n\n  # Name to be used for this HRRTFile object in this archive.\n  #\n  # @abstract\n  # @param f [HRRTFile] The file to return the name of.\n  # @raise [NotImplementedError]\n\n  def name_in_archive(f)\n    fail NotImplementedError, \"Method name_in_archive? must be implemented\"\n  end\n\n  # Name to be used for this HRRTFile object in this archive.\n  #\n  # @abstract\n  # @param f [HRRTFile] The file to return the name of.\n  # @raise [NotImplementedError]\n\n  def path_in_archive(f)\n    fail NotImplementedError, \"Method path_in_archive? must be implemented\"\n  end\n\n  # Store HRRTFile object in this archive.\n  #\n  # @abstract\n  # @param f [HRRTFile] The file to store\n  # @raise [NotImplementedError]\n\n  def store_file(f)\n#    fqn = full_archive_name(f)\n#    mylogger.info(\"store_file(#{fqn}\")\n    fail NotImplementedError, \"Method store_file must be implemented\"\n  end\n\n  # Return fully qualified name of HRRTFile object in this archive.\n  #\n  # @abstract\n  # @param f [HRRTFile]\n  # @raise [NotImplementedError]\n\n  def full_archive_name(f)\n    fail NotImplementedError, \"Method path_in_archive? must be implemented\"\n  end\n\n  # Verify HRRTFile object in this archive.\n  #\n  # @abstract\n  # @param f [HRRTFile] The file to verify\n  # @raise [NotImplementedError]\n\n  def verify_file(f)\n    fail NotImplementedError, \"Method verify_file must be implemented\"\n  end\n\n\nend\n",
-			"file": "lib/HRRT_Archive.rb",
-			"file_size": 1975,
-			"file_write_time": 130855999610000000,
-			"settings":
-			{
-				"buffer_size": 2213,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "#! /usr/bin/env ruby\n\nrequire 'fileutils'\nrequire 'rsync'\n\nrequire_relative './HRRT_Archive'\n\n# Class representing the HRRT local (hrrt-recon) file archive\nclass HRRTArchiveLocal < HRRTArchive\n\n  ARCHIVE_ROOT = '/data/archive'\n  ARCHIVE_PATH_FMT = \"%<root>s/20%<yr>02d/%<mo>02d\"\n\n\n  # Test whether given HRRTFile object is stored in this archive\n  #\n  # @param f [HRRTFile] The file to test for.\n  # @return [true, false] true if present, else false.\n\n  def present?(f)\n    present = false\n    if (fqn = full_archive_name(f))\n      present = File.readable?(fqn)\n      mylogger.info(\"present(#{fqn}): #{present}\")\n    end\n    present\n  end\n\n\n  # Name to be used for this HRRTFile object in this archive.\n  #\n  # @param f [HRRTFile] The file to return the name of.\n  # @return [String] Name of the file in this archive.\n\n  def name_in_archive(f)\n    f.standard_name\n  end\n\n  # Name to be used for this HRRTFile object in this archive.\n  #\n  # @param f [HRRTFile] The file to return the name of.\n  # @return [String] Name of the path in this archive.\n  # @raise Error if date string is not parsed.\n\n  def path_in_archive(f)\n    if m = parse_date(f.scan_date)\n      path = sprintf(ARCHIVE_PATH_FMT, root: ARCHIVE_ROOT, yr: m[:yr], mo: m[:mo])\n    else\n      raise\n    end\n    path\n  end\n\n  # Return fully qualified name of HRRTFile object in this archive.\n  #\n  # @param f [HRRTFile]\n\n  def full_archive_name(f)\n    fqn = nil\n    if ((path = path_in_archive(f)) && (name = name_in_archive(f)))\n      fqn = File.join(path, name)\n    else\n      raise\n    end\n    fqn\n  end\n\n  # Store HRRTFile object in this archive.\n  #\n  # @param f [HRRTFile] The file to store\n\n  def store_file(f)\n    if @options[:dummy]\n      mylogger.info(\"store_file(#{f.full_name}, #{full_archive_name(f)}\")\n    else\n      FileUtils.mkdir_p(path_in_archive(f))\n      result = Rsync.run(f.full_name, full_archive_name(f))\n      unless result.success?\n        puts result.error\n        raise\n      end\n    end\n  end\n\n  # Verify HRRTFile object in this archive.\n  #\n  # @param f [HRRTFile] The file to verify\n  # @raise [NotImplementedError]\n\n  def verify_file(f)\n    File.open(full_archive_name(f), \"rb\") do |file|\n      SevenZipRuby::Reader.verify(file)\n      # => true/false\n    end\n  end\n\nend\n",
-			"file": "lib/HRRT_Archive_Local.rb",
-			"file_size": 1987,
-			"file_write_time": 130856889800000000,
-			"settings":
-			{
-				"buffer_size": 2262,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "lib/HRRT_Utility.rb",
-			"settings":
-			{
-				"buffer_size": 2762,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "lib/HRRT_ACS_Dir.rb",
-			"settings":
-			{
-				"buffer_size": 1548,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "lib/HRRT_File.rb",
-			"settings":
-			{
-				"buffer_size": 2843,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "Searching 39 files for \"module\"\n\n~/Dropbox/DEV/hrrt/ruby/.yardoc/object_types:\n    <binary>\n\n~/Dropbox/DEV/hrrt/ruby/.yardoc/objects/root.dat:\n    <binary>\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/_index.html:\n  114              \n  115                <li>\n  116:                 <span class='object_link'><a href=\"HRRTUtility.html\" title=\"HRRTUtility (module)\">HRRTUtility</a></span>\n  117                  \n  118                </li>\n  ...\n  127              \n  128                <li>\n  129:                 <span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span>\n  130                  \n  131                </li>\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/class_list.html:\n   51        <ul id=\"full_list\" class=\"class\">\n   52          <li><span class='object_link'><a href=\"top-level-namespace.html\" title=\"Top Level Namespace (root)\">Top Level Namespace</a></span></li>\n   53: <li><span class='object_link'><a href=\"HRRTACS.html\" title=\"HRRTACS (class)\">HRRTACS</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTACSDir.html\" title=\"HRRTACSDir (class)\">HRRTACSDir</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTArchive.html\" title=\"HRRTArchive (class)\">HRRTArchive</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTArchiveLocal.html\" title=\"HRRTArchiveLocal (class)\">HRRTArchiveLocal</a></span> &lt; HRRTArchive<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTFile.html\" title=\"HRRTFile (class)\">HRRTFile</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTScan.html\" title=\"HRRTScan (class)\">HRRTScan</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTSubject.html\" title=\"HRRTSubject (class)\">HRRTSubject</a></span> &lt; Object<small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"HRRTUtility.html\" title=\"HRRTUtility (module)\">HRRTUtility</a></span><small class='search_info'>Top Level Namespace</small></li><li><span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span><small class='search_info'>Top Level Namespace</small></li>\n   54  \n   55        </ul>\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/HRRTUtility.html:\n    5      <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n    6  <title>\n    7:   Module: HRRTUtility\n    8    \n    9      &mdash; Documentation by YARD 0.8.7.6\n   ..\n   64      <iframe id=\"search_frame\"></iframe>\n   65  \n   66:     <div id=\"content\"><h1>Module: HRRTUtility\n   67    \n   68    \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/index.html:\n  114              \n  115                <li>\n  116:                 <span class='object_link'><a href=\"HRRTUtility.html\" title=\"HRRTUtility (module)\">HRRTUtility</a></span>\n  117                  \n  118                </li>\n  ...\n  127              \n  128                <li>\n  129:                 <span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span>\n  130                  \n  131                </li>\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/MyLogging.html:\n    5      <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n    6  <title>\n    7:   Module: MyLogging\n    8    \n    9      &mdash; Documentation by YARD 0.8.7.6\n   ..\n   64      <iframe id=\"search_frame\"></iframe>\n   65  \n   66:     <div id=\"content\"><h1>Module: MyLogging\n   67    \n   68    \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/top-level-namespace.html:\n   77      \n   78        <dt class=\"r1\">Includes:</dt>\n   79:       <dd class=\"r1\"><span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span></dd>\n   80        \n   81      \n   ..\n   90    \n   91      \n   92:       <strong class=\"modules\">Modules:</strong> <span class='object_link'><a href=\"HRRTUtility.html\" title=\"HRRTUtility (module)\">HRRTUtility</a></span>, <span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span>\n   93      \n   94    \n   ..\n  166    \n  167    \n  168:   <h3 class=\"inherited\">Methods included from <span class='object_link'><a href=\"MyLogging.html\" title=\"MyLogging (module)\">MyLogging</a></span></h3>\n  169    <p class=\"inherited\"><span class='object_link'><a href=\"MyLogging.html#configure_logger_for-class_method\" title=\"MyLogging.configure_logger_for (method)\">configure_logger_for</a></span>, <span class='object_link'><a href=\"MyLogging.html#logger_for-class_method\" title=\"MyLogging.logger_for (method)\">logger_for</a></span>, <span class='object_link'><a href=\"MyLogging.html#mylogger-instance_method\" title=\"MyLogging#mylogger (method)\">#mylogger</a></span></p>\n  170  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/doc/css/style.css:\n  212  p.children a { font-size: 0.9em; }\n  213  p.children strong { font-size: 0.8em; }\n  214: p.children strong.modules { padding-left: 5px; }\n  215  \n  216  ul.fullTree { display: none; padding-left: 0; list-style: none; margin-left: 0; margin-bottom: 10px; }\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Utility.rb:\n    7  # Utility functions for HRRT files and names.\n    8  \n    9: module HRRTUtility\n   10  \n   11    # ------------------------------------------------------------\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/my_logging.rb:\n    5  # Got this from http://goo.gl/vynfZ\n    6  \n    7: module MyLogging\n    8    def mylogger\n    9      @logger ||= MyLogging.logger_for(self.class.name)\n\n23 matches across 11 files\n",
-			"settings":
-			{
-				"buffer_size": 5772,
+				"buffer_size": 27130,
 				"line_ending": "Unix",
 				"name": "Find Results",
 				"scratch": true
 			}
 		},
 		{
-			"file": "lib/HRRT_ACS.rb",
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb",
 			"settings":
 			{
-				"buffer_size": 1578,
+				"buffer_size": 5374,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb",
+			"settings":
+			{
+				"buffer_size": 2141,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt.rb",
+			"settings":
+			{
+				"buffer_size": 6659,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb",
+			"settings":
+			{
+				"buffer_size": 1931,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb",
+			"settings":
+			{
+				"buffer_size": 1327,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_database.rb",
+			"settings":
+			{
+				"buffer_size": 4384,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "db/migrations/001_create_files.rb",
+			"settings":
+			{
+				"buffer_size": 951,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib/storage.rb",
+			"settings":
+			{
+				"buffer_size": 1520,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib/storage_file.rb",
+			"settings":
+			{
+				"buffer_size": 1745,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib/storage_aws.rb",
+			"settings":
+			{
+				"buffer_size": 1382,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "require 'fileutils'\nrequire 'find'\nrequire 'rsync'\nrequire 'aws-sdk'\nrequire 'aws-sdk-core'\n\nrequire_relative './hrrt_archive'\n\n# Class representing the HRRT remote (AWS) file archive\n\nclass HRRTArchiveAWS < HRRTArchive\n  ARCHIVE_ROOT      = 'hrrt-recon'\n  ARCHIVE_ROOT_TEST = 'hrrt-recon-test'\n  BUCKET_NAME       = 'hrrt-recon'\n  BUCKET_NAME_TEST  = 'hrrt-recon-test'\n  AWS_HOSTNAME      = 'AWS'\n  FILE_NAME_FORMAT = \"%<year2>02d%<month>02d%<day>02d_%<hour>02d%<min>02d%<sec>02d.%<extn>s\"\n  FILE_NAME_CLEAN  = true\n  STORAGE_CLASS = \"StorageAWS\"\n\n  def initialize\n    super\n    log_debug\n    log_in\n    @rsrc   = Aws::S3::Resource.new\n    @client = Aws::S3::Client.new\n    @bucket = @rsrc.bucket(bucket_name)\n  end\n\n  def file_path(f)\n    bucket_name\n  end\n\n\n  def bucket_name\n    MyOpts.get(:test) ? BUCKET_NAME_TEST : BUCKET_NAME\n  end\n\n  def log_in\n    Aws.config.update(\n      {\n        region: 'us-east-1',\n        credentials: Aws::SharedCredentials.new(:profile_name => @archive_root)\n      }\n    )\n  end\n\n  def read_files\n    # Moved to all_files().  Left for completeness (called in base class sometimes)\n  end\n\n  # Return all Objects in this Bucket\n  #\n  # @return [ObjectSummary]\n\n  def all_files\n    @bucket.objects\n  end\n\n  def store_copy(source_file, dest_file)\n    log_debug(\"---------- begin source #{source_file.class} dest #{dest_file.class} ----------\")\n    dest_object = @bucket.object(dest_file.file_name)\n    params = { metadata: metadata_from_file(source_file) }\n    dest_object.upload_file(source_file.full_name, params) or raise(\"upload_file(#{source_file.full_name})\")\n	dest_file.aws_object = dest_object    \n    dest_file.read_physical\n    log_debug\n    dest_file.summary(false)\n    dest_file.ensure_in_database\n  end\n\n  def metadata_from_file(source_file)\n    metadata = {}\n    %i(file_md5 file_crc32 extn file_modified).each      { |key| metadata[key] = source_file.send(key) }\n    %i(scan_date scan_time scan_type).each { |key| metadata[key] = source_file.scan.send(key) }\n    %i(name_last name_first history).each  { |key| metadata[key] = source_file.scan.subject.send(key) }\n    log_debug(source_file.file_name)\n    pp metadata\n    metadata\n  end\n\n  # Not used in AWS since no directory structure.\n\n  def prune_archive\n  end\n\n  def is_copy?(source, dest)\n    fail NotImplementedError, \"Method #{__method__} must be implemented in derived class\"\n  end\n\nend\n",
+			"file": "lib/hrrt_archive_aws.rb",
+			"file_size": 2390,
+			"file_write_time": 130916690780000000,
+			"settings":
+			{
+				"buffer_size": 2390,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib/hrrt_archive_local.rb",
+			"settings":
+			{
+				"buffer_size": 3384,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb",
+			"settings":
+			{
+				"buffer_size": 7071,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb",
+			"settings":
+			{
+				"buffer_size": 7201,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib/physical_file.rb",
+			"settings":
+			{
+				"buffer_size": 5374,
 				"line_ending": "Unix"
 			}
 		},
@@ -203,23 +356,63 @@
 			"file": "Gemfile",
 			"settings":
 			{
-				"buffer_size": 65,
+				"buffer_size": 207,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "lib/HRRT_Scan.rb",
+			"file": "lib/my_opts.rb",
 			"settings":
 			{
-				"buffer_size": 1224,
+				"buffer_size": 261,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "lib/HRRT_Subject.rb",
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_scan.rb",
 			"settings":
 			{
-				"buffer_size": 1085,
+				"buffer_size": 3567,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb",
+			"settings":
+			{
+				"buffer_size": 3214,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/etc/test_subjects.json",
+			"settings":
+			{
+				"buffer_size": 268,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64.rb",
+			"settings":
+			{
+				"buffer_size": 1460,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb",
+			"settings":
+			{
+				"buffer_size": 2152,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hc.rb",
+			"settings":
+			{
+				"buffer_size": 862,
 				"line_ending": "Unix"
 			}
 		}
@@ -232,7 +425,7 @@
 	"command_palette":
 	{
 		"height": 392.0,
-		"last_filter": "package",
+		"last_filter": "",
 		"selected_items":
 		[
 			[
@@ -240,7 +433,7 @@
 				"Package Control: Install Package"
 			]
 		],
-		"width": 530.0
+		"width": 567.0
 	},
 	"console":
 	{
@@ -260,16 +453,54 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/ahc/Dropbox/DEV/hrrt/ruby",
-		"/Users/ahc/Dropbox/DEV/hrrt/ruby/bin",
-		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib"
+		"/Users/ahc/DEV/hrrt/ruby",
+		"/Users/ahc/DEV/hrrt/ruby/lib"
 	],
 	"file_history":
 	[
-		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Archive_Local.rb",
-		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/Alignment/Base File.sublime-settings",
-		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/Alignment/Default (OSX).sublime-keymap",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/db/migrations/001_create_files.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_aws.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb",
+		"/Users/ahc/DEV/hrrt/ruby/db/migrations/001_create_files.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_archive.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/my_opts.rb",
+		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/User/Ruby.sublime-settings",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_archive_local.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_local.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/bin/hrrt_recon_test.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/test/tc_test01.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb",
+		"/Users/ahc/DEV/hrrt/ruby/etc/test_subjects.json",
+		"/Users/ahc/DEV/hrrt/ruby/test_subjects_1.json",
+		"/Users/ahc/DEV/hrrt/ruby/bin/hrrt_recon_test.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_database.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_scan.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_acs_dir.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_acs.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb",
+		"/Users/ahc/DEV/hrrt/ruby/Gemfile",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Subject.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Scan.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/HRRT_ACS.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/HRRT_Archive.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_ACS.rb",
 		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_ACS_Dir.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Utility.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/db/migrations/0002_modify_files.rb",
+		"/Users/ahc/DEV/hrrt/ruby/lib/HRRT_Archive_Local.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Archive.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_Archive_Local.rb",
+		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/User/Base File.sublime-settings",
+		"/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb",
+		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/Alignment/Default (OSX).sublime-keymap",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/bin/hrrt_recon_cron.rb",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/Gemfile",
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/HRRT_File.rb",
+		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/Alignment/Base File.sublime-settings",
 		"/Users/ahc/Library/Application Support/Sublime Text 3/Packages/BeautifyRuby/Default (OSX).sublime-keymap",
 		"/Users/ahc/Dropbox/DEV/ruby/proj/github/Gemfile",
 		"/Users/ahc/Dropbox/DEV/projects/study_aric/ruby/bin/update_scan.rb",
@@ -289,75 +520,137 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
-			"module",
-			"date_fmt",
-			"new",
-			"scans",
-			"    @",
-			"scanfiles",
-			"scanfiles_by_datetime",
-			"acs_dirs",
-			"combine_files",
-			"files_in_dirs",
-			"files_by_datetime",
-			"make_acs_dirs",
-			"needed_names",
-			"needed",
-			"needed_names",
-			"needed",
-			"files_by_datetime",
-			" @",
-			"puts",
-			"log",
-			"my_logging",
-			"log",
-			"extn",
-			"scan_type",
-			"type",
-			"time",
-			"date",
-			"indir",
-			"scanfile",
-			"dirname",
-			"scandirs",
-			"scans_in_dirs",
-			"allscans",
-			"scans_in_dir",
-			"hrrt_files",
+			"File.d",
+			"File.",
+			"Dir.",
+			"Dir",
+			"zip",
+			"mylogger",
+			"rsync",
+			"REQ",
+			"present",
+			"read_phy",
+			"read_physical",
+			"find_records_in_d",
+			"find_rec",
+			"ensure_in_database",
+			"@hrrt_files",
+			"@subjects",
+			"subjects",
+			"check_subjects_scans",
+			"id",
+			"delete_record_from_database",
+			"id",
+			"delete",
+			"subject_for",
+			"dest",
+			"full_name",
+			"archive_file",
 			"print_summary",
-			"fetch",
-			"match",
-			"eql",
-			"do",
-			"()",
-			"if",
-			" ",
-			"      @",
-			"$i",
-			"$I",
-			"$i",
-			"$I",
-			"$i",
-			"$I",
-			"$i",
-			"$I",
-			"$i",
-			"$frameno",
-			"sub do_",
-			"$i",
-			" $",
-			"frameno",
-			"sub do_",
-			"frameno",
-			" $",
-			"sub do_",
-			"proc_name",
-			"frame",
-			"frameby",
-			"framebyframe"
+			"scans",
+			"delete_subject_",
+			"details",
+			"new",
+			"METADATA",
+			"checksum",
+			"file_metadata",
+			"aws_object",
+			"write_test_data",
+			"details",
+			"file_path",
+			"full_name",
+			"write_test_data",
+			"create_test_data",
+			"write_test_data",
+			"create_test_data",
+			"delete_subject_test_directory",
+			"ensure_",
+			"empty",
+			"def dele",
+			"subject",
+			"name_last",
+			"subject_name_last",
+			"name_last",
+			"ARCHIVE_SUFFIX",
+			"make_database_params",
+			"remove_from",
+			"def delete",
+			"crc32",
+			"crc",
+			"crc32",
+			"@archive.",
+			"calculate_crc",
+			"read_physical",
+			"SUMMARY_FMT",
+			"summary_fmt",
+			"printf",
+			"archive_file",
+			"store_copy(",
+			"write_file(",
+			"store_copy(",
+			"store_copy",
+			"same_size_as",
+			"same_modification_as",
+			"subjects",
+			"get",
+			"opt",
+			"TEST_SUBJECTS_JSON",
+			"test_subjects_json",
+			"scs_sc",
+			"test_data_path",
+			"scs",
+			"dir_archive",
+			"@hrrt.parse",
+			"parse",
+			"def input",
+			"input_dir",
+			"file_name",
+			"name_in_archive",
+			"@arch",
+			"archive",
+			"where",
+			"assert",
+			"process_scans",
+			"self.class",
+			"db_table",
+			"add_record_to_database",
+			"read_physical",
+			"file_size",
+			"archive_format",
+			"format",
+			"raise",
+			"matches_file",
+			"@subject",
+			"@subj",
+			"subj",
+			"--------------------",
+			"ensure",
+			"test_files",
+			"log_",
+			"hist",
+			"last",
+			"json",
+			"TEST_DATA_PATH",
+			"data/",
+			"ahc",
+			"TRANSMISSION",
+			"summary",
+			"add_hrrt_file",
+			"type",
+			"test_scans",
+			"newsubject",
+			"test_subjects",
+			"@subjects",
+			"puts",
+			"create_subj",
+			"process_subj",
+			"scans_by_datetime",
+			"def proc",
+			"files_by_datetime",
+			"parse"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -375,24 +668,24 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 4,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "bin/hrrt_recon_cron.rb",
+					"file": "/Users/ahc/DEV/hrrt/ruby/test/tc_test01.rb",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1379,
+						"buffer_size": 5762,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								240,
-								240
+								540,
+								540
 							]
 						],
 						"settings":
@@ -400,21 +693,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_double_quote",
 								"bh_double_quote_center",
 								"bh_double_quote_open",
@@ -425,394 +723,31 @@
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": null,
-							"translate_tabs_to_spaces": null
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "lib/my_logging.rb",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 564,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								209,
-								209
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
 								"bh_round",
 								"bh_round_center",
 								"bh_round_open",
 								"bh_round_close",
 								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 9,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "lib/HRRT_Archive.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2213,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1970,
-								2207
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"_anf_new": "",
-							"bh_regions":
-							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
+								"bh_tag_content",
 								"bh_angle",
 								"bh_angle_center",
 								"bh_angle_open",
 								"bh_angle_close",
 								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
 								"bh_regex",
 								"bh_regex_center",
 								"bh_regex_open",
 								"bh_regex_close",
 								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": null,
-							"translate_tabs_to_spaces": null
-						},
-						"translation.x": 0.0,
-						"translation.y": 245.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "lib/HRRT_Archive_Local.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2262,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2163,
-								2163
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
 								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 166.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "lib/HRRT_Utility.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2762,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								913,
-								913
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"_anf_new": "",
-							"bh_regions":
-							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
+								"bh_unmatched_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage",
 							"tab_size": 2,
@@ -822,199 +757,15 @@
 						"translation.y": 1.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 7,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 2,
-			"sheets":
-			[
-				{
-					"buffer": 5,
-					"file": "lib/HRRT_ACS_Dir.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1548,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								620,
-								620
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": null,
-							"translate_tabs_to_spaces": null
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 8,
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
-					"buffer": 6,
-					"file": "lib/HRRT_File.rb",
+					"buffer": 1,
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2843,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								464,
-								464
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"tab_size": null,
-							"translate_tabs_to_spaces": null
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5772,
+						"buffer_size": 27130,
 						"regions":
 						{
 							"match":
@@ -1023,84 +774,853 @@
 								"regions":
 								[
 									[
-										349,
-										355
+										138,
+										146
 									],
 									[
-										576,
-										582
+										192,
+										200
 									],
 									[
-										2227,
-										2233
+										278,
+										286
 									],
 									[
-										2390,
-										2396
+										298,
+										306
 									],
 									[
-										2667,
-										2673
+										488,
+										496
 									],
 									[
-										2840,
-										2846
+										688,
+										696
 									],
 									[
-										3072,
-										3078
+										748,
+										756
 									],
 									[
-										3299,
-										3305
+										798,
+										806
 									],
 									[
-										3539,
-										3545
+										873,
+										881
 									],
 									[
-										3710,
-										3716
+										1069,
+										1077
 									],
 									[
-										3964,
-										3970
+										1252,
+										1260
 									],
 									[
-										4081,
-										4087
+										1522,
+										1530
 									],
 									[
-										4090,
-										4096
+										1580,
+										1588
 									],
 									[
-										4181,
-										4187
+										1628,
+										1636
 									],
 									[
-										4283,
-										4289
+										1698,
+										1706
 									],
 									[
-										4483,
-										4489
+										1833,
+										1841
 									],
 									[
-										5162,
-										5168
+										2109,
+										2117
 									],
 									[
-										5434,
-										5440
+										2258,
+										2266
 									],
 									[
-										5644,
-										5650
+										2453,
+										2461
+									],
+									[
+										2598,
+										2606
+									],
+									[
+										2814,
+										2822
+									],
+									[
+										2968,
+										2976
+									],
+									[
+										3206,
+										3214
+									],
+									[
+										3512,
+										3520
+									],
+									[
+										3745,
+										3753
+									],
+									[
+										3938,
+										3946
+									],
+									[
+										4142,
+										4150
+									],
+									[
+										4333,
+										4341
+									],
+									[
+										4631,
+										4634
+									],
+									[
+										4788,
+										4791
+									],
+									[
+										4890,
+										4893
+									],
+									[
+										5126,
+										5129
+									],
+									[
+										5283,
+										5286
+									],
+									[
+										5463,
+										5466
+									],
+									[
+										5711,
+										5714
+									],
+									[
+										6008,
+										6011
+									],
+									[
+										6181,
+										6184
+									],
+									[
+										6361,
+										6364
+									],
+									[
+										6609,
+										6612
+									],
+									[
+										7012,
+										7015
+									],
+									[
+										7057,
+										7060
+									],
+									[
+										7328,
+										7331
+									],
+									[
+										7498,
+										7501
+									],
+									[
+										7729,
+										7732
+									],
+									[
+										7765,
+										7768
+									],
+									[
+										7856,
+										7859
+									],
+									[
+										7921,
+										7924
+									],
+									[
+										8096,
+										8099
+									],
+									[
+										8354,
+										8357
+									],
+									[
+										8389,
+										8392
+									],
+									[
+										8430,
+										8433
+									],
+									[
+										8720,
+										8723
+									],
+									[
+										8749,
+										8752
+									],
+									[
+										8908,
+										8911
+									],
+									[
+										9167,
+										9170
+									],
+									[
+										9382,
+										9385
+									],
+									[
+										9421,
+										9424
+									],
+									[
+										9500,
+										9503
+									],
+									[
+										9567,
+										9570
+									],
+									[
+										9749,
+										9752
+									],
+									[
+										9867,
+										9870
+									],
+									[
+										10012,
+										10015
+									],
+									[
+										10120,
+										10123
+									],
+									[
+										10159,
+										10162
+									],
+									[
+										10283,
+										10286
+									],
+									[
+										10486,
+										10489
+									],
+									[
+										10616,
+										10619
+									],
+									[
+										10657,
+										10660
+									],
+									[
+										10837,
+										10840
+									],
+									[
+										11096,
+										11099
+									],
+									[
+										11414,
+										11418
+									],
+									[
+										11717,
+										11721
+									],
+									[
+										11887,
+										11891
+									],
+									[
+										12118,
+										12122
+									],
+									[
+										12245,
+										12249
+									],
+									[
+										12310,
+										12314
+									],
+									[
+										12485,
+										12489
+									],
+									[
+										12743,
+										12747
+									],
+									[
+										12778,
+										12782
+									],
+									[
+										12819,
+										12823
+									],
+									[
+										13109,
+										13113
+									],
+									[
+										13138,
+										13142
+									],
+									[
+										13297,
+										13301
+									],
+									[
+										13556,
+										13560
+									],
+									[
+										13771,
+										13775
+									],
+									[
+										13810,
+										13814
+									],
+									[
+										13889,
+										13893
+									],
+									[
+										13956,
+										13960
+									],
+									[
+										14138,
+										14142
+									],
+									[
+										14277,
+										14281
+									],
+									[
+										14316,
+										14320
+									],
+									[
+										14440,
+										14444
+									],
+									[
+										14658,
+										14662
+									],
+									[
+										14699,
+										14703
+									],
+									[
+										14879,
+										14883
+									],
+									[
+										15138,
+										15142
+									],
+									[
+										15453,
+										15458
+									],
+									[
+										15757,
+										15762
+									],
+									[
+										15804,
+										15809
+									],
+									[
+										16013,
+										16018
+									],
+									[
+										16344,
+										16349
+									],
+									[
+										16554,
+										16559
+									],
+									[
+										16813,
+										16818
+									],
+									[
+										16998,
+										17003
+									],
+									[
+										17081,
+										17086
+									],
+									[
+										17269,
+										17274
+									],
+									[
+										17451,
+										17456
+									],
+									[
+										17496,
+										17501
+									],
+									[
+										17508,
+										17513
+									],
+									[
+										17620,
+										17625
+									],
+									[
+										17922,
+										17927
+									],
+									[
+										18116,
+										18121
+									],
+									[
+										18324,
+										18329
+									],
+									[
+										18343,
+										18348
+									],
+									[
+										18639,
+										18644
+									],
+									[
+										18658,
+										18663
+									],
+									[
+										18843,
+										18848
+									],
+									[
+										19091,
+										19096
+									],
+									[
+										19264,
+										19269
+									],
+									[
+										19529,
+										19534
+									],
+									[
+										19914,
+										19919
+									],
+									[
+										20149,
+										20154
+									],
+									[
+										20185,
+										20190
+									],
+									[
+										20390,
+										20395
+									],
+									[
+										20539,
+										20544
+									],
+									[
+										20582,
+										20587
+									],
+									[
+										20920,
+										20925
+									],
+									[
+										21067,
+										21072
+									],
+									[
+										21102,
+										21107
+									],
+									[
+										21244,
+										21249
+									],
+									[
+										21334,
+										21339
+									],
+									[
+										21489,
+										21494
+									],
+									[
+										21514,
+										21519
+									],
+									[
+										21793,
+										21798
+									],
+									[
+										22128,
+										22133
+									],
+									[
+										22147,
+										22152
+									],
+									[
+										22192,
+										22197
+									],
+									[
+										22222,
+										22227
+									],
+									[
+										22317,
+										22322
+									],
+									[
+										22561,
+										22566
+									],
+									[
+										22643,
+										22648
+									],
+									[
+										22707,
+										22712
+									],
+									[
+										22892,
+										22897
+									],
+									[
+										23037,
+										23042
+									],
+									[
+										23142,
+										23147
+									],
+									[
+										23390,
+										23395
+									],
+									[
+										23595,
+										23600
+									],
+									[
+										23853,
+										23858
+									],
+									[
+										24088,
+										24093
+									],
+									[
+										24124,
+										24129
+									],
+									[
+										24329,
+										24334
+									],
+									[
+										24478,
+										24483
+									],
+									[
+										24521,
+										24526
+									],
+									[
+										24867,
+										24872
+									],
+									[
+										25022,
+										25027
+									],
+									[
+										25057,
+										25062
+									],
+									[
+										25199,
+										25204
+									],
+									[
+										25289,
+										25294
+									],
+									[
+										25444,
+										25449
+									],
+									[
+										25469,
+										25474
+									],
+									[
+										25797,
+										25803
+									],
+									[
+										26069,
+										26075
+									],
+									[
+										26384,
+										26390
+									],
+									[
+										26631,
+										26637
+									],
+									[
+										26777,
+										26783
+									],
+									[
+										26973,
+										26979
 									]
 								],
 								"scope": ""
 							}
+						},
+						"selection":
+						[
+							[
+								25846,
+								25846
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 6,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 11085.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5374,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								899,
+								899
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2141,
+						"regions":
+						{
 						},
 						"selection":
 						[
@@ -1114,21 +1634,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_double_quote",
 								"bh_double_quote_center",
 								"bh_double_quote_open",
@@ -1139,82 +1664,73 @@
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_regex",
 								"bh_regex_center",
 								"bh_regex_open",
 								"bh_regex_close",
 								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content"
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
 							],
-							"default_dir": "/Users/ahc/Dropbox/DEV/hrrt/ruby",
-							"detect_indentation": false,
-							"line_numbers": false,
-							"output_tag": 1,
-							"result_base_dir": "",
-							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
-							"result_line_regex": "^ +([0-9]+):",
-							"scroll_past_end": true,
-							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
-					"buffer": 8,
-					"file": "lib/HRRT_ACS.rb",
+					"buffer": 4,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt.rb",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1578,
+						"buffer_size": 6659,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								271,
-								271
+								2320,
+								2320
 							]
 						],
 						"settings":
 						{
 							"BracketHighlighterBusy": false,
-							"_anf_new": "",
 							"bh_regions":
 							[
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
 								"bh_angle",
 								"bh_angle_center",
 								"bh_angle_open",
@@ -1230,31 +1746,26 @@
 								"bh_double_quote_open",
 								"bh_double_quote_close",
 								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_square",
 								"bh_square_center",
 								"bh_square_open",
@@ -1271,27 +1782,27 @@
 							"translate_tabs_to_spaces": null
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 645.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 9,
-					"file": "Gemfile",
+					"buffer": 5,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive.rb",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 65,
+						"buffer_size": 1931,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								64,
-								64
+								1931,
+								1931
 							]
 						],
 						"settings":
@@ -1299,6 +1810,832 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 2882.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1327,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								837,
+								837
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"_anf_new": "",
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_database.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4384,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2861,
+								2861
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 947.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "db/migrations/001_create_files.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 951,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "lib/storage.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1520,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1150,
+								1150
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 118.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "lib/storage_file.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1745,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1597,
+								1597
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 238.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "lib/storage_aws.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1382,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								144,
+								144
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 87.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "lib/hrrt_archive_aws.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2390,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1014,
+								1014
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 587.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "lib/hrrt_archive_local.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3384,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								980,
+								980
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7071,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3120,
+								3120
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
@@ -1314,36 +2651,191 @@
 								"bh_round_open",
 								"bh_round_close",
 								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
 								"bh_regex",
 								"bh_regex_center",
 								"bh_regex_open",
 								"bh_regex_close",
 								"bh_regex_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 1488.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 20,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 15,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7201,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6232,
+								6232
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
 								"bh_c_define",
 								"bh_c_define_center",
 								"bh_c_define_open",
 								"bh_c_define_close",
 								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"history_list_is_closing": true,
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2893.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "lib/physical_file.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5374,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								145,
+								145
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_square",
 								"bh_square_center",
 								"bh_square_open",
@@ -1361,37 +2853,128 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 10,
-					"file": "lib/HRRT_Scan.rb",
+					"buffer": 17,
+					"file": "Gemfile",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1224,
+						"buffer_size": 207,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1102,
-								1102
+								0,
+								207
 							]
 						],
 						"settings":
 						{
 							"BracketHighlighterBusy": false,
-							"_anf_new": "",
 							"bh_regions":
 							[
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
 								"bh_unmatched_close",
-								"bh_unmatched_content",
+								"bh_unmatched_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "lib/my_opts.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 261,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								261,
+								261
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
 								"bh_angle",
 								"bh_angle_center",
 								"bh_angle_open",
@@ -1407,6 +2990,68 @@
 								"bh_double_quote_open",
 								"bh_double_quote_close",
 								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7071,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								882,
+								882
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -1417,11 +3062,6 @@
 								"bh_single_quote_open",
 								"bh_single_quote_close",
 								"bh_single_quote_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
 								"bh_c_define",
 								"bh_c_define_center",
 								"bh_c_define_open",
@@ -1437,6 +3077,31 @@
 								"bh_square_open",
 								"bh_square_close",
 								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
@@ -1451,24 +3116,203 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 10,
+					"stack_index": 21,
 					"type": "text"
 				},
 				{
-					"buffer": 11,
-					"file": "lib/HRRT_Subject.rb",
+					"buffer": 19,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_scan.rb",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1085,
+						"buffer_size": 3567,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1054,
-								1054
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"history_list_is_closing": true,
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 1738.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3214,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1862,
+								1862
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": null,
+							"translate_tabs_to_spaces": null
+						},
+						"translation.x": 0.0,
+						"translation.y": 797.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "/Users/ahc/DEV/hrrt/ruby/etc/test_subjects.json",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 268,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								246,
+								246
 							]
 						],
 						"settings":
@@ -1491,11 +3335,11 @@
 								"bh_round_open",
 								"bh_round_close",
 								"bh_round_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -1521,16 +3365,106 @@
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
 								"bh_tag_content"
+							],
+							"history_list_is_closing": true,
+							"syntax": "Packages/JavaScript/JSON.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 25,
+					"type": "text"
+				},
+				{
+					"buffer": 22,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1460,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage",
 							"tab_size": 2,
@@ -1540,7 +3474,186 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 11,
+					"stack_index": 23,
+					"type": "text"
+				},
+				{
+					"buffer": 23,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2152,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content"
+							],
+							"history_list_is_closing": true,
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 5.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 24,
+					"type": "text"
+				},
+				{
+					"buffer": 24,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hc.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 862,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								862,
+								862
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 22,
 					"type": "text"
 				}
 			]
@@ -1601,6 +3714,146 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"aws",
+				"ruby/lib/hrrt_archive_aws.rb"
+			],
+			[
+				"hrrt",
+				"ruby/lib/hrrt.rb"
+			],
+			[
+				"hrr",
+				"ruby/lib/hrrt.rb"
+			],
+			[
+				"hr",
+				"ruby/lib/hrrt.rb"
+			],
+			[
+				"file",
+				"ruby/lib/hrrt_file.rb"
+			],
+			[
+				"phy",
+				"ruby/lib/physical_file.rb"
+			],
+			[
+				"archive",
+				"ruby/lib/hrrt_archive.rb"
+			],
+			[
+				"",
+				"ruby/lib/hrrt_file.rb"
+			],
+			[
+				"datab",
+				"ruby/lib/hrrt_database.rb"
+			],
+			[
+				"hrrt_file",
+				"ruby/lib/hrrt_file.rb"
+			],
+			[
+				"scan",
+				"ruby/lib/hrrt_scan.rb"
+			],
+			[
+				"dat",
+				"ruby/lib/hrrt_database.rb"
+			],
+			[
+				"hrrt.",
+				"ruby/lib/hrrt.rb"
+			],
+			[
+				"test0",
+				"ruby/test/tc_test01.rb"
+			],
+			[
+				"phys",
+				"ruby/lib/physical_file.rb"
+			],
+			[
+				"test",
+				"~/Dropbox/DEV/hrrt/ruby/test/tc_test01.rb"
+			],
+			[
+				"arch",
+				"ruby/lib/hrrt_archive.rb"
+			],
+			[
+				"local",
+				"ruby/lib/hrrt_archive_local.rb"
+			],
+			[
+				"json",
+				"ruby/etc/test_subjects.json"
+			],
+			[
+				"subj",
+				"ruby/lib/hrrt_subject.rb"
+			],
+			[
+				"util",
+				"ruby/lib/hrrt_utility.rb"
+			],
+			[
+				"db",
+				"ruby/lib/hrrt_database.rb"
+			],
+			[
+				"database",
+				"ruby/lib/hrrt_database.rb"
+			],
+			[
+				"hrrt_scan",
+				"ruby/lib/hrrt_scan.rb"
+			],
+			[
+				"hrrt_",
+				"ruby/lib/hrrt_file.rb"
+			],
+			[
+				"l64",
+				"ruby/lib/hrrt_file_l64_hc.rb"
+			],
+			[
+				"hdr",
+				"ruby/lib/hrrt_file_l64_hdr.rb"
+			],
+			[
+				"utili",
+				"ruby/lib/hrrt_utility.rb"
+			],
+			[
+				"acs_dir",
+				"ruby/lib/hrrt_acs_dir.rb"
+			],
+			[
+				"acs",
+				"ruby/lib/hrrt_acs.rb"
+			],
+			[
+				"gemf",
+				"ruby/Gemfile"
+			],
+			[
+				"data",
+				"lib/hrrt_database.rb"
+			],
+			[
+				"hrrt_acs",
+				"lib/HRRT_ACS.rb"
+			],
+			[
+				"gem",
+				"Gemfile"
+			],
+			[
+				"my",
+				"lib/my_logging.rb"
+			]
 		],
 		"width": 0.0
 	},
@@ -1622,7 +3875,7 @@
 		],
 		"width": 0.0
 	},
-	"selected_group": 1,
+	"selected_group": 0,
 	"settings":
 	{
 	},
