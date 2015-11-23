@@ -106,8 +106,8 @@ class HRRTSubject
     puts "#{self.class.name}: #{summary(format)}"
   end
 
-  def add_to_database
-    db_params = make_database_params
+  def add_to_database(fields = [])
+    db_params = make_database_params(fields)
     add_record_to_database(db_params)
   end
 

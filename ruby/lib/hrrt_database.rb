@@ -77,6 +77,10 @@ module HRRTDatabase
     @db_rec ? @db_rec[:id] : nil
   end
 
+  def this_table
+    db[self.class::DB_TABLE]
+  end
+
   # Check that this item exists in database
   # Fills in its @id field
   #
@@ -95,21 +99,28 @@ module HRRTDatabase
 
   def present_in_database?(fields = [])
     log_debug(id ? "Already present: id = #{id}" : "Not already present")
-    if (id.nil?)
-      ds = find_records_in_database(fields)
-      if ds.all.length == 1
-        @db_rec = ds.first
-      else
-        log_error("Wrong number of DB matches: #{ds.count}")
-      end
-    end
-    log_debug(id.nil?.to_s + (id.nil? ? "" : ", id = #{id}") + " #{self.class::DB_TABLE} #{summary}")
-    @db_rec
+    @db_rec = find_record_in_database(fields) if (id.nil?)
+    str = id.nil? ? "false" : "true: id = #{id}"
+    log_debug("present = #{str} #{self.class::DB_TABLE} #{summary}")
+    id ? true : false
   end
 
-  def find_records_in_database(fields)
+  def find_record_in_database(fields = [])
+    ret = nil
+    ds = find_records_in_database(fields)
+    if ds.all.length == 1
+      ret = ds.first
+    elsif ds.all.length == 0
+      # Nothing: return nill
+    else
+      raise ("#{__method__} Wrong number of DB matches: #{ds.count}")
+    end
+    ret
+  end
+
+  def find_records_in_database(fields = [])
     db_params = make_database_params(self.class::REQUIRED_FIELDS + fields)
-    db[self.class::DB_TABLE].where(db_params)
+    this_table.where(db_params)
   end
 
   def make_database_params(fields)
@@ -124,13 +135,13 @@ module HRRTDatabase
   # Sets @db_rec field.
 
   def add_record_to_database(db_params)
-    id = db[self.class::DB_TABLE].insert(db_params)
-    @db_rec = db[self.class::DB_TABLE][1]
+    id = this_table.insert(db_params)
+    @db_rec = this_table[id]
     log_info("class #{self.class}: inserted new record id #{id}")
   end
 
   def delete_record_from_database(db_params)
-    recs = db[self.class::DB_TABLE].where(db_params)
+    recs = this_table.where(db_params)
     log_debug(summary)
     recs.delete
     @id = nil

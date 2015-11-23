@@ -23,8 +23,8 @@ class HRRTFile
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
   DB_TABLE = :file
-  REQUIRED_FIELDS = %i(file_path file_name file_size file_modified hostname)	# For DB
-  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)	# For DB
+  REQUIRED_FIELDS = %i(file_path file_name file_size file_modified hostname)  # For DB
+  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)  # For DB
   CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
 
   # Required for print_database_summary
@@ -55,7 +55,7 @@ class HRRTFile
   def self.class_for_file(extn)
     theclass = nil
     CLASSES.each do |classtype|
-      suffix 	     = Object.const_get(classtype)::SUFFIX.upcase
+      suffix       = Object.const_get(classtype)::SUFFIX.upcase
       archive_suffix = Object.const_get(classtype)::ARCHIVE_SUFFIX
       pattern  = "#{suffix}"
       pattern += "(\.#{archive_suffix})?" if archive_suffix
@@ -116,7 +116,8 @@ class HRRTFile
   # Fill in checksums from database, if record exists and timestamps match
 
   def ensure_checksums
-    checksums = ds = present_in_database? ? ds.select(:file_crc32, :file_md5) : []
+    ds = find_record_in_database
+    checksums = ds ? ds.select(:file_crc32, :file_md5) : []
     @storage.calculate_checksums(checksums)
   end
 
@@ -131,9 +132,9 @@ class HRRTFile
     archive_copy
   end
 
-#  def subject
-#    @scan.subject
-#  end
+  #  def subject
+  #    @scan.subject
+  #  end
 
   # Return true if this file is archive copy of source file
   # @note Default is to compare uncompressed: overload to test compressed files
@@ -177,13 +178,13 @@ class HRRTFile
     {extn: self.class::SUFFIX}
   end
 
-#  def datetime
-#    @scan.datetime
-#  end
-#
-#  def scan_datetime
-#    @scan.scan_datetime
-#  end
+  #  def datetime
+  #    @scan.datetime
+  #  end
+  #
+  #  def scan_datetime
+  #    @scan.scan_datetime
+  #  end
 
   def scan_id
     @scan.id
@@ -200,7 +201,7 @@ class HRRTFile
   def summary(longer = false)
     bits = []
     fields = longer ? REQUIRED_FIELDS + OTHER_FIELDS : REQUIRED_FIELDS
-    fields.each { |fld|	bits << (send(fld) || "<nil>") }
+    fields.each { |fld| bits << (send(fld) || "<nil>") }
     bits.join " "
   end
 
