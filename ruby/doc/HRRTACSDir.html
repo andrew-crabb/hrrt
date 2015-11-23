@@ -94,7 +94,7 @@
   
   
     <dt class="r2 last">Defined in:</dt>
-    <dd class="r2 last">lib/HRRT_ACS_Dir.rb</dd>
+    <dd class="r2 last">unused/hrrt_acs_dir.rb</dd>
   
 </dl>
 <div class="clear"></div>
@@ -133,6 +133,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Combine this object&#39;s files_by_datetime with the incoming list.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#create_hrrt_files-instance_method" title="#create_hrrt_files (instance method)">- (Object) <strong>create_hrrt_files</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create HRRTFile-derived objects for each HRRT file listed in @all_files.</p>
 </div></span>
   
 </li>
@@ -208,8 +232,6 @@
     
 <p>Recursively analyze given directory for HRRT files.</p>
 
-<pre class="code ruby"><code class="ruby">Initiates @hrrt_files with HRRTFile objects</code></pre>
-
 
   </div>
 </div>
@@ -242,35 +264,21 @@
       <pre class="lines">
 
 
-18
-19
-20
-21
 22
 23
 24
 25
 26
-27
-28
-29
-30</pre>
+27</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_ACS_Dir.rb', line 18</span>
+      <pre class="code"><span class="info file"># File 'unused/hrrt_acs_dir.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_indir'>indir</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_mylogger'>mylogger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>initialize(</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_indir'>indir</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='ivar'>@hrrt_files</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_indir'>indir</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='ivar'>@indir</span> <span class='op'>=</span> <span class='id identifier rubyid_indir'>indir</span>
   <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_chdir'>chdir</span><span class='lparen'>(</span><span class='id identifier rubyid_indir'>indir</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_infiles'>infiles</span> <span class='op'>=</span> <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_glob'>glob</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>**/*</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span><span class='op'>|</span><span class='id identifier rubyid_f'>f</span><span class='op'>|</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_file?'>file?</span> <span class='id identifier rubyid_f'>f</span><span class='rbrace'>}</span>
-  <span class='id identifier rubyid_infiles'>infiles</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_infile'>infile</span><span class='op'>|</span>
-    <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span> <span class='op'>=</span> <span class='const'>HRRTFile</span><span class='period'>.</span><span class='id identifier rubyid_matches_name'>matches_name</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span><span class='rparen'>)</span>
-      <span class='ivar'>@hrrt_files</span><span class='lbracket'>[</span><span class='id identifier rubyid_infile'>infile</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'>HRRTFile</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
-      <span class='ivar'>@hrrt_files</span><span class='lbracket'>[</span><span class='id identifier rubyid_infile'>infile</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_read_physical'>read_physical</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_indir'>indir</span><span class='comma'>,</span> <span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span><span class='rparen'>)</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
+  <span class='ivar'>@all_files</span> <span class='op'>=</span> <span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_glob'>glob</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>**/*</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_f'>f</span><span class='op'>|</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_file?'>file?</span> <span class='id identifier rubyid_f'>f</span> <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -311,22 +319,73 @@ combined list.</p>
       <pre class="lines">
 
 
-49
-50
-51
-52
-53
-54
-55</pre>
+42
+43
+44
+45
+46
+47
+48</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_ACS_Dir.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'unused/hrrt_acs_dir.rb', line 42</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_combine_files!'>combine_files!</span><span class='lparen'>(</span><span class='id identifier rubyid_infiles'>infiles</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_make_files_by_datetime'>make_files_by_datetime</span>
   <span class='id identifier rubyid_infiles'>infiles</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='ivar'>@files_by_datetime</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_oldval'>oldval</span><span class='comma'>,</span> <span class='id identifier rubyid_newval'>newval</span><span class='op'>|</span>
-    <span class='id identifier rubyid_mylogger'>mylogger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Key collision: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_key'>key</span><span class='embexpr_end'>}</span><span class='tstring_content'>, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_oldval'>oldval</span><span class='embexpr_end'>}</span><span class='tstring_content'>, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_newval'>newval</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_log_error'>log_error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Key collision: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_key'>key</span><span class='embexpr_end'>}</span><span class='tstring_content'>, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_oldval'>oldval</span><span class='embexpr_end'>}</span><span class='tstring_content'>, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_newval'>newval</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='id identifier rubyid_raise'>raise</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="create_hrrt_files-instance_method">
+  
+    - (<tt>Object</tt>) <strong>create_hrrt_files</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create HRRTFile-derived objects for each HRRT file listed in @all_files</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+31
+32
+33
+34
+35
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'unused/hrrt_acs_dir.rb', line 31</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_create_hrrt_files'>create_hrrt_files</span>
+  <span class='ivar'>@hrrt_files</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@all_files</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_infile'>infile</span><span class='op'>|</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_hrrt_file'>hrrt_file</span> <span class='op'>=</span> <span class='id identifier rubyid_create_hrrt_file'>create_hrrt_file</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+      <span class='ivar'>@hrrt_files</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -380,25 +439,25 @@ combined list.</p>
       <pre class="lines">
 
 
-37
-38
-39
-40
-41
-42
-43
-44
-45</pre>
+55
+56
+57
+58
+59
+60
+61
+62
+63</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/HRRT_ACS_Dir.rb', line 37</span>
+      <pre class="code"><span class="info file"># File 'unused/hrrt_acs_dir.rb', line 55</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_make_files_by_datetime'>make_files_by_datetime</span>
   <span class='kw'>unless</span> <span class='kw'>defined?</span> <span class='ivar'>@files_by_datetime</span>
     <span class='ivar'>@files_by_datetime</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-    <span class='ivar'>@hrrt_files</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_filename'>filename</span><span class='comma'>,</span> <span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='op'>|</span>
-      <span class='ivar'>@files_by_datetime</span><span class='lbracket'>[</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'>Array</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
-      <span class='ivar'>@files_by_datetime</span><span class='lbracket'>[</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_push'>push</span><span class='lparen'>(</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='rparen'>)</span>
+    <span class='ivar'>@hrrt_files</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='op'>|</span>
+      <span class='ivar'>@files_by_datetime</span><span class='lbracket'>[</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+      <span class='ivar'>@files_by_datetime</span><span class='lbracket'>[</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_extn'>extn</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_hrrt_file'>hrrt_file</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -412,7 +471,7 @@ combined list.</p>
 </div>
 
     <div id="footer">
-  Generated on Mon Aug 31 16:20:09 2015 by
+  Generated on Wed Oct 14 14:29:47 2015 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.8.7.6 (ruby-2.2.2).
 </div>

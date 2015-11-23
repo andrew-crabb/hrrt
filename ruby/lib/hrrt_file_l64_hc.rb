@@ -10,6 +10,10 @@ class HRRTFileL64Hc < HRRTFile
   # Definitions
   # ------------------------------------------------------------
 
+  SUFFIX = 'hc'
+  ARCHIVE_FORMAT = FORMAT_NATIVE
+  TEST_DATA_SIZE = 10**3
+
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
@@ -22,9 +26,8 @@ class HRRTFileL64Hc < HRRTFile
   # Methods
   # ------------------------------------------------------------
 
-  def initialize(filename)
+  def initialize(params = {}, required_keys = nil)
     super
-    mylogger.debug("initialize(#{File.basename(filename)})")
   end
 
 end

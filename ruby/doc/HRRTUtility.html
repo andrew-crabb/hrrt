@@ -77,9 +77,13 @@
     
   
   
+    <dt class="r1">Included in:</dt>
+    <dd class="r1"><span class='object_link'><a href="HRRTFile.html" title="HRRTFile (class)">HRRTFile</a></span></dd>
+    
   
-    <dt class="r1 last">Defined in:</dt>
-    <dd class="r1 last">lib/HRRT_Utility.rb</dd>
+  
+    <dt class="r2 last">Defined in:</dt>
+    <dd class="r2 last">lib/hrrt_utility.rb</dd>
   
 </dl>
 <div class="clear"></div>
@@ -96,6 +100,191 @@
   
 
 </div>
+  <h2>Constant Summary</h2>
+  
+    <dl class="constants">
+      
+        <dt id="NAME_PATTERN_STD-constant" class="">NAME_PATTERN_STD =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc HRRT ACS: 
+LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>%r{</span><span class='tstring_content'>
+  (?&lt;name_last&gt;\w+)		# subject
+  _(?&lt;name_first&gt;\w*)		# subject
+  _(?&lt;history&gt;\w*)		# subject
+  _(?&lt;mod&gt;PET)			# constant
+  _(?&lt;scan_date&gt;\d{6})	# scan
+  _(?&lt;scan_time&gt;\d{6})	# scan
+  _(?&lt;scan_type&gt;\w{2})	# scan
+  \.(?&lt;extn&gt;[\w\.]+)		# file
+</span><span class='regexp_end'>}x</span></span></pre></dd>
+      
+        <dt id="NAME_PATTERN_ACS-constant" class="">NAME_PATTERN_ACS =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>%r{</span><span class='tstring_content'>
+  (?&lt;name_last&gt;[^-]+\s*)			# subject
+  -(?&lt;name_first&gt;\s*[^-]*\s*)		# subject
+  -(?&lt;history&gt;\s*[^-]*\s*)		# subject
+  -(?&lt;yr&gt;\d{4}\s*)
+  \.(?&lt;mo&gt;\d{1,2})
+  \.(?&lt;dy&gt;\d{1,2})
+  \.(?&lt;hr&gt;\d{1,2})
+  \.(?&lt;mn&gt;\d{1,2})
+  \.(?&lt;sc&gt;\d{1,2})
+  _(?&lt;scan_type&gt;\w{2})			# scan
+  \.(?&lt;extn&gt;[\w\.]+)				# file
+</span><span class='regexp_end'>}x</span></span></pre></dd>
+      
+        <dt id="NAME_FORMAT_STD-constant" class="">NAME_FORMAT_STD =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>printf formatting strings for file names in standard and ACS format.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;name_last&gt;s_%&lt;name_first&gt;s_%&lt;history&gt;s_%&lt;scan_date&gt;s_%&lt;scan_time&gt;s_%&lt;scan_type&gt;s.%&lt;extn&gt;s</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="NAME_FORMAT_ACS-constant" class="">NAME_FORMAT_ACS =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;name_last&gt;s-%&lt;name_first&gt;s-%&lt;history&gt;s-%&lt;yr4&gt;d.%&lt;mo&gt;d.%&lt;dy&gt;d.%&lt;hr&gt;d.%&lt;mn&gt;d.%&lt;sc&gt;d_%&lt;scan_type&gt;s.%&lt;extn&gt;s</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="HRRT_DATE_PATTERN-constant" class="">HRRT_DATE_PATTERN =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>(?&lt;yr&gt;\d{2})(?&lt;mo&gt;\d{2})(?&lt;dy&gt;\d{2})</span><span class='regexp_end'>/</span></span></pre></dd>
+      
+        <dt id="HRRT_TIME_PATTERN-constant" class="">HRRT_TIME_PATTERN =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>(?&lt;hr&gt;\d{2})(?&lt;mn&gt;\d{2})(?&lt;sc&gt;\d{2})</span><span class='regexp_end'>/</span></span></pre></dd>
+      
+        <dt id="HRRT_DATE_FMT-constant" class="">HRRT_DATE_FMT =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>150824</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;yr&gt;02d%&lt;mo&gt;02d%&lt;dy&gt;02d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="HRRT_TIME_FMT-constant" class="">HRRT_TIME_FMT =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>083500</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;hr&gt;02d%&lt;mn&gt;02d%&lt;sc&gt;02d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="HDR_DATE_FMT-constant" class="">HDR_DATE_FMT =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>24:08:2015</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;dy&gt;02d:%&lt;mo&gt;02d:%&lt;yr4&gt;d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="HDR_TIME_FMT-constant" class="">HDR_TIME_FMT =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>08:35:00</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>%&lt;hr&gt;02d:%&lt;mn&gt;02d:%&lt;sc&gt;02d</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="NEEDED_NAMES_DATE-constant" class="">NEEDED_NAMES_DATE =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Required fields in NAME_PATTERN_xxx</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='qwords_beg'>%w(</span><span class='tstring_content'>yr</span><span class='words_sep'> </span><span class='tstring_content'>mo</span><span class='words_sep'> </span><span class='tstring_content'>dy</span><span class='words_sep'>)</span></pre></dd>
+      
+        <dt id="NEEDED_NAMES_TIME-constant" class="">NEEDED_NAMES_TIME =
+          
+        </dt>
+        <dd><pre class="code"><span class='qwords_beg'>%w(</span><span class='tstring_content'>hr</span><span class='words_sep'> </span><span class='tstring_content'>mn</span><span class='words_sep'> </span><span class='tstring_content'>sc</span><span class='words_sep'>)</span></pre></dd>
+      
+        <dt id="CLASS_L64-constant" class="">CLASS_L64 =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HRRTFileL64</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+      
+        <dt id="CLASS_L64_HDR-constant" class="">CLASS_L64_HDR =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HRRTFileL64Hdr</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+      
+        <dt id="CLASS_L64_HC-constant" class="">CLASS_L64_HC =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HRRTFileL64Hc</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+      
+        <dt id="CLASSES-constant" class="">CLASSES =
+          
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span><span class='const'>CLASS_L64</span><span class='comma'>,</span> <span class='const'>CLASS_L64_HDR</span><span class='comma'>,</span> <span class='const'>CLASS_L64_HC</span><span class='rbracket'>]</span></pre></dd>
+      
+    </dl>
+  
 
 
 
@@ -103,11 +292,1025 @@
 
 
 
+  
+    <h2>
+      Instance Method Summary
+      <small>(<a href="#" class="summary_toggle">collapse</a>)</small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clean_name-instance_method" title="#clean_name (instance method)">- (Object) <strong>clean_name</strong>(instr) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return given name component cleaned (keep only alpha and numeric).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#create_hrrt_file-instance_method" title="#create_hrrt_file (instance method)">- (HRRTFile) <strong>create_hrrt_file</strong>(details, infile) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create an HRRTFile-derived object from the input file.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#hostname-instance_method" title="#hostname (instance method)">- (Object) <strong>hostname</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return standardized host name.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#make_date-instance_method" title="#make_date (instance method)">- (string) <strong>make_date</strong>(match) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create date in standard format YYMMDD from MatchData object.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#make_time-instance_method" title="#make_time (instance method)">- (Object) <strong>make_time</strong>(match) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create time in standard format HHMMSS from MatchData object.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#matches_hrrt_name-instance_method" title="#matches_hrrt_name (instance method)">- (MatchData) <strong>matches_hrrt_name</strong>(infile) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Analyze infile name for HRRT pattern.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parse_date-instance_method" title="#parse_date (instance method)">- (MatchData) <strong>parse_date</strong>(datestr) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return a MatchData object of date components of given date string.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parse_datetime-instance_method" title="#parse_datetime (instance method)">- (Hash) <strong>parse_datetime</strong>(pattern, datetime) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return a Hash of date or time symbols and their integer values.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parse_filename-instance_method" title="#parse_filename (instance method)">- (Object) <strong>parse_filename</strong>(filename) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Extract subject name and date/time from file name.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parse_time-instance_method" title="#parse_time (instance method)">- (MatchData) <strong>parse_time</strong>(timestr) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Return a MatchData object of time components of given time string.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="clean_name-instance_method">
+  
+    - (<tt>Object</tt>) <strong>clean_name</strong>(instr) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return given name component cleaned (keep only alpha and numeric)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>instr</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>outstr</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+175
+176
+177</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 175</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clean_name'>clean_name</span><span class='lparen'>(</span><span class='id identifier rubyid_instr'>instr</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_instr'>instr</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>[^A-Z0-9]</span><span class='regexp_end'>/</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="create_hrrt_file-instance_method">
+  
+    - (<tt><span class='object_link'><a href="HRRTFile.html" title="HRRTFile (class)">HRRTFile</a></span></tt>) <strong>create_hrrt_file</strong>(details, infile) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create an HRRTFile-derived object from the input file.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>infile</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Input file</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="HRRTFile.html" title="HRRTFile (class)">HRRTFile</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 83</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_create_hrrt_file'>create_hrrt_file</span><span class='lparen'>(</span><span class='id identifier rubyid_details'>details</span><span class='comma'>,</span> <span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_hrrt_file'>hrrt_file</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='const'>CLASSES</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_classtype'>classtype</span><span class='op'>|</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='symbol'>:extn</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_const_get'>const_get</span><span class='lparen'>(</span><span class='id identifier rubyid_classtype'>classtype</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_extn'>extn</span>
+      <span class='id identifier rubyid_hrrt_file'>hrrt_file</span> <span class='op'>=</span> <span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_const_get'>const_get</span><span class='lparen'>(</span><span class='id identifier rubyid_classtype'>classtype</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+      <span class='id identifier rubyid_hrrt_file'>hrrt_file</span><span class='period'>.</span><span class='id identifier rubyid_read_physical'>read_physical</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>: New </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_classtype'>classtype</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_hrrt_file'>hrrt_file</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="hostname-instance_method">
+  
+    - (<tt>Object</tt>) <strong>hostname</strong> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return standardized host name</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+194
+195
+196</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 194</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_hostname'>hostname</span>
+  <span class='const'>Socket</span><span class='period'>.</span><span class='id identifier rubyid_gethostname'>gethostname</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="make_date-instance_method">
+  
+    - (<tt>string</tt>) <strong>make_date</strong>(match) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create date in standard format YYMMDD from MatchData object</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>match</span>
+      
+      
+        <span class='type'>(<tt>MatchData</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>result of regex match against file name patterns. Must contain the labels
+<em>yr</em>, <strong>mo</strong>, __dy__</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>string</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Date in YYMMDD format</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>foo</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if the required labels are not present.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+130
+131
+132
+133
+134
+135
+136
+137</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 130</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_make_date'>make_date</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span> <span class='op'>&amp;</span> <span class='const'>NEEDED_NAMES_DATE</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_eql?'>eql?</span><span class='lparen'>(</span><span class='const'>NEEDED_NAMES_DATE</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_date'>date</span> <span class='op'>=</span> <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>HRRT_DATE_FMT</span><span class='comma'>,</span> <span class='label'>yr:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:yr</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span> <span class='op'>%</span> <span class='int'>100</span><span class='comma'>,</span> <span class='label'>mo:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:mo</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>dy:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:dy</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_raise'>raise</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_date'>date</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="make_time-instance_method">
+  
+    - (<tt>Object</tt>) <strong>make_time</strong>(match) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create time in standard format HHMMSS from MatchData object</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+141
+142
+143
+144
+145
+146
+147
+148</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 141</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_make_time'>make_time</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span> <span class='op'>&amp;</span> <span class='const'>NEEDED_NAMES_TIME</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='period'>.</span><span class='id identifier rubyid_eql?'>eql?</span><span class='lparen'>(</span><span class='const'>NEEDED_NAMES_TIME</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_time'>time</span> <span class='op'>=</span> <span class='id identifier rubyid_sprintf'>sprintf</span><span class='lparen'>(</span><span class='const'>HRRT_TIME_FMT</span><span class='comma'>,</span> <span class='label'>hr:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:hr</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>mn:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:mn</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>sc:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:sc</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_raise'>raise</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_time'>time</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="matches_hrrt_name-instance_method">
+  
+    - (<tt>MatchData</tt>) <strong>matches_hrrt_name</strong>(infile) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Analyze infile name for HRRT pattern.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>infile</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>input file name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>MatchData</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>object of name parts if match, else nil.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+73
+74
+75
+76</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 73</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_matches_hrrt_name'>matches_hrrt_name</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_filename'>filename</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_infile'>infile</span><span class='rparen'>)</span>
+  <span class='const'>NAME_PATTERN_STD</span><span class='period'>.</span><span class='id identifier rubyid_match'>match</span><span class='lparen'>(</span><span class='id identifier rubyid_filename'>filename</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='const'>NAME_PATTERN_ACS</span><span class='period'>.</span><span class='id identifier rubyid_match'>match</span><span class='lparen'>(</span><span class='id identifier rubyid_filename'>filename</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parse_date-instance_method">
+  
+    - (<tt>MatchData</tt>) <strong>parse_date</strong>(datestr) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return a MatchData object of date components of given date string.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>datestr</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>date in standard YYMMDD format</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>MatchData</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>of :yr, :mo, :dy if match; else nil.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+155
+156
+157
+158
+159</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 155</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parse_date'>parse_date</span><span class='lparen'>(</span><span class='id identifier rubyid_datestr'>datestr</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_details'>details</span> <span class='op'>=</span> <span class='id identifier rubyid_parse_datetime'>parse_datetime</span><span class='lparen'>(</span><span class='const'>HRRT_DATE_PATTERN</span><span class='comma'>,</span> <span class='id identifier rubyid_datestr'>datestr</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='symbol'>:yr4</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='symbol'>:yr</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='int'>2000</span>
+  <span class='id identifier rubyid_details'>details</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parse_datetime-instance_method">
+  
+    - (<tt>Hash</tt>) <strong>parse_datetime</strong>(pattern, datetime) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return a Hash of date or time symbols and their integer values</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+183
+184
+185
+186
+187
+188</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 183</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parse_datetime'>parse_datetime</span><span class='lparen'>(</span><span class='id identifier rubyid_pattern'>pattern</span><span class='comma'>,</span> <span class='id identifier rubyid_datetime'>datetime</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_match'>match</span> <span class='op'>=</span> <span class='id identifier rubyid_pattern'>pattern</span><span class='period'>.</span><span class='id identifier rubyid_match'>match</span><span class='lparen'>(</span><span class='id identifier rubyid_datetime'>datetime</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_name_symbols'>name_symbols</span> <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_name'>name</span><span class='op'>|</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_capture_ints'>capture_ints</span> <span class='op'>=</span> <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_captures'>captures</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_val'>val</span><span class='op'>|</span> <span class='id identifier rubyid_val'>val</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span> <span class='rbrace'>}</span>
+  <span class='const'>Hash</span><span class='lbracket'>[</span><span class='id identifier rubyid_name_symbols'>name_symbols</span><span class='period'>.</span><span class='id identifier rubyid_zip'>zip</span><span class='lparen'>(</span><span class='id identifier rubyid_capture_ints'>capture_ints</span><span class='rparen'>)</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parse_filename-instance_method">
+  
+    - (<tt>Object</tt>) <strong>parse_filename</strong>(filename) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Extract subject name and date/time from file name</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>filename</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 99</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parse_filename'>parse_filename</span><span class='lparen'>(</span><span class='id identifier rubyid_filename'>filename</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_details'>details</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='comment'>#    log_debug(filename)
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_match'>match</span> <span class='op'>=</span> <span class='id identifier rubyid_matches_hrrt_name'>matches_hrrt_name</span><span class='lparen'>(</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_filename'>filename</span><span class='rparen'>)</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_details'>details</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+      <span class='label'>scan_date:</span>       <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>scan_date</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:scan_date</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='id identifier rubyid_make_date'>make_date</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span><span class='comma'>,</span>
+      <span class='label'>scan_time:</span>       <span class='id identifier rubyid_match'>match</span><span class='period'>.</span><span class='id identifier rubyid_names'>names</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>scan_time</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:scan_time</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='id identifier rubyid_make_time'>make_time</span><span class='lparen'>(</span><span class='id identifier rubyid_match'>match</span><span class='rparen'>)</span><span class='comma'>,</span>
+      <span class='label'>scan_type:</span>       <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:scan_type</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='comma'>,</span>
+      <span class='label'>extn:</span>       <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:extn</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span><span class='comma'>,</span>
+      <span class='label'>name_last:</span>  <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:name_last</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='comma'>,</span>
+      <span class='label'>name_first:</span> <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:name_first</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='comma'>,</span>
+      <span class='label'>history:</span>    <span class='id identifier rubyid_match'>match</span><span class='lbracket'>[</span><span class='symbol'>:history</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='comma'>,</span>
+    <span class='rbrace'>}</span>
+    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_filename'>filename</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='comment'># Derived fields
+</span>    <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='symbol'>:scan_summary</span><span class='rbracket'>]</span>    <span class='op'>=</span> <span class='id identifier rubyid_details'>details</span><span class='period'>.</span><span class='id identifier rubyid_values_at'>values_at</span><span class='lparen'>(</span><span class='symbol'>:scan_date</span><span class='comma'>,</span> <span class='symbol'>:scan_time</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_details'>details</span><span class='lbracket'>[</span><span class='symbol'>:subject_summary</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_details'>details</span><span class='period'>.</span><span class='id identifier rubyid_values_at'>values_at</span><span class='lparen'>(</span><span class='symbol'>:name_last</span><span class='comma'>,</span> <span class='symbol'>:name_first</span><span class='comma'>,</span> <span class='symbol'>:history</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_log_debug'>log_debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No match: &#39;</span><span class='embexpr_beg'>#{</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='id identifier rubyid_filename'>filename</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='comment'>#    pp details
+</span>  <span class='id identifier rubyid_details'>details</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parse_time-instance_method">
+  
+    - (<tt>MatchData</tt>) <strong>parse_time</strong>(timestr) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Return a MatchData object of time components of given time string.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>timestr</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>time in standard HHMMSS format</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>MatchData</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>of :hr, :mn, :sc if match; else nil.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+166
+167
+168</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hrrt_utility.rb', line 166</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parse_time'>parse_time</span><span class='lparen'>(</span><span class='id identifier rubyid_timestr'>timestr</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_parse_datetime'>parse_datetime</span><span class='lparen'>(</span><span class='const'>HRRT_TIME_PATTERN</span><span class='comma'>,</span> <span class='id identifier rubyid_timestr'>timestr</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 </div>
 
     <div id="footer">
-  Generated on Mon Aug 31 16:20:09 2015 by
+  Generated on Wed Oct 14 14:29:46 2015 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.8.7.6 (ruby-2.2.2).
 </div>
