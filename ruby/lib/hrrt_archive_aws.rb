@@ -79,6 +79,12 @@ class HRRTArchiveAWS < HRRTArchive
     metadata
   end
 
+  def clear_test_archive
+    raise("Bad root #{@archive_root}") unless @archive_root == self.class::ARCHIVE_ROOT_TEST
+    raise("Too many files: #{testfiles.count}") if all_files.count > ARCHIVE_TEST_MAX
+    @rsrc.bucket(BUCKET_NAME_TEST).objects.each { |obj| obj.delete }
+  end
+
   # Not used in AWS since no directory structure.
 
   def prune_archive

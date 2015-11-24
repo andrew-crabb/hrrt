@@ -14,10 +14,6 @@ include MyOpts
 
 module HRRTDatabase
 
-  # ------------------------------------------------------------
-  # Definitions
-  # ------------------------------------------------------------
-
   # Database hosts
   WONGLAB      = 'wonglab.rad.jhmi.edu'
   LOCALHOST    = 'localhost'
@@ -26,11 +22,10 @@ module HRRTDatabase
   DB_NAME      = 'hrrt_recon'
   DB_NAME_TEST = 'hrrt_recon_test'
 
-  # ------------------------------------------------------------
   # Module variables
-  # ------------------------------------------------------------
-
   @@db = nil
+
+  attr_reader :id
 
   # ------------------------------------------------------------
   # Methods
@@ -71,10 +66,10 @@ module HRRTDatabase
   # Generic methods (will work on any table)
   # ------------------------------------------------------------
 
-  # Record id in DB
+  # Record in DB
 
-  def id
-    @db_rec ? @db_rec[:id] : nil
+  def db_rec
+  	@id ? this_table[@id] : nil
   end
 
   def this_table
@@ -88,7 +83,6 @@ module HRRTDatabase
 
   def ensure_in_database(fields = [])
     add_to_database(fields) unless present_in_database?(fields)
-    id
   end
 
   # If @id present, already found in DB.  Else find in DB and fill in @id.
@@ -98,29 +92,34 @@ module HRRTDatabase
   # @return db_rec [Dataset]
 
   def present_in_database?(fields = [])
-    log_debug(id ? "Already present: id = #{id}" : "Not already present")
-    @db_rec = find_record_in_database(fields) if (id.nil?)
-    str = id.nil? ? "false" : "true: id = #{id}"
+    log_debug(@id ? "Already present: id = #{@id}" : "Not already present")
+    find_record_in_database(fields) unless @id
+    str = @id.nil? ? "false" : "true: id = #{@id}"
     log_debug("present = #{str} #{self.class::DB_TABLE} #{summary}")
-    id ? true : false
+    @id
   end
 
   def find_record_in_database(fields = [])
-    ret = nil
     ds = find_records_in_database(fields)
     if ds.all.length == 1
-      ret = ds.first
+      @id = ds.first.id
     elsif ds.all.length == 0
-      # Nothing: return nill
+      @id = nil
     else
       raise ("#{__method__} Wrong number of DB matches: #{ds.count}")
     end
-    ret
+    @id
   end
 
   def find_records_in_database(fields = [])
+  	if fields.keys.include? :table
+  		table = fields[:table]
+	    fields.reject! { |key, val| key == :table }
+	else
+		table = this_table
+	end
     db_params = make_database_params(self.class::REQUIRED_FIELDS + fields)
-    this_table.where(db_params)
+    table.where(db_params)
   end
 
   def make_database_params(fields)
@@ -135,31 +134,20 @@ module HRRTDatabase
   # Sets @db_rec field.
 
   def add_record_to_database(db_params)
-    id = this_table.insert(db_params)
-    @db_rec = this_table[id]
-    log_info("class #{self.class}: inserted new record id #{id}")
+    @id = this_table.insert(db_params)
+    log_info("class #{self.class}: inserted new record id #{@id}")
   end
 
   def delete_record_from_database(db_params)
-    recs = this_table.where(db_params)
-    log_debug(summary)
-    recs.delete
+  	this_table[@id].delete
     @id = nil
+    log_debug(summary)
   end
 
   # Return dataset of all records for this table in database.
 
   def all_records_in_table(thetable)
-    #    log_debug(thetable)
     db[thetable]
-  end
-
-  def records_for(params)
-    raise("Param 'table' missing") unless params.keys.include?(:table)
-    ds = db[params[:table]]
-    params.reject! { |key, val| key == :table }
-    ds = ds.where(params) unless params.keys.empty?
-    ds
   end
 
   # ------------------------------------------------------------
@@ -168,16 +156,15 @@ module HRRTDatabase
 
   def print_database_summary(classname)
     theclass = Object.const_get(classname)
-    records = records_for(table: theclass::DB_TABLE).order(*theclass::SUMMARY_FIELDS)
+    records = find_records_in_database(table: theclass::DB_TABLE).order(*theclass::SUMMARY_FIELDS)
     log_info("-------------------- #{classname} #{records.count} records --------------------")
     headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]
     printf(theclass::SUMMARY_FORMAT, headings)
     records.each { |rec| printf(theclass::SUMMARY_FORMAT, rec) }
   end
 
-  def database_is_empty?(classname)
-    theclass = Object.const_get(classname)
-    records_for(table: theclass::DB_TABLE).count == 0
+  def database_is_empty?
+    find_records_in_database(self.class::DB_TABLE).count == 0
   end
 
   # ------------------------------------------------------------

@@ -236,7 +236,7 @@ class HRRTArchive
       table:         HRRTFile::DB_TABLE,
       archive_class: self.class.to_s,
     }
-    records = records_for(params)
+    records = find_records_in_database(params)
     log_debug("#{self.class.to_s}: #{records.count} records")
     records
   end
@@ -261,11 +261,8 @@ class HRRTArchive
 
   def clear_test_archive
     raise("Bad root #{@archive_root}") unless @archive_root == self.class::ARCHIVE_ROOT_TEST
-    parse
-    raise("Too many files: #{testfiles.count}") if @hrrt_files.count > ARCHIVE_TEST_MAX
-    # Delete each file, its File object, and any scantime with no File objects.
-    @hrrt_files.each { |dtime, files| delete_files_and_scan(dtime, files) }
-    prune_archive
+    raise("Too many files: #{testfiles.count}") if all_files.count > ARCHIVE_TEST_MAX
+    Dir.glob("#{self.class::ARCHIVE_ROOT_TEST}/*").each { |f| FileUtils.rm_rf(f) }
   end
 
   def delete_files_and_scan(dtime, files)
@@ -278,6 +275,10 @@ class HRRTArchive
       @scans.delete(dtime)
     end
   end
+
+  # ------------------------------------------------------------
+  # Default methods to be overridden in non file-based subclasses
+  # ------------------------------------------------------------
 
   # Delete empty directories from this archive.
   # Default is for physical file system: override for non physical.
