@@ -183,7 +183,7 @@ our %FNAME_TYPES = (
 # Constants.
 # ------------------------------------------------------------
 
-my $HRRT_DIR_MOUNT = '/mnt';
+my $HRRT_DIR_MOUNT = '/mnt/ext_*';
 my $HRRT_YEAR_PATT  = '(20\d{2})';
 my $HRRT_MONTH_PATT  = '(\d{2})';
 
@@ -612,7 +612,6 @@ sub list_backup_disks {
      }
    }
  }
-
  return \%disk_data;
 }
 
@@ -659,6 +658,7 @@ sub get_backup_files {
       }
     }
     my $allgood = ($n_ok == scalar(@needed)) ? 1 : 0;
+
     return ($allgood) ? \%files : undef;
   }
 
@@ -711,24 +711,27 @@ sub assemble_study {
 
   my $subject_name = make_subject_name($subject_record, 1);
   print "HRRT_Utilities::assemble_study($subject_name, $scan_datetime)\n";
-  my $scan_secs = convertDates($scan_datetime)->{$DATES_SECS};
+  my $dates = convertDates($scan_datetime);
+  # my $monthpath = "/$dates->{'MM'}";
+  my $scanyear  = $dates->{'YYYY'};
+  my $scanmonth = $dates->{'MM'};
+
   my %threads = ();
   my $backup_disks = undef;
   if (defined($scan_datetime)) {
     my $backup_disk = undef;
     $backup_disks = list_backup_disks();
+    # print Dumper($backup_disks);
     foreach my $disk (sort keys %$backup_disks) {
-      my $dir = $backup_disks->{$disk};
-      my $dirstart = $dir->{'start'};
-      my $dirstop = $dir->{'stop'};
-      if (($scan_secs >= $dirstart) and ($scan_secs <= $dirstop)) {
-       $backup_disk = $disk;
-       last;
-     }
+      if (exists($backup_disks->{$disk}{$scanyear}{$scanmonth})) {
+	print "Found year $scanyear month $scanmonth on disk $disk\n";
+	$backup_disk = $disk;
+      }
    }
+
    if (defined($backup_disk)) {
     print "Backup disk: $backup_disk\n";
-    if (defined(my $backup_files = get_backup_files($scan_datetime, $subject_record, $backup_disk))) {
+    if (defined(my $backup_files = get_backup_files($scan_datetime, $subject_record, "${backup_disk}/${scanyear}/${scanmonth}"))) {
      my $recon_dir = make_recon_dir_name($subject_record, $scan_datetime);
      print "recon_dir $recon_dir\n" if ($opts->{$Opt::OPT_VERBOSE});
      mkDir($recon_dir, 0777) unless ((-d $recon_dir) or $opts->{$Opts::OPT_DUMMY});

@@ -30,6 +30,10 @@ use HRRT_Utilities;
 use Opts;
 use Utilities_new;
 
+# File stat keys
+Readonly::Scalar our $STAT_SIZE  => 'size';
+Readonly::Scalar our $STAT_MTIME => 'mtime';
+
 Readonly::Scalar our $OMIT_FILES_PATTERN => q{bh$|log$};
 our $g_max_name_len = 0;
 
@@ -136,9 +140,35 @@ sub copy_file_to_disk {
   foreach my $disk (sort keys %disks) {
     if (exists($disks->{$disk}{$fileyear}{$filemonth})) {
       # print "xxx . copy_file_to_disk('$disk' '$fileyear' '$filemonth' $infile)\n";
-      copy_file_to_this_disk($infile, $newname, $disk, $fileyear, $filemonth);
+      if file_exists_on_disk($infile, $newname, $disk, $fileyear, $filemonth) {
+	print "Skipping: Exists on disk $disk: $newname\n";
+      } else {
+	copy_file_to_this_disk($infile, $newname, $disk, $fileyear, $filemonth);
+      }
     }
   }
+}
+
+sub file_exists_on_disk($infile, $newname, $disk, $fileyear, $filemonth) {
+  my @instat = stat($infile);
+  my ($insize, $inmtime) = @instat[7, 9];
+  my @newstat = stat_of_file($newname);
+}
+
+sub stat_of_file($newname) {
+  # If uncompressed, get stat of file.  Else, read details of uncompressed file from 7z output.
+  $det = undef;
+  if ($newname =~ /\.7z$/) {
+    $det = {
+    }
+  } else {
+    my $stat = stat($newname);
+    $det = { 
+      $STAT_MTIME => $stat[9],
+      $STAT_SIZE  => $stat[7],
+    }
+  }
+  return $stat;
 }
 
 sub copy_file_to_this_disk {
