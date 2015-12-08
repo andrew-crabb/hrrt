@@ -18,7 +18,7 @@ class HRRTArchive
 
   ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
 
-  attr_reader :subjects 		# Per-archive, but consistent between archives
+  attr_reader :subjects 	# Per-archive, but consistent between archives
   attr_reader :scans 			# Per-archive, but consistent between archives
   attr_reader :test_scans
   attr_reader :test_subjects
