@@ -4,6 +4,7 @@ require_relative './my_logging'
 
 require 'seven_zip_ruby'
 require 'digest/crc32'
+require 'digest/md5'
 require 'shellwords'
 
 include MyLogging
@@ -19,45 +20,14 @@ module PhysicalFile
   FORMAT_NATIVE     = :format_native
   FORMAT_COMPRESSED = :format_compressed
 
-  PHYSICAL_FILE_DETAILS = %i(file_name file_path hostname file_size file_modified)
-
-  # ------------------------------------------------------------
-  # Accssors
-  # ------------------------------------------------------------
-
-  attr_reader :file_size
-  attr_reader :file_modified
-  attr_reader :file_crc32
-
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
-  # Read in to this object the physical characteristics of the file it represents
-  # Requires @file_path and @file_name to be filled in already
-  # Sets file_size and file_modified to nil if file does not exist
-
-  def read_physical
-    stat = File.exist?(full_name) ? File.stat(full_name) : nil
-    @file_size     = stat ? stat.size       : nil
-    @file_modified = stat ? stat.mtime.to_i : nil
-    @hostname      = get_hostname
-    @file_class    = self.class.to_s
-    @file_crc32    = nil      # Necessary since sometimes this called on cloned object
-  end
-
-  # Fully qualified name of this file
-  #
-  # @return full_name [String]
-
-  def full_name
-    file_path ? File.join(file_path, file_name) : ""
-  end
-
   def write_uncomp(source_file)
     Dir.chdir(source_file.file_path)
     FileUtils.mkdir_p(file_path)
-    log_debug("source #{source_file.full_name}, dest #{full_name}")
+    log_debug("#{source_file.full_name}  #{full_name}")
     result = Rsync.run(Shellwords.escape(source_file.full_name), full_name, '--times')
     raise "#{result.error}" unless result.success?
   end
@@ -76,31 +46,15 @@ module PhysicalFile
 
   # Return true if both this file and other file exist, and both have matching non-null modified times
 
-  def same_modification_as(other_file)
-    @file_modified && @file_modified == other_file.file_modified
+  def same_modification_as?(other_file)
+    @file_modified && @file_modified == other_file.file_modified ? true : false
   end
-
-  # def same_modification_as(other_file)
-  #   same_modification = false
-  #   if exists_on_disk? && File.exist?(other_file.full_name)
-  #     same_modification = @file_modified &&  @file_modified == File.stat(other_file.full_name).mtime.to_i
-  #   end
-  #   same_modification
-  # end
 
   # Return true if both this file and other file exist, and both have matching non-null sizes
 
-  def same_size_as(other_file)
-    @file_size && @file_size == other_file.file_size
+  def same_size_as?(other_file)
+    @file_size && @file_size == other_file.file_size ? true : false
   end
-
-  # def same_size_as(other_file)
-  #   same_size = false
-  #   if exists_on_disk? && File.exist?(other_file.full_name)
-  #     same_size = @file_size && @file_size == File.stat(other_file.full_name).size
-  #   end
-  #   same_size
-  # end
 
   # Test this file against given archive
   # Native format: compare file size and modification time
@@ -110,7 +64,7 @@ module PhysicalFile
 
   def is_uncompressed_copy_of?(source_file)
     #       log_debug(source_file)
-    ret = same_size_as(source_file) && same_modification_as(source_file)
+    ret = same_size_as?(source_file) && same_modification_as?(source_file)
     log_debug("#{ret.to_s}: #{full_name} #{source_file.full_name}")
     ret
   end
@@ -135,19 +89,6 @@ module PhysicalFile
     present
   end
 
-  def calculate_crc32
-    @file_crc32 = sprintf("%x", Digest::CRC32.file(full_name).checksum).upcase
-    log_debug("#{file_name}: #{@file_crc32}")
-  end
-
-  def write_test_data
-    #    log_debug(File.join(@file_path, @file_name))
-    FileUtils.mkdir_p(@file_path)
-    f = File.new(full_name,  "w")
-    f.write(test_data_contents)
-    f.close
-  end
-
   def file_contents(filename)
     file = File.open(filename)
     contents = file.read
@@ -163,9 +104,9 @@ module PhysicalFile
     if File.exist?(full_name)
       stat = File.stat(full_name)
       exists = @file_size == stat.size &&  @file_modified == stat.mtime.to_i
-#      log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
+            log_debug("#{exists.to_s}: #{full_name}: (#{@file_size} == #{stat.size} &&  #{@file_modified} == #{stat.mtime.to_i}")
     else
-#      log_debug("#{exists.to_s}: #{full_name}")
+            log_debug("#{exists.to_s}: #{full_name}")
     end
     exists
   end

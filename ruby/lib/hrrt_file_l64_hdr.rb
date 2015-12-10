@@ -45,9 +45,9 @@ class HRRTFileL64Hdr < HRRTFile
     frame_definition_erb = @scan.scan_type == HRRTScan::TYPE_EM ? "15*4,30*4,60*3,120*2,240*5,300*12" : "*"
     image_duration_erb   = @scan.scan_type == HRRTScan::TYPE_EM ? "5400" : "300"
     mode_erb             =  HRRTScan::SCAN_TYPES[@scan.scan_type]
-    study_time_erb       = sprintf(HDR_TIME_FMT, details)
-    study_date_erb       = sprintf(HDR_DATE_FMT, details)
-    file_name_erb        = acs_name
+    study_time_erb       = sprintf(HDR_TIME_FMT, expand_time(details))
+    study_date_erb       = sprintf(HDR_DATE_FMT, expand_time(details))
+    file_name_erb        = file_name
 
     contents = file_contents(HDR_FILE_ERB)
     renderer = ERB.new(contents)

@@ -11,8 +11,10 @@ class HRRTArchiveLocal < HRRTArchive
 
   ARCHIVE_ROOT      = '/data/archive'
   ARCHIVE_ROOT_TEST = '/data/archive_test'
-  ARCHIVE_PATH_FMT  = "%<root>s/20%<yr>02d/%<mo>02d"
-  ARCHIVE_TEST_MAX  = 100   # Max number of files in test archive
+  ARCHIVE_PATH_FMT  = "%<root>s/%<year>d/%<month>02d"
+  FILE_NAME_FORMAT = "%<name_last>s_%<name_first>s_%<history>s_PET_%<year2>02d%<month>02d%<day>02d_%<hour>02d%<min>02d%<sec>02d_%<scan_type>s.%<extn>s"
+  FILE_NAME_CLEAN  = true
+  STORAGE_CLASS = "StorageFile"
 
   # ------------------------------------------------------------
   # Class methods
@@ -25,101 +27,32 @@ class HRRTArchiveLocal < HRRTArchive
     found_files = [] unless found_files
   end
 
-  def self.clear_test_archive
-    testfiles = self.files_in_test_archive
-    nfiles = testfiles ? testfiles.count : 0
-    if nfiles < ARCHIVE_TEST_MAX
-      FileUtils.rm_rf(ARCHIVE_ROOT_TEST)
-      FileUtils.mkdir(ARCHIVE_ROOT_TEST) unless File.directory?(ARCHIVE_ROOT_TEST)
-    else
-      raise("More than #{ARCHIVE_TEST_MAX} files in #{ARCHIVE_ROOT_TEST}: #{nfiles}")
-    end
-  end
-
-  def self.archive_is_empty
-    self.files_in_test_archive.count == 0
-  end
-
-  # Test whether given HRRTFile object is stored in this archive
-  #
-  # @param f [HRRTFile] The file to test for.
-  # @return [true, false] true if present, else false.
-
-  ### NOTE: You can do a lot better than this by examining the 7zip file header.
-  ### This will give you CRC checksum, original file size and modified time.
-  ###   Path = TESTTWO_FIRST_4002008_PET_150319_085346_TX.l64
-  ###   Size = 10000000
-  ###   Packed Size = 1480
-  ###   Modified = 2015-09-02 13:38:19
-  ###   Attributes = ....A
-  ###   CRC = EBBDA4B0   (note this is crc32 of original file)
-  ###   Encrypted = -
-  ###   Method = LZMA:12m
-  ###   Block = 0
-
-  def self.archive_root
-    MyOpts.get(:test) ? ARCHIVE_ROOT_TEST : ARCHIVE_ROOT;
-  end
-
-  # Name to be used for this HRRTFile object in this archive.
-  #
-  # @param f [HRRTFile] The file to return the name of.
-  # @return [String] Name of the path in this archive.
-  # @raise Error if date string is not parsed.
-
   def initialize
   	log_debug
   	super
   end
 
-  def path_in_archive(f)
-    raise unless m = parse_date(f.scan_date)
-    sprintf(ARCHIVE_PATH_FMT, root: self.class.archive_root, yr: m[:yr].to_i, mo: m[:mo].to_i)
+  def file_path(f)
+  	details = expand_time(scan_datetime: f.scan_datetime).merge(root: @archive_root)
+    file_path = sprintf(ARCHIVE_PATH_FMT, details)
+#  	log_debug("file_path #{file_path}")
+#  	pp details
+
+    file_path
   end
 
-  def name_in_archive(f)
-  	f.standard_name
-  end
-
-  def read_physical(f)
-    f.read_physical
-  end
+  # Create physical copy of source file.
+  # Derived class for different Archive types
+  # Calls derived File method for compressed/uncompressed write
 
   def store_copy(source, dest)
-    dest.copy_file(source_file)
-    dest.read_physical
-    dest.ensure_in_database
+  	dest.copy_file(source)
+  	dest.read_physical
+  	dest.ensure_in_database
   end
 
-
-  # Note: Hard-coded to avoid mistakenly listing true archive
-
-  def files_in_archive
-    root = self.class.archive_root
-    Dir.chdir(root)
-    found_files = Dir['**/*'].reject {|fn| File.directory?(fn) }
-    found_files = [] unless found_files
-    log_debug("root is #{root}: #{found_files.count} files found")
-    found_files
-  end
-
-  # Build a File object of every file in the archive
-
-  def inventory_archive_contents
-    allfiles = files_in_archive
-    log_debug("#{allfiles.count} files found")
-    allfiles.each do |thefile|
-      puts thefile
-    end
-  end
-
-  # Ensure that every file in the archive is in the database
-
-  def checksum
-    inventory_archive_contents
-    @archive_files.each do |file|
-      file.ensure_in_database
-    end
+  def is_copy?(source, dest)
+  	dest.is_copy_of(source)
   end
 
 end

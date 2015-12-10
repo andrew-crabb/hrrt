@@ -19,90 +19,122 @@ class HRRTFile
   # ------------------------------------------------------------
 
   SUFFIX = nil
+  ARCHIVE_SUFFIX = nil
   ARCHIVE_FORMAT = FORMAT_NATIVE
   TEST_DATA_SIZE = 10**3
-  # Move these to a config file later.
-  TEST_DATA_PATH = File.join(Dir.home, 'data/hrrt_acs')
-  TRANSMISSION = 'Transmission'
-
-  # Map from database field to object variable name.
-
   DB_TABLE = :file
-  REQUIRED_FIELDS = %i(file_name file_path file_size file_modified hostname)
+  REQUIRED_FIELDS = %i(file_path file_name file_size file_modified hostname)  # For DB
+  OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)  # For DB
+  CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
+
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(hostname file_path file_name)
+  SUMMARY_FORMAT     = "%-12<hostname>s %-60<file_path>s %-60<file_name>s\n"
 
   # ------------------------------------------------------------
   # Accssors
   # ------------------------------------------------------------
 
-  # @return [HRRTScan] The Scan object this File belongs to
   attr_accessor :scan
-
-  # @return [HRRTArchive] The Archive object this file is archived in, or nil
   attr_accessor :archive
 
-  # Following attributes need to be set when empty File object created from database.
-  attr_accessor :hostname
-  attr_accessor :file_path
-  attr_accessor :file_name
-  attr_accessor :file_size
-  attr_accessor :file_modified
-  attr_accessor :file_class
-  attr_accessor :file_crc32
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
 
-  def self.make_test_files(scan)
+  def self.make_test_files(scan, archive)
     test_files = {scan.datetime => {}}
     CLASSES.each do |theclass|
-      newfile = Object.const_get(theclass).new({}, {})
-      newfile.scan = scan
+      newfile = Object.const_get(theclass).new(scan, archive)
       newfile.create_test_data
       test_files[newfile.datetime][newfile.class] = newfile
     end
     test_files
   end
 
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
+  def self.class_for_file(extn)
+    theclass = nil
+    CLASSES.each do |classtype|
+      suffix       = Object.const_get(classtype)::SUFFIX.upcase
+      archive_suffix = Object.const_get(classtype)::ARCHIVE_SUFFIX
+      pattern  = "#{suffix}"
+      pattern += "(\.#{archive_suffix})?" if archive_suffix
+      if extn.upcase =~ Regexp.new("#{pattern}$")
+        theclass = classtype
+        break
+      end
+    end
+    #    log_debug("*****  #{theclass.to_s}  *****")
+    theclass
+  end
+
+  def self.print_database_summary
+    records = records_for(table: DB_TABLE).order(:hostname, :file_path, :file_name)
+    log_info("-------------------- #{records.count} Files --------------------")
+    records.each { |rec| printf(SUMMARY_FORMAT, rec) }
   end
 
   # ------------------------------------------------------------
   # Object methods
   # ------------------------------------------------------------
 
-  # Create a new HRRT_File object from a MatchData object from a previous name match
+  class << self
+    def create(extn, scan, archive)
+      hrrtfile = nil
+      #      log_debug("scan #{scan.to_s}, extn #{extn}")
+      if scan && (classtype = self.class_for_file(extn))
+        hrrtfile = Object.const_get(classtype).new(scan, archive)
+      end
+      hrrtfile
+    end
 
-  def initialize(params = {}, required_keys = nil)
-    set_params(params, required_keys)
-    log_debug(full_name)
+    #    private :new
+  end
+
+
+  # Create a new HRRT_File object from a MatchData object from a previous name match
+  # Ensure checksums here (from DB match or calculate), as needed later.
+
+  def initialize(scan, archive)
+    @scan = scan
+    @archive = archive
+    @storage = Object.const_get(@archive.class::STORAGE_CLASS).new(self)
+    read_physical
+    ensure_checksums
+    ensure_in_database([:scan_id])
+    log_debug(@storage.full_name)
+  end
+
+  # Delete this object from its archive, and remove database entry
+
+  def delete
+    @storage.delete
+    remove_from_database
+    @id = nil
+  end
+
+  # Fill in checksums from database, if record exists and timestamps match
+
+  def ensure_checksums
+    ds = find_record_in_database
+    checksums = ds ? ds.select(:file_crc32, :file_md5) : []
+    @storage.calculate_checksums(checksums)
   end
 
   # Return a copy of the given file.
-  # Retain @scan, @file_name and @file_path, but read in physical parameters
+  #
+  # @param archive [HRRTArchive] Destination archive
 
   def archive_copy(archive)
-    archive_copy = self.clone
-    archive_copy.file_name = archive.name_in_archive(self)
-    archive_copy.file_path = archive.path_in_archive(self)
-    # archive_copy.read_physical
+    archive_copy = self.class.new(@scan, archive)
     archive.read_physical(archive_copy)
-    archive_copy.archive = archive
-        log_debug(archive_copy.summary)
+    log_debug(archive_copy.summary)
     archive_copy
   end
 
-  def subject
-    @scan.subject
-  end
-
-  # Return extension of this object's class
-  #
-  # @return extn [String]
-
-  def extn
-    self.class::SUFFIX
-  end
+  #  def subject
+  #    @scan.subject
+  #  end
 
   # Return true if this file is archive copy of source file
   # @note Default is to compare uncompressed: overload to test compressed files
@@ -114,6 +146,10 @@ class HRRTFile
     is_uncompressed_copy_of?(source_file)
   end
 
+  def copy_file(source_file)
+    write_uncomp(source_file)
+  end
+
   # Return archive format of this object's class
   # This base class works in all derived classes
   #
@@ -121,34 +157,6 @@ class HRRTFile
 
   def archive_format
     self.class::ARCHIVE_FORMAT
-  end
-
-  def id
-    @id
-  end
-
-  # Return name of this file in standard format
-  #
-  # @return filename [String]
-
-  def standard_name
-    sprintf(NAME_FORMAT_STD, get_details(true))
-  end
-
-  # Return name of this file in datetime format
-  #
-  # @return filename [String]
-
-  def datetime_name
-    sprintf(NAME_FORMAT_AWS, get_details(true))
-  end
-
-  # Return name of this file in ACS format
-  #
-  # @return filename [String]
-
-  def acs_name
-    sprintf(NAME_FORMAT_ACS, get_details(false))
   end
 
   # Return a hash of details relevant to this File.
@@ -167,112 +175,74 @@ class HRRTFile
   # @return details [Hash]
 
   def details
-    {extn: extn}
+    {extn: self.class::SUFFIX}
   end
 
-  def datetime
-    @scan.datetime
-  end
-
-  def scan_date
-    @scan.scan_date
-  end
-
-  def print_summary(short = true)
-    log_info(summary(short))
-  end
-
-  def summary(short = true)
-    size_str = file_size     ? printf("%d", file_size)     : "<nil>"
-    mod_str  = file_modified ? printf("%d", file_modified) : "<nil>"
-    summary = sprintf("%-40s %-40s %10s %10s", file_path, file_name, size_str, mod_str)
-    if !short
-      summary += "Subject: #{subject.summary}"
-      summary += "Scan: #{@scan.summary}"
-    end
-    summary
-  end
-
-  # Duplicate given file, update records of new file, update record
-
-  # def store_copy_of(source_file)
-  #   copy_file(source_file)
-  #   read_physical
-  #   ensure_in_database
-  # end
-
-  # Duplicate the given file, using already-filled @file_path and @file_name
+  #  def datetime
+  #    @scan.datetime
+  #  end
   #
-  # @attr source_file [String]
+  #  def scan_datetime
+  #    @scan.scan_datetime
+  #  end
 
-  def copy_file(source_file)
-    write_uncomp(source_file)
+  def scan_id
+    @scan.id
   end
 
-  # Check that this File exists in database
-  # Fills in its @id field
+  def archive_class
+    @archive.class.to_s
+  end
 
-  def ensure_in_database
-    # Search database without crc32 field, since we may not have calculated it
-    # Any matching record will have crc32 (required)
-    add_to_database unless present_in_database?
+  def print_summary(longer = false)
+    log_info(summary(longer))
+  end
+
+  def summary(longer = false)
+    bits = []
+    fields = longer ? REQUIRED_FIELDS + OTHER_FIELDS : REQUIRED_FIELDS
+    fields.each { |fld| bits << (send(fld) || "<nil>") }
+    bits.join " "
   end
 
   # Add record of this File to database.
   # Adds Scan record, if necessary, which in turn adds Subject record.
 
   def add_to_database
-    calculate_crc32 unless @file_crc32
-    @scan.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS + [:file_crc32, :file_class])
-    puts "db_params:"
-    pp db_params
-    db_params.merge!(scan_id: @scan.id)
+    log_debug(@storage.full_name)
+    db_params = make_database_params(OTHER_FIELDS)
+    #    log_debug "db_params:"
+    #    pp db_params
     add_record_to_database(db_params)
   end
 
   # Delete record of this File from database.
 
   def remove_from_database
-    db_params = make_database_params(REQUIRED_FIELDS)
+    db_params = make_database_params
+    log_debug(full_name)
+    pp db_params
     delete_record_from_database(db_params)
   end
 
-  # Search for required fields including any given as parameters.
-  # Need to be able to search without crc for quick search using mod time.
-
-  def find_in_database(fields)
-    #    required_fields = [:name, :path, :size, :modified, :host] + fields
-    #    find_records_in_database(*required_fields)
-    find_records_in_database(REQUIRED_FIELDS + fields)
-  end
-
   def create_test_data
-    create_test_file_names
-    write_test_data
-    read_physical
-    #    log_debug("************ host #{hostname}, name #{full_name}")
-  end
-
-  # Fill in @file_path and @file_name for this File object
-
-  def create_test_file_names
-    @file_path = test_data_path
-    @file_name = acs_name
-  end
-
-  # Return path to test data file for this File object
-  #
-  # @return path [String]
-
-  def test_data_path
-    file_path = File.join(TEST_DATA_PATH, subject.summary(:summ_fmt_name))
-    file_path = File.join(file_path, TRANSMISSION) if @scan.scan_type == HRRTScan::TYPE_TX
-    file_path
+    @storage.write_test_data
+    @storage.read_physical
+    #    log_debug("************ host #{hostname}, name #{@storage.full_name}")
   end
 
   def test_data_contents
     '0' * self.class::TEST_DATA_SIZE
+  end
+
+  def method_missing(m, *args, &block)
+    if @storage.respond_to?(m)     # read_physical
+      @storage.send(m, *args, &block)
+    elsif @scan.respond_to?(m)     # subject, datetime, scan_datetime
+      @scan.send(m, *args, &block)
+    else
+      super
+    end
   end
 
 end

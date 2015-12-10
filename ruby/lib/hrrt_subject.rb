@@ -4,6 +4,7 @@ require 'json'
 require 'pp'
 
 require_relative '../lib/my_logging'
+require_relative './hrrt_database'
 
 include MyLogging
 
@@ -13,14 +14,22 @@ class HRRTSubject
   # Definitions
   # ------------------------------------------------------------
 
-  SUMMARY_FMT        = "%<name_last>-12s, %<name_first>-12s %<history>s"
-  TEST_SUBJECTS_JSON = File.absolute_path(File.dirname(__FILE__) + "/../etc/test_subjects_1.json")
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(name_last name_first history)
+  SUMMARY_FORMAT     = "%<name_last>-20s, %<name_first>-20s %<history>s\n"
 
-  SUMM_FMT_SHORT    = :summ_fmt_short
-  SUMM_FMT_FILENAME = :summ_fmt_filename
+  TEST_SUBJECTS_PATH = File.absolute_path(File.dirname(__FILE__) + "/../etc")
+  TEST_SUBJECTS_FILE = "test_subjects_1.json"
 
   DB_TABLE = :subject
   REQUIRED_FIELDS = %i(name_last name_first history)
+
+  SUMMARY_FORMATS = {
+    summ_fmt_short:    "%-12<name_last>s %-12<name_first>s %-12<history>s",
+    summ_fmt_filename: "%<name_last>s_%<name_first>s_%<history>s",
+    summ_fmt_name:     "%<name_last>s_%<name_first>s",
+    summ_fmt_names:    "%<name_last>s, %<name_first>s",
+  }
 
   # ------------------------------------------------------------
   # Accessors
@@ -40,32 +49,45 @@ class HRRTSubject
   # @return subjects [Hash[HRRTSubject]]
 
   def self.make_test_subjects
-    subject_data = JSON.parse(File.read(TEST_SUBJECTS_JSON), symbolize_names: true)
+    subject_data = JSON.parse(File.read(self.test_subjects_file), symbolize_names: true)
     subjects = []
     subject_data.each do |subj|
-      subj_in  = HRRTSubject.new(subj[:given])
-      subj_out = HRRTSubject.new(subj[:answer])
-      subjects.push([subj_in, subj_out])
+      subj_in  = HRRTSubject.create(subj[:given])
+      subj_out = HRRTSubject.create(subj[:answer])
+      subjects.push([subj_in, subj_out]) if (subj_in && subj_out)
     end
     subjects
   end
 
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
+  def self.test_subjects_file
+    subjects_file = MyOpts.get(:subjects) || TEST_SUBJECTS_FILE
+    File.join(TEST_SUBJECTS_PATH, subjects_file)
   end
 
+  def self.summary(details, format = :summ_fmt_short)
+    sprintf(SUMMARY_FORMATS[format], details)
+  end
 
   # ------------------------------------------------------------
   # Instance methods
   # ------------------------------------------------------------
+
+  class << self
+    def create(params)
+      (params && (params.keys & REQUIRED_FIELDS).size == REQUIRED_FIELDS.size) ? new(params) : nil
+    end
+
+    private :new
+  end
 
   # Create new HRRTSubject
   #
   # @param details [Hash]  Hash of :last, :first, :history
 
   def initialize(params)
-    set_params(params)
-    log_debug("name_last >#{@name_last}< name_first >#{@name_first}< history >#{@history}<")
+    params.select { |key, val| REQUIRED_FIELDS.include? key }.map { |key, val| send "#{key}=", val }
+    ensure_in_database		# Sets @id from existing record matching REQUIRED_FIELDS, or a new record.
+    log_debug(summary)
   end
 
   # Return hash of subject details.
@@ -73,46 +95,20 @@ class HRRTSubject
   # @param clean [Boolean] Strip all spaces and punctuation from name components.
 
   def details(clean = false)
-    details = {
-      history:    clean ? clean_name(@history)    : @history   ,
-      name_first: clean ? clean_name(@name_first) : @name_first,
-      name_last:  clean ? clean_name(@name_last)  : @name_last ,
-    }
-    details
-  end
-
-  def id
-    @id
+    Hash[(REQUIRED_FIELDS.map { |fld| [fld, clean ? clean_name(send(fld)) : send(fld)] })]
   end
 
   def summary(format = :summ_fmt_short, clean = false)
-    details = details(clean)
-    case format
-    when :summ_fmt_short
-      sprintf("%-12s %-12s %-12s", details[:name_last], details[:name_first], details[:history])
-    when :summ_fmt_filename
-      sprintf("%s_%s_%s", details[:name_last], details[:name_first], details[:history])
-    when :summ_fmt_name
-      sprintf("%s_%s", details[:name_last], details[:name_first])
-    when :summ_fmt_names
-      sprintf("%s, %s", details[:name_last], details[:name_first])
-    else
-      raise
-    end
+    self.class.summary(details(clean), format)
   end
 
   def print_summary(format = :summ_fmt_short)
     puts "#{self.class.name}: #{summary(format)}"
   end
 
-  def ensure_in_database
-    add_to_database unless present_in_database?
-  end
-
-  def add_to_database
-    db_params = make_database_params(REQUIRED_FIELDS)
+  def add_to_database(fields = [])
+    db_params = make_database_params(fields)
     add_record_to_database(db_params)
   end
-
 
 end

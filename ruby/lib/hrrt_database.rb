@@ -14,10 +14,6 @@ include MyOpts
 
 module HRRTDatabase
 
-  # ------------------------------------------------------------
-  # Definitions
-  # ------------------------------------------------------------
-
   # Database hosts
   WONGLAB      = 'wonglab.rad.jhmi.edu'
   LOCALHOST    = 'localhost'
@@ -26,11 +22,10 @@ module HRRTDatabase
   DB_NAME      = 'hrrt_recon'
   DB_NAME_TEST = 'hrrt_recon_test'
 
-  # ------------------------------------------------------------
   # Module variables
-  # ------------------------------------------------------------
-
   @@db = nil
+
+  attr_reader :id
 
   # ------------------------------------------------------------
   # Methods
@@ -71,81 +66,114 @@ module HRRTDatabase
   # Generic methods (will work on any table)
   # ------------------------------------------------------------
 
-  def present_in_database?(fields = [])
+  # Record in DB
 
-    ds = find_records_in_database(self.class::REQUIRED_FIELDS + fields)
-    present = false
-    if ds.all.length == 1
-      present = true
-      @id = ds.first[:id]
-    end
-    log_info(present.to_s + (present ? ", id = #{id}" : "") + " #{self.class::DB_TABLE} #{summary}")
-    present
+  def db_rec
+  	@id ? this_table[@id] : nil
   end
 
-  def find_records_in_database(fields)
-    db_params = make_database_params(fields)
-    db[self.class::DB_TABLE].where(db_params)
+  def this_table
+    db[self.class::DB_TABLE]
+  end
+
+  # Check that this item exists in database
+  # Fills in its @id field
+  #
+  # @return id [Integer] DB id of this object
+
+  def ensure_in_database(fields = [])
+    add_to_database(fields) unless present_in_database?(fields)
+  end
+
+  # If @id present, already found in DB.  Else find in DB and fill in @id.
+  # Uses only REQRIRED_FIELDS.
+  #
+  # @param fields [Hash] Add these fields to REQUIRED_FIELDS when querying DB
+  # @return db_rec [Dataset]
+
+  def present_in_database?(fields = [])
+    log_debug(@id ? "Already present: id = #{@id}" : "Not already present")
+    find_record_in_database(fields) unless @id
+    str = @id.nil? ? "false" : "true: id = #{@id}"
+    log_debug("present = #{str} #{self.class::DB_TABLE} #{summary}")
+    @id
+  end
+
+  def find_record_in_database(fields = [])
+    ds = find_records_in_database(fields)
+    if ds.all.length == 1
+      @id = ds.first.id
+    elsif ds.all.length == 0
+      @id = nil
+    else
+      raise ("#{__method__} Wrong number of DB matches: #{ds.count}")
+    end
+    @id
+  end
+
+  def find_records_in_database(fields = [])
+  	if fields.keys.include? :table
+  		table = fields[:table]
+	    fields.reject! { |key, val| key == :table }
+	else
+		table = this_table
+	end
+    db_params = make_database_params(self.class::REQUIRED_FIELDS + fields)
+    table.where(db_params)
   end
 
   def make_database_params(fields)
-    db_params = {}
-    fields.each do |field|
-      # field_name = db_field_name(field)
-      db_params[field] = instance_variable_get("@#{field}")
-    end
+    fields = self.class::REQUIRED_FIELDS + fields
+    db_params = Hash[ fields.map { |field| [field, send(field)] }]
+    log_debug("In #{self.class}, fields: #{fields.join(',')}")
+    pp db_params
     db_params
   end
 
+  # Insert this record into the database.
+  # Sets @db_rec field.
+
   def add_record_to_database(db_params)
-    @id = db[self.class::DB_TABLE].insert(db_params)
+    @id = this_table.insert(db_params)
     log_info("class #{self.class}: inserted new record id #{@id}")
   end
 
   def delete_record_from_database(db_params)
-    recs = db[self.class::DB_TABLE].where(db_params)
+  	this_table[@id].delete
+    @id = nil
     log_debug(summary)
-    if recs.count == 1
-      recs.delete
-    else
-      raise
-    end
   end
 
   # Return dataset of all records for this table in database.
 
   def all_records_in_table(thetable)
-    #    log_debug(thetable)
     db[thetable]
+  end
+
+  # ------------------------------------------------------------
+  # UGLY methods that take a class name.  Prefer http://goo.gl/ueue9Z
+  # ------------------------------------------------------------
+
+  def print_database_summary(classname)
+    theclass = Object.const_get(classname)
+    records = find_records_in_database(table: theclass::DB_TABLE).order(*theclass::SUMMARY_FIELDS)
+    log_info("-------------------- #{classname} #{records.count} records --------------------")
+    headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]
+    printf(theclass::SUMMARY_FORMAT, headings)
+    records.each { |rec| printf(theclass::SUMMARY_FORMAT, rec) }
+  end
+
+  def database_is_empty?
+    find_records_in_database(self.class::DB_TABLE).count == 0
   end
 
   # ------------------------------------------------------------
   # Non generic methods (will work on only 'file' table)
   # ------------------------------------------------------------
 
-
   def clear_test_database
     log_info("Delete contents of #{DB_NAME_TEST} (hard coded name)")
   end
-
-  # Check database against given directory.
-  # Remove any database records not on disk
-
-  def sync_database_to_directory(input_dir)
-
-    ds = db[HRRTFile::DB_TABLE].where(Sequel.like(:file_path, "#{input_dir}/%"), hostname: get_hostname)
-    ds.each do |file_record|
-      file_values = file_record.select { |key, value| HRRTFile::REQUIRED_FIELDS.include?(key) }
-      # puts "file_values: "
-      # pp file_values
-      test_file = HRRTFile.new(file_values)
-      unless test_file.exists_on_disk?
-        test_file.remove_from_database
-      end
-    end
-    log_debug("-------------------- end --------------------")
-  end
-
 
   # Update Subject and Scan tables against File
   # Delete any Scan not linked to from any File
@@ -153,10 +181,10 @@ module HRRTDatabase
 
   def check_subjects_scans
     ds_scan = db[:scan].left_join(:file, :scan_id=>:id).where(Sequel.qualify(:file, :id) => nil)
-    log_info("Deleting #{ds_scan.count} Scans not referenced by a File")
+    log_info("XXX Deleting #{ds_scan.count} Scans not referenced by a File")
     ds_scan.delete
     ds_subj = db[:subject].left_join(:scan, :subject_id=>:id).where(Sequel.qualify(:scan, :id) => nil)
-    log_info("Deleting #{ds_subj.count} Subjects not referenced by a Scan")
+    log_info("XXX Deleting #{ds_subj.count} Subjects not referenced by a Scan")
     ds_subj.delete
   end
 

@@ -15,6 +15,7 @@
 perl/etc/hrrt_recon.conf
 dev/
 project/
+ruby/doc/
 
 # Compiled source #
 ###################

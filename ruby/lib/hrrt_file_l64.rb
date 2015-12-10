@@ -54,8 +54,4 @@ class HRRTFileL64 < HRRTFile
     write_comp(source_file)
   end
 
-  def standard_name
-    "#{super}.#{ARCHIVE_SUFFIX}"
-  end
-
 end

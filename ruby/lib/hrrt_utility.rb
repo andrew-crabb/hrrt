@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby
 
 require_relative '../lib/my_logging'
+require_relative './hrrt_subject'
+require_relative './hrrt_scan'
 require 'socket'
 
 include MyLogging
@@ -13,187 +15,112 @@ module HRRTUtility
   # Definitions
   # ------------------------------------------------------------
 
+  KEYS_PHYSICAL = %i(file_size hostname file_modified file_class)
+  KEYS_CHECKSUM = %i(file_crc32 file_md5)
+  KEYS_KEYS     = HRRTSubject::REQUIRED_FIELDS + HRRTScan::REQUIRED_FIELDS + KEYS_PHYSICAL + KEYS_CHECKSUM
+
   # Standard:  LAST_FIRST_1234567_PET_150821_082939_EM.hc
   # HRRT ACS:  LAST-FIRST-1234567-2015.8.21.8.29.39_EM.hc
   NAME_PATTERN_STD = %r{
-    (?<name_last>\w+)		# subject
-    _(?<name_first>\w*)		# subject
-    _(?<history>\w*)		# subject
-    _(?<mod>PET)			# constant
-    _(?<scan_date>\d{6})	# scan
-    _(?<scan_time>\d{6})	# scan
-    _(?<scan_type>\w{2})	# scan
-    \.(?<extn>[\w\.]+)		# file
+    (?<name_last>\w+)     # subject
+    _(?<name_first>\w*)   # subject
+    _(?<history>\w*)      # subject
+    _(?<mod>PET)          # constant
+    _(?<scan_date>\d{6})  # scan
+    _(?<scan_time>\d{6})  # scan
+    _(?<scan_type>\w{2})  # scan
+    \.(?<extn>[\w\.]+)    # file
   }x
   NAME_PATTERN_ACS = %r{
-    (?<name_last>[^-]+\s*)			# subject
-    -(?<name_first>\s*[^-]*\s*)		# subject
-    -(?<history>\s*[^-]*\s*)		# subject
-    -(?<yr>\d{4}\s*)
-    \.(?<mo>\d{1,2})
-    \.(?<dy>\d{1,2})
-    \.(?<hr>\d{1,2})
-    \.(?<mn>\d{1,2})
-    \.(?<sc>\d{1,2})
-    _(?<scan_type>\w{2})			# scan
-    \.(?<extn>[\w\.]+)				# file
+    (?<name_last>[^-]+\s*)      # subject
+    -(?<name_first>\s*[^-]*\s*) # subject
+    -(?<history>\s*[^-]*\s*)    # subject
+    -(?<year>\d{4}\s*)
+    \.(?<month>\d{1,2})
+    \.(?<day>\d{1,2})
+    \.(?<hour>\d{1,2})
+    \.(?<min>\d{1,2})
+    \.(?<sec>\d{1,2})
+    _(?<scan_type>\w{2})      # scan
+    \.(?<extn>[\w\.]+)        # file
+  }x
+  NAME_PATTERN_AWS = %r{
+    (?<scan_date>\d{6})   # scan
+    _(?<scan_time>\d{6})  # scan
+    \.(?<extn>[\w\.]+)    # file
   }x
 
   # printf formatting strings for file names in standard and ACS format.
-  NAME_FORMAT_STD = "%<name_last>s_%<name_first>s_%<history>s_%<scan_date>s_%<scan_time>s_%<scan_type>s.%<extn>s"
-  NAME_FORMAT_ACS = "%<name_last>s-%<name_first>s-%<history>s-%<yr4>d.%<mo>d.%<dy>d.%<hr>d.%<mn>d.%<sc>d_%<scan_type>s.%<extn>s"
-  NAME_FORMAT_AWS = "%<scan_date>s_%<scan_time>s.%<extn>s"
 
-  HRRT_DATE_PATTERN = /(?<yr>\d{2})(?<mo>\d{2})(?<dy>\d{2})/
-  HRRT_TIME_PATTERN = /(?<hr>\d{2})(?<mn>\d{2})(?<sc>\d{2})/
+  DATE_PATT = /(?<year>\d{2})(?<month>\d{2})(?<day>\d{2})/
+  TIME_PATT = /(?<hour>\d{2})(?<min>\d{2})(?<sec>\d{2})/
 
-  HRRT_DATE_FMT = "%<yr>02d%<mo>02d%<dy>02d"  # 150824
-  HRRT_TIME_FMT = "%<hr>02d%<mn>02d%<sc>02d"  # 083500
-  HDR_DATE_FMT  = "%<dy>02d:%<mo>02d:%<yr4>d" # 24:08:2015
-  HDR_TIME_FMT  = "%<hr>02d:%<mn>02d:%<sc>02d"  # 08:35:00
+  HDR_DATE_FMT  = "%<day>02d:%<month>02d:%<year>d" # 24:08:2015
+  HDR_TIME_FMT  = "%<hour>02d:%<min>02d:%<sec>02d"  # 08:35:00
 
-  # Required fields in NAME_PATTERN_xxx
-  NEEDED_NAMES_DATE = %w(yr mo dy)
-  NEEDED_NAMES_TIME = %w(hr mn sc)
+  # For directory name
+  TRANSMISSION = 'Transmission'
 
-  CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)
+    TIME_FIELDS     = %i(year month day hour min sec)
 
   # ------------------------------------------------------------
   # Methods
   # ------------------------------------------------------------
 
-  # Analyze infile name for HRRT pattern.
-  #
-  # @param infile [String] input file name
-  # @return [MatchData] object of name parts if match, else nil.
-
-  def matches_hrrt_name(infile)
-    filename = File.basename(infile)
-    NAME_PATTERN_STD.match(filename) || NAME_PATTERN_ACS.match(filename)
-  end
-
-  # Create an HRRTFile-derived object from the input file.
-  #
-  # @param infile [String] Input file
-  # @return [HRRTFile]
-
-  def create_hrrt_file(details, infile)
-    hrrt_file = nil
-    CLASSES.each do |classtype|
-      if details[:extn] == Object.const_get(classtype)::SUFFIX
-        params = {
-          file_path: File.dirname(infile),
-          file_name: File.basename(infile),
-        }
-        # Create an HRRTFile filling in only file path and name, then read other details.
-        hrrt_file = Object.const_get(classtype).new(params, params.keys)
-        hrrt_file.read_physical
-        break
-      end
-    end
-    hrrt_file
-  end
-
-  # Extract subject name and date/time from file name
-  #
-  # @param filename [String]
-
-  def parse_filename(filename)
+  def details_from_filename(infile)
     details = nil
-    #    log_debug(filename)
-    if match = matches_hrrt_name(File.basename(filename))
-      details = {
-        scan_date:       match.names.include?('scan_date') ? match[:scan_date] : make_date(match),
-        scan_time:       match.names.include?('scan_time') ? match[:scan_time] : make_time(match),
-        scan_type:       match[:scan_type].upcase,
-        extn:       match[:extn].downcase,
-        name_last:  match[:name_last].upcase,
-        name_first: match[:name_first].upcase,
-        history:    match[:history].upcase,
-      }
-      # Derived fields
-      details[:scan_summary]    = details.values_at(:scan_date, :scan_time).join('_')
-      details[:subject_summary] = details.values_at(:name_last, :name_first, :history).join('_')
-    else
-      log_debug("No match: '#{File.basename(filename)}'")
+
+#    log_debug(infile)
+    filename = File.basename(infile)
+    if match = NAME_PATTERN_STD.match(filename)
+      details = {scan_datetime: datetime_from_std(match)}
+    elsif match = NAME_PATTERN_ACS.match(filename)
+      details = {scan_datetime: datetime_from_acs(match)}
     end
-    #    pp details
+    details.merge!(details_from_match(match)) if details
     details
   end
 
-  # Create date in standard format YYMMDD from MatchData object
-  #
-  # @param match [MatchData] result of regex match against file name patterns.
-  #   Must contain the labels _yr_, *mo*, __dy__
-  # @raise [foo] if the required labels are not present.
-  # @return [string] Date in YYMMDD format
+  # Add non time-date related details to hash
 
-  def make_date(match)
-    if (match.names & NEEDED_NAMES_DATE).sort.eql?(NEEDED_NAMES_DATE.sort)
-      date = sprintf(HRRT_DATE_FMT, yr: match[:yr].to_i % 100, mo: match[:mo], dy: match[:dy])
-    else
-      raise
-    end
-    date
+  def details_from_match(match)
+    details = {}
+    keys = %i(scan_type extn name_last name_first history)
+    keys.each { |key| details[key] = match.names.include?(key.to_s) ? match[key].upcase  : nil }
+    details
+  end
+
+  # Return date-time related details from match results (standard format YYMMDD_HHMMSS)
+
+  def datetime_from_std(match)
+    details = parse_datetime(DATE_PATT, match[:scan_date]).merge(parse_datetime(TIME_PATT, match[:scan_time]))
+    secs = datetime_from_details(details)
+#    log_debug
+#    pp ret
+	secs
+  end
+
+  # Return date-time related details from match results (ACS format Y.M.D.H.M.S)
+
+  def datetime_from_acs(match)
+#    log_debug
+    details = {}
+    TIME_FIELDS.each { |key| details[key] = match[key] }
+    secs = datetime_from_details(details)
+    secs
+  end
+
+  # Return Epoch time (seconds) from given date and time components
+  #
+  # @param times [Hash]
+  # @return datetime [Integer]
+
+  def datetime_from_details(details)
+    Time.new(*details.values_at(*TIME_FIELDS)).to_i
   end
 
   def required_fields
-  	self.class::REQUIRED_FIELDS
-  end
-
-  # Ensure that all keys from REQUIRED_FIELDS are present in params
-  # Return hash containing only key-value pairs matching these
-  #
-  # @param params [Hash]
-  # @return my_params [Hash]
-
-  def check_params(params, required_keys = nil)
-    required_keys ||= self.class::REQUIRED_FIELDS
-    my_params =  params.select { |key, value| required_keys.include?(key) }
-    unless my_params.keys.sort.eql?(required_keys.sort)
-      puts "Looking for: #{required_keys.sort.join(', ')}"
-      puts "Received   : #{my_params.keys.sort.join(', ')}"
-      raise("Params don't match for class #{self.class}")
-    end
-    my_params
-  end
-
-  # Call check_params() on given params, then call accessor for each key-value pair
-
-  def set_params(params, required_keys = nil)
-    my_params = check_params(params, required_keys)
-    my_params.each { |key, value| send "#{key}=", value }
-  end
-
-  # Create time in standard format HHMMSS from MatchData object
-
-  def make_time(match)
-    if (match.names & NEEDED_NAMES_TIME).sort.eql?(NEEDED_NAMES_TIME.sort)
-      time = sprintf(HRRT_TIME_FMT, hr: match[:hr], mn: match[:mn], sc: match[:sc])
-    else
-      raise
-    end
-    time
-  end
-
-  # Return a MatchData object of date components of given date string.
-  #
-  # @param datestr [String] date in standard YYMMDD format
-  # @return [MatchData] of :yr, :mo, :dy if match; else nil.
-
-  def parse_date(datestr)
-    details = parse_datetime(HRRT_DATE_PATTERN, datestr)
-    details[:yr4] = details[:yr] + 2000
-    details
-  end
-
-  # Return a MatchData object of time components of given time string.
-  #
-  # @param timestr [String] time in standard HHMMSS format
-  # @return [MatchData] of :hr, :mn, :sc if match; else nil.
-
-  def parse_time(timestr)
-    parse_datetime(HRRT_TIME_PATTERN, timestr)
+    self.class::REQUIRED_FIELDS
   end
 
   # Return given name component cleaned (keep only alpha and numeric)
@@ -203,6 +130,22 @@ module HRRTUtility
 
   def clean_name(instr)
     instr.upcase.gsub(/[^A-Z0-9]/, "")
+  end
+
+  # Return hash including input hash, with date/time components included separately
+
+  def expand_time(details)
+  	time = Time.at(details[:scan_datetime].to_i)
+  	times = {}
+  	TIME_FIELDS.each { |fld| times[fld] = time.send(fld) }
+  	times[:year] += 2000 if times[:year] < 100
+  	times[:year2] = times[:year] % 100  	
+  	ret = times.merge(details)
+#  	log_debug("scan_datetime #{details[:scan_datetime].to_i} details, times, ret: ")
+#  	pp details
+#  	pp times
+#  	pp ret
+	ret
   end
 
   # Return a Hash of date or time symbols and their integer values

@@ -29,7 +29,17 @@ class HRRTScan
     TYPE_TX => 'transmission',
   }
 
-  REQUIRED_FIELDS = %i(scan_date scan_time scan_type)
+  REQUIRED_FIELDS = %i(scan_datetime scan_type)
+  OTHER_FIELDS    = %i(subject_id)
+
+  # Required for print_database_summary
+  SUMMARY_FIELDS     = %i(scan_date scan_time scan_type)
+  SUMMARY_FORMAT     = "%<scan_date>-6s %<scan_time>-6s %<scan_type>s\n"
+
+#  HRRT_DATE_FMT = "%<yr>02d%<mo>02d%<dy>02d"  # 150824
+#  HRRT_TIME_FMT = "%<hr>02d%<mn>02d%<sc>02d"  # 083500
+  HRRT_DATE_FMT = "%y%m%d"  # 150824
+  HRRT_TIME_FMT = "%H%M%S"  # 083500
 
   # ------------------------------------------------------------
   # Accessors
@@ -39,20 +49,32 @@ class HRRTScan
   # attr_reader :details
 
   attr_accessor :files
-  attr_accessor :subject
-
-  attr_accessor :scan_date
-  attr_accessor :scan_time
-  attr_accessor :scan_type
+  attr_accessor :subject        # HRRTSubject object
+  attr_accessor :scan_type      # EM or TX
+  attr_accessor :scan_datetime  # Seconds since epoch.
 
   # ------------------------------------------------------------
   # Class methods
   # ------------------------------------------------------------
 
+  class << self
+    def create(params, subject)
+      scan = nil
+      log_debug("subject: #{subject.summary}")
+#      pp params
+      if params && subject && (params.keys & REQUIRED_FIELDS).size == REQUIRED_FIELDS.size
+        scan = new(params, subject)
+      end
+      scan
+    end
+
+    private :new
+  end
+
   def self.make_test_scans(subject)
-    emdate = Faker::Time.between(2.days.ago, Time.now, :day)
-    em_scan = self.make_test_scan(subject, 'EM', emdate)
-    tx_scan = self.make_test_scan(subject, 'TX', emdate - 3600)
+    emdate = Faker::Time.between(2.days.ago, Time.now, :day).to_i
+    em_scan = new({scan_type: 'EM', scan_datetime: emdate       }, subject)
+    tx_scan = new({scan_type: 'TX', scan_datetime: emdate - 3600}, subject)
     scans = {
       TYPE_EM => em_scan,
       TYPE_TX => tx_scan,
@@ -60,18 +82,22 @@ class HRRTScan
     scans
   end
 
-  def self.make_test_scan(subject, type, datetime)
-    log_debug("#{subject}, #{type}, #{datetime}")
-    details = {
-      scan_date: datetime.strftime("%y%m%d"),
-      scan_time: datetime.strftime("%H%M%S"),
-      scan_type: type,
-    }
-    HRRTScan.new(details, subject)
+  # summary(), scan_date(), scan_time() made class methods as can be called before Scan object made
+
+  def self.summary(details)
+    summary = datetime(details)
   end
 
-  def self.all_records_in_database
-    all_records_in_table(DB_TABLE)
+  def self.datetime(details)
+    "#{scan_date(details)}_#{scan_time(details)}"
+  end
+
+  def self.scan_date(details)
+    Time.at(details[:scan_datetime]).strftime(HRRT_DATE_FMT)
+  end
+
+  def self.scan_time(details)
+    Time.at(details[:scan_datetime]).strftime(HRRT_TIME_FMT)
   end
 
   # ------------------------------------------------------------
@@ -79,38 +105,52 @@ class HRRTScan
   # ------------------------------------------------------------
 
   # Create new Scan and fill in its files
+  # ensure_in_database includes subject_id: scan is a product of subject.
+  # But subject_id not passed nor stored: no @subject_id or subject_id=. 
+  # subject_id is method calling @subject
 
   def initialize(params, subject)
-  	set_params(params)
+    REQUIRED_FIELDS.map { |fld| send "#{fld}=", params[fld] }
     @subject = subject
-    log_debug("Date: #{datetime} Subject: #{subject.summary}")
+    ensure_in_database([:subject_id])
+    log_debug(summary(true))
+#    pp params
   end
 
   # Return details of this Scan
-  # Accessor rather than attribute since dates and times supplied as fields as well as string
   #
   # @return details [Hash]
 
   def details
-    details = {
-      scan_date: @scan_date,
-      scan_time: @scan_time,
-      scan_type: @scan_type,
-    }
-    details = details.merge(parse_date(@scan_date)).merge(parse_time(@scan_time))
-    details
-  end
-
-  def id
-    @id
-  end
-
-  def has_all_files
-    (@files.keys & HRRTFile::CLASSES).sort.eql?(HRRTFile::CLASSES.sort)
+    Hash[REQUIRED_FIELDS.map { |fld| [fld, send(fld)]}]
   end
 
   def datetime
-    @scan_date + '_' + @scan_time
+    self.class.datetime(details)
+  end
+
+  def scan_date
+    self.class.scan_date(details)
+  end
+
+  def scan_time
+    self.class.scan_time(details)
+  end
+
+  # Called by send() in add_to_database
+
+  def subject_id
+  	@subject.id
+  end
+
+  def print_summary(long = false)
+    log_info(summary(long))
+  end
+
+  def summary(long = false)
+    summary = self.class.summary(details)
+    summary += "  #{@scan_type} :  #{@subject.summary}" if long
+    summary
   end
 
   # Return total size of this scan
@@ -121,29 +161,12 @@ class HRRTScan
     @files ? @files.map { |name, f| f.file_size }.inject(:+) : 0
   end
 
-  def print_summary
-    log_info(summary)
-  end
-
-  def summary
-    "#{datetime} #{@subject.summary} #{file_size}"
-  end
-
   # ------------------------------------------------------------
   # Database-related methods
   # ------------------------------------------------------------
 
-  # Check that this Scan exists in database
-  # Fills in its @id field
-
-  def ensure_in_database
-    add_to_database unless present_in_database?
-  end
-
-  def add_to_database
-    @subject.ensure_in_database
-    db_params = make_database_params(REQUIRED_FIELDS)
-    db_params.merge!(subject_id: @subject.id)
+  def add_to_database(fields = [])
+    db_params = make_database_params(fields)
     log_debug
     pp db_params
     add_record_to_database(db_params)
