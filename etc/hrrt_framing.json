@@ -1,78 +1,82 @@
 {
-    "003": {
-	"01": {
-	    "description" : "3 minute 1 frame",
-	    "framing"     : "180*1"
-	}
-    },
-    "020": {
-	"04": {
-	    "description" : "20 minute 4 frame",
-	    "framing"     : "300*4"
-	}
-    },
-    "030": {
-	"06": {
-	    "description" : "30 minute 6 frame",
-	    "framing"     : "300*6"
-	}
-    },
-    "040": {
-	"20": {
-	    "description" : "40 minute 20 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*2"
-	}
-    },
-    "060": {
-	"24": {
-	    "description" : "60 minute 24 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*6"
-	}
-    },
-    "070": {
-	"33": {
-	    "description" : "70 minute 33 frame",
-	    "framing"     : "15*4,30*8,60*9,180*2,300*10"
-	}
-    },
-    "080": {
-	"30": {
-	    "description" : "80 minute 30 frame",
-	    "framing"     : "30*6,60*7,120*5,300*12"
-	}
-    },
-    "090": {
-	"22": {
-	    "description" : "90 minute 22 frame",
-	    "framing"     : "20*3,30*2,60*2,120*3,300*8,600*4"
-	},
-	"30": {
-	    "description" : "90 minute 30 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*12"
-	}
-    },
-    "120": {
-	"36": {
-	    "description" : "120 minute 36 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*18"
-	}
-    },
-    "180": {
-	"48": {
-	    "description" : "180 minute 48 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*30"
-	}
-    },
-    "200": {
-	"52": {
-	    "description" : "200 minute 52 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*34"
-	}
-    },
-    "270": {
-	"66": {
-	    "description" : "270 minute 66 frame",
-	    "framing"     : "15*4,30*4,60*3,120*2,240*5,300*48"
-	}
+  "003": {
+    "01": {
+      "description": "3 minute 1 frame",
+      "framing": "180*1"
     }
+  },
+  "020": {
+    "04": {
+      "description": "20 minute 4 frame",
+      "framing": "300*4"
+    }
+  },
+  "030": {
+    "06": {
+      "description": "30 minute 6 frame",
+      "framing": "300*6"
+    }
+  },
+  "040": {
+    "20": {
+      "description": "40 minute 20 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*2"
+    }
+  },
+  "060": {
+    "12": {
+      "description": "60 minute 12 frame",
+      "framing": "300*12"
+    },
+    "24": {
+      "description": "60 minute 24 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*6"
+    }
+  },
+  "070": {
+    "33": {
+      "description": "70 minute 33 frame",
+      "framing": "15*4,30*8,60*9,180*2,300*10"
+    }
+  },
+  "080": {
+    "30": {
+      "description": "80 minute 30 frame",
+      "framing": "30*6,60*7,120*5,300*12"
+    }
+  },
+  "090": {
+    "22": {
+      "description": "90 minute 22 frame",
+      "framing": "20*3,30*2,60*2,120*3,300*8,600*4"
+    },
+    "30": {
+      "description": "90 minute 30 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*12"
+    }
+  },
+  "120": {
+    "36": {
+      "description": "120 minute 36 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*18"
+    }
+  },
+  "180": {
+    "48": {
+      "description": "180 minute 48 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*30"
+    }
+  },
+  "200": {
+    "52": {
+      "description": "200 minute 52 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*34"
+    }
+  },
+  "270": {
+    "66": {
+      "description": "270 minute 66 frame",
+      "framing": "15*4,30*4,60*3,120*2,240*5,300*48"
+    }
+  }
 }
