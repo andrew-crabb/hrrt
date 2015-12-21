@@ -59,14 +59,14 @@ our $find_files_size = 0;
 
 # Find backup disks.
 my $disks = list_backup_disks();
-print Dumper($disks);
+# print Dumper($disks);
 
 # ------------------------------------------------------------
 # Step 1. Mirror new files on HRRT onto backup disks.
 # ------------------------------------------------------------
 
 unless ($no_mirror) {
-  run_and_log($HRRT_MIRROR, "hrrt_mirror");
+  run_and_log($HRRT_MIRROR, "hrrt_mirror $HRRT_MIRROR");
 }
 
 my %disks = %$disks;
@@ -179,7 +179,7 @@ sub wanted {
   my ($filename, $filepath, $filesuff) = fileparse($fname);
   my $flagfile = "/tmp/${filename}.inprogress";
   my $old_recon_file = (($dir =~ m{$HRRT}xms) and (-M $_ > $period)) ? 1 : 0;
-  print  "XXX ($fname = $filename, $filepath, $filesuff): infile = $infile; old = $old_recon_file\n";
+#  print  "XXX ($fname = $filename, $filepath, $filesuff): infile = $infile; old = $old_recon_file\n";
   if (-f $infile and !/.*frame.*|.*qc$/ and not $old_recon_file) {
     unless ($dir =~ /$UNWANTED_DIR_PATTERN/) {
       if (-f $flagfile) {
