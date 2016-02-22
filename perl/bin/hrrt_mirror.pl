@@ -30,10 +30,6 @@ use HRRT_Utilities;
 use Opts;
 use Utilities_new;
 
-# File stat keys
-Readonly::Scalar our $STAT_SIZE  => 'size';
-Readonly::Scalar our $STAT_MTIME => 'mtime';
-
 Readonly::Scalar our $OMIT_FILES_PATTERN => q{bh$|log$};
 our $g_max_name_len = 0;
 
@@ -64,7 +60,7 @@ my %allopts = (
     $Opts::OPTS_TYPE => $Opts::OPTS_INT,
     $Opts::OPTS_TEXT => 'Window tolerance for modification time match (seconds)',
   },
-    );
+);
 
 my $opts = process_opts(\%allopts);
 if ($opts->{$Opts::OPT_HELP}) {
@@ -134,43 +130,15 @@ sub copy_file_to_disk {
   my %args = (
     $API_Utilities::IS_HEADER => ($infile =~ /\.hdr$/) ? 1 : 0,
     $API_Utilities::VERBOSE   => $opts->{$Opts::OPT_VERBOSE},
-      );
+  );
   my $newname = make_std_name($infile, \%args);
 
   foreach my $disk (sort keys %disks) {
     if (exists($disks->{$disk}{$fileyear}{$filemonth})) {
-      print "xxx file_exists_on_disk($infile, $newname, $disk, $fileyear, $filemonth)\n";
-      if (file_exists_on_disk($infile, $newname, $disk, $fileyear, $filemonth)) {
-	print "Skipping: Exists on disk $disk: $newname\n";
-      } else {
-	copy_file_to_this_disk($infile, $newname, $disk, $fileyear, $filemonth);
-      }
+      # print "xxx . copy_file_to_disk('$disk' '$fileyear' '$filemonth' $infile)\n";
+      copy_file_to_this_disk($infile, $newname, $disk, $fileyear, $filemonth);
     }
   }
-}
-
-sub file_exists_on_disk {
-  my ($infile, $newname, $disk, $fileyear, $filemonth)  = @_;
-  my @instat = stat($infile);
-  my ($insize, $inmtime) = @instat[7, 9];
-  my @newstat = stat_of_file($newname);
-}
-
-sub stat_of_file {
-  my ($newname) = @_;
-  # If uncompressed, get stat of file.  Else, read details of uncompressed file from 7z output.
-  my $det = undef;
-  if ($newname =~ /\.7z$/) {
-    $det = {
-    }
-  } else {
-    my @stat = stat($newname);
-    $det = { 
-      $STAT_MTIME => $stat[9],
-      $STAT_SIZE  => $stat[7],
-    }
-  }
-  return $det;
 }
 
 sub copy_file_to_this_disk {
@@ -189,7 +157,7 @@ sub copy_file_to_this_disk {
     'dest'	=> $dest,
     'dry-run'   => ($opts->{$Opts::OPT_DUMMY}) ? 1 : 0,
     'modify-window' => ($opts->{$OPT_WINDOW} // 1),
-      );
+  );
 
   # printHash(\%rsopts, "copy_file_to_disk") if ($opts->{$Opts::OPT_VERBOSE});
 
