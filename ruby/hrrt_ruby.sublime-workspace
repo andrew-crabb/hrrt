@@ -539,7 +539,7 @@
 			"file": "/Users/ahc/Dropbox/DEV/ruby/lib/file_utilities.rb",
 			"settings":
 			{
-				"buffer_size": 1038,
+				"buffer_size": 1361,
 				"line_ending": "Unix"
 			}
 		},
@@ -592,14 +592,6 @@
 			}
 		},
 		{
-			"file": "lib/storage.rb",
-			"settings":
-			{
-				"buffer_size": 1540,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb",
 			"settings":
 			{
@@ -644,6 +636,40 @@
 			"settings":
 			{
 				"buffer_size": 6498,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Searching 56 files for \"printf\"\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_local.rb:\n   35    def file_path(f)\n   36    	details = expand_time(scan_datetime: f.scan_datetime).merge(root: @archive_root)\n   37:     file_path = sprintf(ARCHIVE_PATH_FMT, details)\n   38  #  	log_debug(\"file_path #{file_path}\")\n   39  #  	pp details\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_database.rb:\n  160      log_info(\"-------------------- #{classname} #{records.count} records --------------------\")\n  161      headings = Hash[theclass::SUMMARY_FIELDS.map {|key, value| [key, key.to_s]}]\n  162:     printf(theclass::SUMMARY_FORMAT, headings)\n  163:     records.each { |rec| printf(theclass::SUMMARY_FORMAT, rec) }\n  164    end\n  165  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb:\n   72      records = records_for(table: DB_TABLE).order(:hostname, :file_path, :file_name)\n   73      log_info(\"-------------------- #{records.count} Files --------------------\")\n   74:     records.each { |rec| printf(SUMMARY_FORMAT, rec) }\n   75    end\n   76  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb:\n   46      image_duration_erb   = @scan.scan_type == HRRTScan::TYPE_EM ? \"5400\" : \"300\"\n   47      mode_erb             =  HRRTScan::SCAN_TYPES[@scan.scan_type]\n   48:     study_time_erb       = sprintf(HDR_TIME_FMT, expand_time(details))\n   49:     study_date_erb       = sprintf(HDR_DATE_FMT, expand_time(details))\n   50      file_name_erb        = file_name\n   51  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_subject.rb:\n   66  \n   67    def self.summary(details, format = :summ_fmt_short)\n   68:     sprintf(SUMMARY_FORMATS[format], details)\n   69    end\n   70  \n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb:\n   51    }x\n   52  \n   53:   # printf formatting strings for file names in standard and ACS format.\n   54  \n   55    DATE_PATT = /(?<year>\\d{2})(?<month>\\d{2})(?<day>\\d{2})/\n\n/Users/ahc/DEV/hrrt/ruby/lib/my_logging.rb:\n   31  \n   32    def file_line(match)\n   33:     file_line = sprintf(\"%s:%d\", File.basename(match[:filename]), match[:lineno])\n   34      #    puts \"xxx filewidth #{MyLogging.filewidth}, len #{file_line.length}\"\n   35      MyLogging.filewidth = [MyLogging.filewidth, file_line.length].max\n   36:     sprintf(\"%-#{MyLogging.filewidth}s\", file_line)\n   37    end\n   38  \n   ..\n   41      method.sub!('block in ', '')\n   42      MyLogging.methwidth = [MyLogging.methwidth, method.length].max\n   43:     sprintf(\"%-#{MyLogging.methwidth}s\", method)\n   44    end\n   45  \n   ..\n   50      classwidth = MyLogging.classwidth\n   51      padwidth = classwidth - self.class.name.length\n   52:     logstr = sprintf(\"%#{padwidth}s%s  %s  %s\", '', file_line(m), meth(m), msg)\n   53      case severity\n   54      when :info\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage.rb:\n   33  \n   34    def file_name\n   35:     sprintf(@archive.class::FILE_NAME_FORMAT, expand_time(@parent.get_details(@archive.class::FILE_NAME_CLEAN)))\n   36    end\n   37  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   55  \n   56    def calculate_file_crc32\n   57:     @file_crc32 ||= sprintf(\"%x\", Digest::CRC32.file(full_name).checksum).upcase\n   58      log_debug(\"#{file_name}: CRC #{@file_crc32}\")\n   59    end\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_archive_local.rb:\n   35    def file_path(f)\n   36    	details = expand_time(scan_datetime: f.scan_datetime).merge(root: @archive_root)\n   37:     file_path = sprintf(ARCHIVE_PATH_FMT, details)\n   38  #  	log_debug(\"file_path #{file_path}\")\n   39  #  	pp details\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_file_l64_hdr.rb:\n   46      image_duration_erb   = @scan.scan_type == HRRTScan::TYPE_EM ? \"5400\" : \"300\"\n   47      mode_erb             =  HRRTScan::SCAN_TYPES[@scan.scan_type]\n   48:     study_time_erb       = sprintf(HDR_TIME_FMT, expand_time(details))\n   49:     study_date_erb       = sprintf(HDR_DATE_FMT, expand_time(details))\n   50      file_name_erb        = file_name\n   51  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/hrrt_subject.rb:\n   66  \n   67    def self.summary(details, format = :summ_fmt_short)\n   68:     sprintf(SUMMARY_FORMATS[format], details)\n   69    end\n   70  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage.rb:\n   33  \n   34    def file_name\n   35:     sprintf(@archive.class::FILE_NAME_FORMAT, expand_time(@parent.get_details(@archive.class::FILE_NAME_CLEAN)))\n   36    end\n   37  \n\n19 matches across 13 files\n\n\nSearching 56 files for \"home\"\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb:\n   10  class HRRTArchiveACS < HRRTArchive\n   11  \n   12:   ARCHIVE_ROOT_TEST = File.join(Dir.home, 'data/hrrt_acs')\n   13    ARCHIVE_ROOT      = \"/mnt/hrrt/SCS_SCANS\"\n   14    FILE_NAME_CLEAN  = false\n\n/Users/ahc/Dropbox/DEV/python/bin/dropbox.py:\n  175  def gpgme_context(keys):\n  176      gpg_conf_contents = ''\n  177:     _gpghome = tempfile.mkdtemp(prefix='tmp.gpghome')\n  178  \n  179      try:\n  180:         os.environ['GNUPGHOME'] = _gpghome\n  181:         fp = open(os.path.join(_gpghome, 'gpg.conf'), 'wb')\n  182          fp.write(gpg_conf_contents)\n  183          fp.close()\n  ...\n  194          yield ctx\n  195      finally:\n  196:         del os.environ['GNUPGHOME']\n  197:         shutil.rmtree(_gpghome, ignore_errors=True)\n  198  \n  199  def verify_signature(key_file, sig_file, plain_file):\n  ...\n 1247  \n 1248  def reroll_autostart(should_autostart):\n 1249:     home_dir = os.path.expanduser(u'~')\n 1250:     contents = os.listdir(home_dir)\n 1251  \n 1252      # UBUNTU\n 1253      if u\".config\" in contents:\n 1254:         autostart_dir = os.path.join(home_dir, u\".config\", u\"autostart\")\n 1255          autostart_link = os.path.join(autostart_dir, u\"dropbox.desktop\")\n 1256          if should_autostart:\n\n11 matches across 2 files\n\n\nSearching 56 files for \"mkdir\"\n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n   27    def write_uncomp(source_file)\n   28      Dir.chdir(source_file.file_path)\n   29:     FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   31      result = Rsync.run(Shellwords.escape(source_file.full_name), full_name, '--times')\n   ..\n   35    def write_comp(source_file)\n   36      log_debug(\"source #{source_file.full_name}, dest #{full_name}\")\n   37:     FileUtils.mkdir_p(file_path)\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   41    def write_test_data\n   42      #    log_debug(File.join(@file_path, @file_name))\n   43:     FileUtils.mkdir_p(file_path)\n   44      f = File.new(full_name,  \"w\")\n   45      f.write(@parent.test_data_contents)\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n   27    def write_uncomp(source_file)\n   28      Dir.chdir(source_file.file_path)\n   29:     FileUtils.mkdir_p(file_path)\n   30      log_debug(\"#{source_file.full_name}  #{full_name}\")\n   31      result = Rsync.run(Shellwords.escape(source_file.full_name), full_name, '--times')\n   ..\n   35    def write_comp(source_file)\n   36      log_debug(\"source #{source_file.full_name}, dest #{full_name}\")\n   37:     FileUtils.mkdir_p(file_path)\n   38      File.open(full_name, \"wb\") do |file|\n   39        SevenZipRuby::Writer.open(file) do |szr|\n\n5 matches across 3 files\n\n\nSearching 56 files for \"md5\"\n\n/Users/ahc/DEV/hrrt/ruby/README.md:\n   34  	* size\n   35  	* mtime\n   36: 	* md5sum\n   37  	* crc32sum\n   38  	* host (from archive)\n\n/Users/ahc/DEV/hrrt/ruby/db/migrations/001_create_files.rb:\n   22        String      :file_class   , :null=>false\n   23        String      :file_crc32   , :null=>false\n   24:       String      :file_md5     , :null=>false\n   25        Integer     :file_size    , :null=>false\n   26        Integer     :file_modified, :null=>false\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_aws.rb:\n   72    def metadata_from_file(source_file)\n   73      metadata = {}\n   74:     %i(file_md5 file_crc32 extn file_modified).each      { |key| metadata[key] = source_file.send(key) }\n   75      %i(scan_date scan_time scan_type).each { |key| metadata[key] = source_file.scan.send(key) }\n   76      %i(name_last name_first history).each  { |key| metadata[key] = source_file.scan.subject.send(key) }\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb:\n   25    DB_TABLE = :file\n   26    REQUIRED_FIELDS = %i(file_path file_name file_size file_modified hostname)  # For DB\n   27:   OTHER_FIELDS    = %i(file_crc32 file_md5 file_class scan_id archive_class)  # For DB\n   28    CLASSES = %w(HRRTFileL64 HRRTFileL64Hdr HRRTFileL64Hc)\n   29  \n   ..\n  118    def ensure_checksums\n  119      ds = find_record_in_database\n  120:     checksums = ds ? ds.select(:file_crc32, :file_md5) : []\n  121      @storage.calculate_checksums(checksums)\n  122    end\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb:\n   17  \n   18    KEYS_PHYSICAL = %i(file_size hostname file_modified file_class)\n   19:   KEYS_CHECKSUM = %i(file_crc32 file_md5)\n   20    KEYS_KEYS     = HRRTSubject::REQUIRED_FIELDS + HRRTScan::REQUIRED_FIELDS + KEYS_PHYSICAL + KEYS_CHECKSUM\n   21  \n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n    5  require 'seven_zip_ruby'\n    6  require 'digest/crc32'\n    7: require 'digest/md5'\n    8  require 'shellwords'\n    9  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage.rb:\n   10  \n   11    attr_accessor :file_crc32\n   12:   attr_accessor :file_md5\n   13    attr_accessor :file_size\n   14    attr_accessor :file_modified\n   ..\n   48      pp vals\n   49  \n   50:     %w(file_crc32 file_md5).each do |cs|\n   51        unless send(cs)\n   52          if vals.has_key? cs\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_aws.rb:\n   44      # Following are not computed in StorageFile#read_physical\n   45      @file_crc32    ||= metadata[:file_crc32]\n   46:     @file_md5      ||= metadata[:file_md5]\n   47      log_debug(f.summary)\n   48    end\n   ..\n   53    end\n   54  \n   55:   def calculate_file_md5\n   56:     @file_md5 = @aws_obj.metadata[:file_md5]\n   57:     log_debug(\"#{file_name}: MD5 #{@file_md5}\")\n   58    end\n   59  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   59    end\n   60  \n   61:   def calculate_file_md5\n   62:     @file_md5 ||= Digest::MD5.file(full_name).hexdigest\n   63:     log_debug(\"#{file_name}: MD5 #{@file_md5}\")\n   64    end\n   65  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/db/migrations/001_create_files.rb:\n   22        String      :file_class   , :null=>false\n   23        String      :file_crc32   , :null=>false\n   24:       String      :file_md5     , :null=>false\n   25        Integer     :file_size    , :null=>false\n   26        Integer     :file_modified, :null=>false\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n    5  require 'seven_zip_ruby'\n    6  require 'digest/crc32'\n    7: require 'digest/md5'\n    8  require 'shellwords'\n    9  \n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage.rb:\n   10  \n   11    attr_accessor :file_crc32\n   12:   attr_accessor :file_md5\n   13    attr_accessor :file_size\n   14    attr_accessor :file_modified\n   ..\n   48      pp vals\n   49  \n   50:     %w(file_crc32 file_md5).each do |cs|\n   51        unless send(cs)\n   52          if vals.has_key? cs\n\n25 matches across 12 files\n\n\nSearching 56 files for \"calculate_\"\n\n/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb:\n  119      ds = find_record_in_database\n  120      checksums = ds ? ds.select(:file_crc32, :file_md5) : []\n  121:     @storage.calculate_checksums(checksums)\n  122    end\n  123  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage.rb:\n   44    # @param vals [Hash]\n   45  \n   46:   def calculate_checksums(vals = [])\n   47      log_debug\n   48      pp vals\n   ..\n   53            send(\"#{cs}=\", vals[cs])\n   54          else\n   55:           send \"calculate_#{cs}\"\n   56          end\n   57        end\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_aws.rb:\n   48    end\n   49  \n   50:   def calculate_file_crc32\n   51      @file_crc32 = @aws_obj.metadata[:file_crc32]\n   52      log_debug(\"#{file_name}: CRC #{@file_crc32}\")\n   53    end\n   54  \n   55:   def calculate_file_md5\n   56      @file_md5 = @aws_obj.metadata[:file_md5]\n   57      log_debug(\"#{file_name}: MD5 #{@file_md5}\")\n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   54    end\n   55  \n   56:   def calculate_file_crc32\n   57      @file_crc32 ||= sprintf(\"%x\", Digest::CRC32.file(full_name).checksum).upcase\n   58      log_debug(\"#{file_name}: CRC #{@file_crc32}\")\n   59    end\n   60  \n   61:   def calculate_file_md5\n   62      @file_md5 ||= Digest::MD5.file(full_name).hexdigest\n   63      log_debug(\"#{file_name}: MD5 #{@file_md5}\")\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage.rb:\n   44    # @param vals [Hash]\n   45  \n   46:   def calculate_checksums(vals = [])\n   47      log_debug\n   48      pp vals\n   ..\n   53            send(\"#{cs}=\", vals[cs])\n   54          else\n   55:           send \"calculate_#{cs}\"\n   56          end\n   57        end\n\n9 matches across 5 files\n\n\nSearching 56 files for \"digest\"\n\n/Users/ahc/DEV/hrrt/ruby/Gemfile:\n    6  gem 'thor'\n    7  gem 'sequel'\n    8: gem 'digest'\n    9: gem 'digest-crc'\n   10  gem 'mysql'\n   11  gem 'json'\n\n/Users/ahc/DEV/hrrt/ruby/Gemfile.lock:\n    9      aws-sdk-resources (2.1.32)\n   10        aws-sdk-core (= 2.1.32)\n   11:     digest (0.0.1)\n   12:     digest-crc (0.4.1)\n   13      faker (1.5.0)\n   14        i18n (~> 0.5)\n   ..\n   28    as-duration\n   29    aws-sdk\n   30:   digest\n   31:   digest-crc\n   32    faker\n   33    json\n\n/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb:\n    4  \n    5  require 'seven_zip_ruby'\n    6: require 'digest/crc32'\n    7: require 'digest/md5'\n    8  require 'shellwords'\n    9  \n\n/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb:\n   55  \n   56    def calculate_file_crc32\n   57:     @file_crc32 ||= sprintf(\"%x\", Digest::CRC32.file(full_name).checksum).upcase\n   58      log_debug(\"#{file_name}: CRC #{@file_crc32}\")\n   59    end\n   60  \n   61    def calculate_file_md5\n   62:     @file_md5 ||= Digest::MD5.file(full_name).hexdigest\n   63      log_debug(\"#{file_name}: MD5 #{@file_md5}\")\n   64    end\n\n/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/physical_file.rb:\n    4  \n    5  require 'seven_zip_ruby'\n    6: require 'digest/crc32'\n    7: require 'digest/md5'\n    8  require 'shellwords'\n    9  \n\n13 matches across 5 files\n",
+			"settings":
+			{
+				"buffer_size": 14096,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/storage.rb",
+			"settings":
+			{
+				"buffer_size": 1540,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb",
+			"settings":
+			{
+				"buffer_size": 3533,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_local.rb",
+			"settings":
+			{
+				"buffer_size": 1525,
 				"line_ending": "Unix"
 			}
 		},
@@ -726,6 +752,7 @@
 	],
 	"file_history":
 	[
+		"/Users/ahc/Dropbox/DEV/hrrt/ruby/lib/storage.rb",
 		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_aws.rb",
 		"/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb",
 		"/Users/ahc/Dropbox/DEV/hrrt/ruby/Gemfile",
@@ -829,6 +856,13 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"digest",
+			"calculate_",
+			"check",
+			"md5",
+			"mkdir",
+			"home",
+			"printf",
 			"REQU",
 			"self",
 			"self::",
@@ -949,14 +983,7 @@
 			"HRRT_DATE_PATTERN",
 			"make_date",
 			"HRRT_DATE_P",
-			"NAME_PATTERN",
-			"parse_",
-			"parse_scandate",
-			"make_date_from_details",
-			"make_date",
-			"subject_summary",
-			"scan_summary",
-			"matches_hrrt_name"
+			"NAME_PATTERN"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1080,7 +1107,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 10,
+					"stack_index": 13,
 					"type": "text"
 				},
 				{
@@ -1169,7 +1196,7 @@
 						"translation.y": 132.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 17,
+					"stack_index": 20,
 					"type": "text"
 				},
 				{
@@ -1258,7 +1285,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 13,
+					"stack_index": 16,
 					"type": "text"
 				},
 				{
@@ -1283,61 +1310,61 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
 								"bh_c_define",
 								"bh_c_define_center",
 								"bh_c_define_open",
 								"bh_c_define_close",
 								"bh_c_define_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_square",
 								"bh_square_center",
 								"bh_square_open",
 								"bh_square_close",
-								"bh_square_content"
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage",
 							"tab_size": null,
@@ -1347,7 +1374,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -1356,15 +1383,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1038,
+						"buffer_size": 1361,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1038,
-								1038
+								0,
+								0
 							]
 						],
 						"settings":
@@ -1436,7 +1463,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 9,
+					"stack_index": 12,
 					"type": "text"
 				},
 				{
@@ -1525,7 +1552,7 @@
 						"translation.y": 18661.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 12,
+					"stack_index": 15,
 					"type": "text"
 				},
 				{
@@ -1614,13 +1641,13 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 18,
+					"stack_index": 21,
 					"type": "text"
 				}
 			]
 		},
 		{
-			"selected": 0,
+			"selected": 4,
 			"sheets":
 			[
 				{
@@ -1707,10 +1734,10 @@
 							"translate_tabs_to_spaces": null
 						},
 						"translation.x": 0.0,
-						"translation.y": 700.0,
+						"translation.y": 481.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 11,
 					"type": "text"
 				},
 				{
@@ -1726,8 +1753,8 @@
 						"selection":
 						[
 							[
-								22,
-								54
+								677,
+								677
 							]
 						],
 						"settings":
@@ -1735,31 +1762,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -1770,26 +1792,31 @@
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
 								"bh_tag_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content"
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage"
 						},
@@ -1797,7 +1824,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
@@ -1884,7 +1911,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 11,
+					"stack_index": 14,
 					"type": "text"
 				},
 				{
@@ -1914,143 +1941,56 @@
 								"bh_angle_open",
 								"bh_angle_close",
 								"bh_angle_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content"
-							],
-							"syntax": "Packages/Ruby/Ruby.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 8,
-					"type": "text"
-				},
-				{
-					"buffer": 11,
-					"file": "lib/storage.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1540,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1197,
-								1287
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
 								"bh_square",
 								"bh_square_center",
 								"bh_square_open",
 								"bh_square_close",
 								"bh_square_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
 								"bh_curly_close",
 								"bh_curly_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
 								"bh_single_quote",
 								"bh_single_quote_center",
 								"bh_single_quote_open",
 								"bh_single_quote_close",
-								"bh_single_quote_content"
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage"
 						},
@@ -2058,11 +1998,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 6,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 12,
+					"buffer": 11,
 					"file": "/Users/ahc/DEV/hrrt/ruby/lib/storage_file.rb",
 					"semi_transient": false,
 					"settings":
@@ -2074,8 +2014,8 @@
 						"selection":
 						[
 							[
-								1380,
-								1680
+								622,
+								622
 							]
 						],
 						"settings":
@@ -2094,46 +2034,46 @@
 								"bh_c_define_open",
 								"bh_c_define_close",
 								"bh_c_define_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
 								"bh_single_quote",
 								"bh_single_quote_center",
 								"bh_single_quote_open",
 								"bh_single_quote_close",
 								"bh_single_quote_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
@@ -2148,11 +2088,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 7,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 13,
+					"buffer": 12,
 					"file": "/Users/ahc/DEV/hrrt/ruby/lib/storage_aws.rb",
 					"semi_transient": false,
 					"settings":
@@ -2238,11 +2178,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 14,
+					"stack_index": 17,
 					"type": "text"
 				},
 				{
-					"buffer": 14,
+					"buffer": 13,
 					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_utility.rb",
 					"semi_transient": false,
 					"settings":
@@ -2327,17 +2267,17 @@
 						"translation.y": 1.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 19,
+					"stack_index": 22,
 					"type": "text"
 				}
 			]
 		},
 		{
-			"selected": 2,
+			"selected": 4,
 			"sheets":
 			[
 				{
-					"buffer": 15,
+					"buffer": 14,
 					"file": "lib/hrrt_subject.rb",
 					"semi_transient": false,
 					"settings":
@@ -2422,11 +2362,11 @@
 						"translation.y": 342.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 15,
+					"stack_index": 18,
 					"type": "text"
 				},
 				{
-					"buffer": 16,
+					"buffer": 15,
 					"file": "lib/hrrt_scan.rb",
 					"semi_transient": false,
 					"settings":
@@ -2511,11 +2451,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 16,
+					"stack_index": 19,
 					"type": "text"
 				},
 				{
-					"buffer": 17,
+					"buffer": 16,
 					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_file.rb",
 					"semi_transient": false,
 					"settings":
@@ -2527,8 +2467,8 @@
 						"selection":
 						[
 							[
-								1559,
-								1559
+								2523,
+								2839
 							]
 						],
 						"settings":
@@ -2536,31 +2476,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -2571,40 +2506,736 @@
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
 								"bh_tag_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content"
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage",
 							"tab_size": null,
 							"translate_tabs_to_spaces": null
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 181.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 14096,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										226,
+										232
+									],
+									[
+										579,
+										585
+									],
+									[
+										654,
+										660
+									],
+									[
+										970,
+										976
+									],
+									[
+										1269,
+										1275
+									],
+									[
+										1347,
+										1353
+									],
+									[
+										1570,
+										1576
+									],
+									[
+										1710,
+										1716
+									],
+									[
+										1960,
+										1966
+									],
+									[
+										2199,
+										2205
+									],
+									[
+										2399,
+										2405
+									],
+									[
+										2594,
+										2600
+									],
+									[
+										2792,
+										2798
+									],
+									[
+										3038,
+										3044
+									],
+									[
+										3370,
+										3376
+									],
+									[
+										3729,
+										3735
+									],
+									[
+										3807,
+										3813
+									],
+									[
+										4038,
+										4044
+									],
+									[
+										4193,
+										4199
+									],
+									[
+										4526,
+										4530
+									],
+									[
+										4762,
+										4766
+									],
+									[
+										4801,
+										4805
+									],
+									[
+										4864,
+										4868
+									],
+									[
+										4877,
+										4881
+									],
+									[
+										4924,
+										4928
+									],
+									[
+										5105,
+										5109
+									],
+									[
+										5145,
+										5149
+									],
+									[
+										5312,
+										5316
+									],
+									[
+										5381,
+										5385
+									],
+									[
+										5501,
+										5505
+									],
+									[
+										5865,
+										5870
+									],
+									[
+										6180,
+										6185
+									],
+									[
+										6459,
+										6464
+									],
+									[
+										6726,
+										6731
+									],
+									[
+										7041,
+										7046
+									],
+									[
+										7297,
+										7300
+									],
+									[
+										7553,
+										7556
+									],
+									[
+										7824,
+										7827
+									],
+									[
+										8341,
+										8344
+									],
+									[
+										8594,
+										8597
+									],
+									[
+										8840,
+										8843
+									],
+									[
+										9100,
+										9103
+									],
+									[
+										9255,
+										9258
+									],
+									[
+										9394,
+										9397
+									],
+									[
+										9660,
+										9663
+									],
+									[
+										9688,
+										9691
+									],
+									[
+										9793,
+										9796
+									],
+									[
+										9814,
+										9817
+									],
+									[
+										9844,
+										9847
+									],
+									[
+										9885,
+										9888
+									],
+									[
+										9897,
+										9900
+									],
+									[
+										10021,
+										10024
+									],
+									[
+										10042,
+										10045
+									],
+									[
+										10058,
+										10061
+									],
+									[
+										10124,
+										10127
+									],
+									[
+										10136,
+										10139
+									],
+									[
+										10372,
+										10375
+									],
+									[
+										10644,
+										10647
+									],
+									[
+										10807,
+										10810
+									],
+									[
+										10946,
+										10949
+									],
+									[
+										11265,
+										11275
+									],
+									[
+										11410,
+										11420
+									],
+									[
+										11572,
+										11582
+									],
+									[
+										11705,
+										11715
+									],
+									[
+										11873,
+										11883
+									],
+									[
+										12080,
+										12090
+									],
+									[
+										12280,
+										12290
+									],
+									[
+										12518,
+										12528
+									],
+									[
+										12680,
+										12690
+									],
+									[
+										12878,
+										12884
+									],
+									[
+										12898,
+										12904
+									],
+									[
+										13073,
+										13079
+									],
+									[
+										13099,
+										13105
+									],
+									[
+										13223,
+										13229
+									],
+									[
+										13239,
+										13245
+									],
+									[
+										13383,
+										13389
+									],
+									[
+										13413,
+										13419
+									],
+									[
+										13591,
+										13597
+									],
+									[
+										13773,
+										13779
+									],
+									[
+										13804,
+										13810
+									],
+									[
+										13991,
+										13997
+									],
+									[
+										14021,
+										14027
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								13396,
+								13396
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"default_dir": "/Users/ahc/DEV/hrrt/ruby",
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 6,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 5790.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
 					"buffer": 18,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/storage.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1540,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								968,
+								968
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/physical_file.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3533,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								80,
+								124
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_local.rb",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1525,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								344,
+								496
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
+							],
+							"syntax": "Packages/Ruby/Ruby.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
 					"file": "/Users/ahc/DEV/hrrt/ruby/lib/hrrt_archive_acs.rb",
 					"semi_transient": false,
 					"settings":
@@ -2616,8 +3247,8 @@
 						"selection":
 						[
 							[
-								194,
-								253
+								216,
+								252
 							]
 						],
 						"settings":
@@ -2625,31 +3256,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -2660,26 +3286,31 @@
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
 								"bh_tag_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content"
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage"
 						},
@@ -2687,11 +3318,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
-					"buffer": 19,
+					"buffer": 22,
 					"file": "lib/hrrt_file_l64.rb",
 					"semi_transient": false,
 					"settings":
@@ -2712,31 +3343,26 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
@@ -2747,26 +3373,31 @@
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
 								"bh_tag_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content"
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content"
 							],
 							"syntax": "Packages/Ruby/Ruby.tmLanguage"
 						},
@@ -2774,11 +3405,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 10,
 					"type": "text"
 				},
 				{
-					"buffer": 20,
+					"buffer": 23,
 					"file": "lib/hrrt_file_l64_hdr.rb",
 					"semi_transient": false,
 					"settings":
@@ -2861,7 +3492,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 20,
+					"stack_index": 23,
 					"type": "text"
 				}
 			]
@@ -3086,7 +3717,7 @@
 		],
 		"width": 392.0
 	},
-	"selected_group": 0,
+	"selected_group": 1,
 	"settings":
 	{
 	},
