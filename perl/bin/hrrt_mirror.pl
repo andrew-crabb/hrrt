@@ -146,6 +146,7 @@ sub copy_file_to_this_disk {
 
   # Check we have space.
   my $dest = "$disk/$fileyear/$filemonth/$newname";
+#  files_are_same($infile, $dest)
   unless (file_will_fit($infile, $disk)) {
     print "ERROR: copy_file_to_this_disk($infile, $disk): Insufficient destination space\n";
     return;
@@ -175,9 +176,6 @@ sub copy_file_to_this_disk {
     print "r_err '$r_err', r_out '$r_out'\n" if ($opts->{$Opts::OPT_VERBOSE});
     if ($opts->{$OPT_EXPUNGE} and $ret) {
       my $ret = unlink($infile);
-      # my %delopts = (%rsopts, ('remove-sent-files' => 1));
-      # print Dumper(\%delopts);
-      # $ret = $rsync->exec(\%delopts);
       print "ERROR: Could not unlink $infile\n" unless ($ret);
     }
   }
@@ -189,7 +187,20 @@ sub copy_file_to_this_disk {
     print join("\n", @$r_err) . "\n";
     print "------------------------------------------------\n";
   }
+}
 
+sub files_are_same {
+  my ($src, $dest) = @_;
+
+  my @stat_src = stat($src);
+  my @stat_dest = stat($dest);
+  if (-f $src and -f $dest) {
+    
+  } elsif (-f $src and -f "${dest}.7z") {
+
+  } else {
+
+  }
 }
 
 sub file_will_fit {
