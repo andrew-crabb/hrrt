@@ -140,10 +140,10 @@ my $scans_to_send = select_scan($scans_by_date);
 my $scan_to_send = $scans_by_date->{$scans_to_send->{'EM'}};
 my $framing = select_framing($scan_to_send, $framing_array);
 # Should be only one blank scan per day.
-printHash($scans_to_send, "scans to send");
+# printHash($scans_to_send, "scans to send");
 my $blank_scan = select_blank_scan($scans_to_send->{'EM'});
-printHash($blank_scan, "Blank scan");
-printHash($scans_to_send, "scans_to_send");
+# printHash($blank_scan, "Blank scan");
+# printHash($scans_to_send, "scans_to_send");
 
 # Send files.
 my $xfer_files = make_xfer_files( $scans_by_date, $scans_to_send);
@@ -618,7 +618,7 @@ sub check_scans_transferred {
     my %files_ok = ();
     foreach my $dir_suffix (@dir_suffixes) {
       my $tx_suffix = (length($dir_suffix)) ? '_TX_' . $dir_suffix : '';
-      print "-------------------- $dest_dir_base: dir_suffix $dir_suffix\n";
+#      print "-------------------- $dest_dir_base: dir_suffix $dir_suffix\n";
       foreach my $type (qw{EM TX}) {
 	next unless $scanrec->{$type};
 	# If multiple scans in same day, accept either matching TX scan.
@@ -662,7 +662,7 @@ sub files_are_same {
     $is_ok = ($srcfile =~ /hdr$/) ? 1 : (-s $srcfile == -s $destfile);
   }
   unless ($is_ok) {
-    print "$destfile\n";
+    # print "$destfile\n";
   }
   return $is_ok;
 }
