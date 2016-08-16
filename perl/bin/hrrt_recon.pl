@@ -99,6 +99,10 @@ if ($usersw_m and not $do_motion) {
 
 my %recons;
 our $subj_dir = $ARGV[0];
+if (length($subj_dir) > 38) {
+  croak("ERROR: Input directory name too long - lmhistogram will fail");
+  exit;
+}
 
 # Initialize recon start time, and flag on whether to create log.
 my $time_now = strftime($DATEFMT_YYMMDD_HHMMSS, localtime);
