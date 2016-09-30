@@ -347,7 +347,7 @@ sub usage_old {
   print "   -U: user_software_m   : Use HRRT_user software with motion correction (2011)\n";
   print "   -v: verbose           : Print debug messages\n";
   print "   -V: very_verbose      : Print many debug messages\n";
-  print "   -Y: bigdummy          : Dont test prereqs, Print but do not execute commands\n"
+  print "   -Y: bigdummy          : Dont test prereqs, Print but do not execute commands\n";
 #   print "   -x: on unix           : Run on Unix system\n";
   print "   -z: multiline         : Print logs of commands in multiline format\n";
   print "   -3: span3             : Use Span 3 (Default)\n";
