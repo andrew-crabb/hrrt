@@ -16,7 +16,7 @@ our @EXPORT = qw($O_DO_VHIST $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USE
 @EXPORT = (@EXPORT, qw($PROC_NAME $PROC_PREREQ $PROC_POSTREQ $PROC_PREOK $PROC_POSTOK $PROC_INIT));
 @EXPORT = (@EXPORT, qw($FPATH $EPATH));
 # Reconstruction software
-@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL $O_LOG_CAT));
+@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL $O_LOG_CAT $O_NO_REF_DELAY));
 
 @EXPORT = (@EXPORT, qw($CALIB_DATE $CALIB_RATIO $CALIB_FACT));
 
@@ -83,6 +83,7 @@ our $O_CONF_FILE  = 'opt_conf_file';
 our $O_WIDE_KERNEL = 'opt_wide_kernel'; # Use 5 mm wide kernel in if2e7
 our $O_LOG_CAT     = 'opt_log_cat'; # Log level for log4perl
 our $O_TEST_NORM   = 'opt_test_norm';
+our $O_NO_REF_DELAY = 'opt_no_ref_delay';  # motion_correct_recon don't delay to find ref frame.
 
 # String constants: Software to use.
 our $SW_CPS      = "sw_cps";    # CPS software
@@ -2858,6 +2859,7 @@ sub do_motion {
     $cmd .= ' -z ' . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT); # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
     $cmd .= ' -l ' . $this->{$_LOG_DIR};
     $cmd .= ' -b ' . $rebinner_lut_file;
+    $cmd .= ' -D' if ($this->{$O_NO_REF_DELAY});  # ahc 9/30/16 don't delay to find ref frame
 
     $ret += $this->runit($cmd, 'do_motion');
   }

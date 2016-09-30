@@ -43,7 +43,7 @@ our $g_logger = undef;
 # ------------------------------------------------------------
 
 my %opts;
-getopts('cbtasrpYydDe:fgG:hHijJKImMNnoqQuvR:S:UVz369', \%opts);
+getopts('cbtasrpYydDe:fgG:hHijJKImMNnoqQuvR:S:UVYz369', \%opts);
 our $do_complete       = $opts{'c'} || 0;   # Options BTASRP, in that order.
 our $do_rebin          = $opts{'b'} || 0;   # lmhistogram (makes *EM.s)
 our $do_transmission   = $opts{'t'} || 0;   # e7_atten (makes *TX.i)
@@ -56,7 +56,7 @@ our $do_crystalmap     = $opts{'y'} || 0;   # Create 30-second crystal map, and 
 our $do_motion         = $opts{'m'} || 0;   #
 our $no_motion         = $opts{'M'} || 0;   #
 my $dummy              = $opts{'d'} || 0;   # Print actions, don't run.
-my $bigdummy           = $opts{'D'} || 0;   # Don't test for prereqs, print actions, don't run.
+my $bigdummy           = $opts{'Y'} || 0;   # Don't test for prereqs, print actions, don't run.
 my $ergratio           = $opts{'e'} || '';  # Use given ergratio value.
 my $force              = $opts{'f'} || 0;   # Overwrite destination files if existing.
 my $config_file        = $opts{'G'} || '';  # Config file
@@ -71,6 +71,7 @@ my $widekernel         = $opts{'K'} || 0;   # Use 5 mm wide kernel to if2e7
 my $frame_count        = $opts{'n'} || 0;   # Include frame count in image file name.
 my $multiline          = $opts{'z'} || 0;   # Print log commands in multiline format.
 my $notimetag          = $opts{'N'} || 0;   # Add option '-notimetag' to lmhistogram
+my $norefdelay         = $opts{'D'} || 0;   # motion_correct_recon: Don't delay to reference frame.
 my $docopy             = $opts{'o'} || 0;   # Copy from server to this node first.
 my $quiet              = $opts{'q'} || 0;   # STFU
 my $do_qc              = $opts{'Q'} || 0;   # Create QC files.
@@ -196,6 +197,7 @@ my %recon_opts = (
   $O_CONF_FILE   => $config_file,
   $O_WIDE_KERNEL => $widekernel,
   $O_LOG_CAT     => $log_category,
+  $O_NO_REF_DELAY => $norefdelay,
 );
 
 my $recon = HRRTRecon->new(\%recon_opts);
@@ -322,7 +324,7 @@ sub usage_old {
   print "   -m: do_motion         : Perform motion correction (Default true with -U\n";
   print "   -M: no_motion         : Don't perform motion correction (only relevant with -U\n";
   print "   -d: dummy             : Print but do not execute commands\n";
-  print "   -D: big_dummy         : Don't test prereqs, Print but do not execute commands\n";
+  print "   -D: no_ref_delay      : motion_correct_recon don't delay to find reference frame\n";
   print "   -e: ergratio <val>    : Use given val as ErgRatio in GM328.INI (Scatter/e7_sino)\n";
   print "   -f: force             : Execution includes steps already completed\n";
   print "   -g: log               : Log process to VHIST file (automatically named)\n";
@@ -345,6 +347,7 @@ sub usage_old {
   print "   -U: user_software_m   : Use HRRT_user software with motion correction (2011)\n";
   print "   -v: verbose           : Print debug messages\n";
   print "   -V: very_verbose      : Print many debug messages\n";
+  print "   -Y: bigdummy          : Dont test prereqs, Print but do not execute commands\n"
 #   print "   -x: on unix           : Run on Unix system\n";
   print "   -z: multiline         : Print logs of commands in multiline format\n";
   print "   -3: span3             : Use Span 3 (Default)\n";
