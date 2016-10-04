@@ -2816,6 +2816,7 @@ sub do_motion {
     $cmd .= ' -z ' . $this->conf_file($CNF_SEC_PROGS, $CNF_VAL_GNUPLOT);  # $this->{$_CNF}{$CNF_SEC_PROGS}{$CNF_VAL_GNUPLOT}; # FQ path of gnuplot.
     $cmd .= ' -l ' . $this->{$_LOG_DIR};
     $cmd .= ' -x ' . $this->program_name($PROG_OSEM3D);
+    $cmd .= ' -d' if ($this->{$O_NO_REF_DELAY});  # ahc 9/30/16 don't delay to find ref frame.  Note had to use d not D as D taken in motion_qc
 
     $ret = $this->runit($cmd, 'do_motion');
   }
