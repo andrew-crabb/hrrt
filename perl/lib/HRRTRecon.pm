@@ -1396,6 +1396,7 @@ sub fileName {
     $filename =~ s/_EM$//;
     unless ($nosuff) {
       my $sw_suff = $CODE_SW_GROUP{$this->{$O_SW_GROUP}};
+      $sw_suff .= 'p' if ($this->{O_USERSW} and $this->{O_POST_SMOOTHING});
       $filename .= "_${sw_suff}";
       # print "*** fileName(): sw_suff = CODE_SW_GROUP{$this->{$O_SW_GROUP}} = $sw_suff\n";
       $filename .= $this->{$O_SPAN};
@@ -3074,6 +3075,7 @@ sub do_transfer {
   if ($this->{$O_USESUBDIR}) {
     $span_dir .= "/span$this->{$O_SPAN}";
     $span_dir .= ($this->{$_USER_SW}) ? ($this->{$_USER_M_SW}) ? "_m" : "_u" : "_c";
+    $span_dir .= 'p' if ($this->{O_POST_SMOOTHING});
     $span_dir .= '_' . $nframes . 'fr';
     # ahc 9/25/14.  Append erg ratio to subdir name, for calibration phantom.
     if ($recon_dir =~ /$CALIBRATION/i) {
