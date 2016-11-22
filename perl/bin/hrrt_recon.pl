@@ -43,7 +43,7 @@ our $g_logger = undef;
 # ------------------------------------------------------------
 
 my %opts;
-getopts('cbtasrpYydDe:fgG:hHijJKImMNnoqQuvR:S:UVYz369', \%opts);
+getopts('cbtasrpYydDe:fgG:hHijJKImMNnoqQuvPR:S:UVYz369', \%opts);
 our $do_complete       = $opts{'c'} || 0;   # Options BTASRP, in that order.
 our $do_rebin          = $opts{'b'} || 0;   # lmhistogram (makes *EM.s)
 our $do_transmission   = $opts{'t'} || 0;   # e7_atten (makes *TX.i)
@@ -55,6 +55,7 @@ our $no_crystalmap     = $opts{'Y'} || 0;   # Don't create 30-second crystal map
 our $do_crystalmap     = $opts{'y'} || 0;   # Create 30-second crystal map, and exit.
 our $do_motion         = $opts{'m'} || 0;   #
 our $no_motion         = $opts{'M'} || 0;   #
+our $post_smoothing    = $opts{'P'} || 0;
 my $dummy              = $opts{'d'} || 0;   # Print actions, don't run.
 my $bigdummy           = $opts{'Y'} || 0;   # Don't test for prereqs, print actions, don't run.
 my $ergratio           = $opts{'e'} || '';  # Use given ergratio value.
@@ -198,6 +199,7 @@ my %recon_opts = (
   $O_WIDE_KERNEL => $widekernel,
   $O_LOG_CAT     => $log_category,
   $O_NO_REF_DELAY => $norefdelay,
+  $O_POST_SMOOTHING => $post_smoothing,
 );
 
 my $recon = HRRTRecon->new(\%recon_opts);
@@ -324,6 +326,7 @@ sub usage_old {
   print "   -m: do_motion         : Perform motion correction (Default true with -U\n";
   print "   -M: no_motion         : Don't perform motion correction (only relevant with -U\n";
   print "   -d: dummy             : Print but do not execute commands\n";
+  print "   -P: post_smoothing    : Perform m9 smoothing in if2e7 rather than in motion_correct_recon\n";
   print "   -D: no_ref_delay      : motion_correct_recon don't delay to find reference frame\n";
   print "   -e: ergratio <val>    : Use given val as ErgRatio in GM328.INI (Scatter/e7_sino)\n";
   print "   -f: force             : Execution includes steps already completed\n";

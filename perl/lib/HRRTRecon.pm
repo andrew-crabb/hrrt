@@ -16,7 +16,7 @@ our @EXPORT = qw($O_DO_VHIST $O_ERGRATIO $O_DBRECORD $O_NOTIMETAG $O_SPAN $O_USE
 @EXPORT = (@EXPORT, qw($PROC_NAME $PROC_PREREQ $PROC_POSTREQ $PROC_PREOK $PROC_POSTOK $PROC_INIT));
 @EXPORT = (@EXPORT, qw($FPATH $EPATH));
 # Reconstruction software
-@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL $O_LOG_CAT $O_NO_REF_DELAY));
+@EXPORT = (@EXPORT, qw($O_VERBOSE $O_DUMMY $O_FORCE $O_USERSW $O_SW_GROUP $O_FRAME_CNT $O_RECON_START $O_DO_QC $O_CONF_FILE $SW_CPS $SW_USER $SW_USER_M $O_WIDE_KERNEL $O_LOG_CAT $O_NO_REF_DELAY $O_POST_SMOOTHING));
 
 @EXPORT = (@EXPORT, qw($CALIB_DATE $CALIB_RATIO $CALIB_FACT));
 
@@ -84,6 +84,7 @@ our $O_WIDE_KERNEL = 'opt_wide_kernel'; # Use 5 mm wide kernel in if2e7
 our $O_LOG_CAT     = 'opt_log_cat'; # Log level for log4perl
 our $O_TEST_NORM   = 'opt_test_norm';
 our $O_NO_REF_DELAY = 'opt_no_ref_delay';  # motion_correct_recon don't delay to find ref frame.
+our $O_POST_SMOOTHING = 'opt_post_smoothing'; # Perform m9 smoothing in if2e7 rather than in motion_correct_recon
 
 # String constants: Software to use.
 our $SW_CPS      = "sw_cps";    # CPS software
@@ -2850,7 +2851,10 @@ sub do_motion {
     $cmd .= ' -I ' . $ITER_MOTION_CORR;
     $cmd .= ' -a 1.03,4';
     $cmd .= ' -v';
-    #   $cmd .= ' -P';        # Enable PSF, which sets '-B 0,0,0' in call to osem3d.
+    # NOTE.  Until 10/1/16, psf_flag was hard-coded to 1 in the motino_correct program.  I added an operable -P option to that program (it used to be useless as the variable was hard coded to 1)
+    # Our intention is to turn off the effect of -P in motion_correction, and replace it with 2mm smoothing in if2e7.
+    # USER_M_SW is traditional m9 using smoothing in motion_correction.  USER_MP_SW is m9 with post-smoothing in if2e7.
+      $cmd .= ' -P' if ($this->{$_USER_M_SW} and not $this->{$O_POST_SMOOTHING});        # Enable PSF, which sets '-B 0,0,0' in call to osem3d.
     $cmd .= ' -O ';		# Overwrite
     # Horrible bug in motion_correct_recon calling if2e7:  calib factor must be in local dir.
     $cmd .= ' -s ' . $this->{$_FNAMES}->{$_CALIB_};
@@ -2920,7 +2924,10 @@ sub run_conversion {
     if ($this->{$O_WIDE_KERNEL}) {
       $kernel_width = $KERNEL_WIDTH_5;
     } else {
-      $kernel_width = ($this->{$_USER_SW}) ? $KERNEL_WIDTH_0 : $KERNEL_WIDTH_2;
+      # ahc 11/22/16.  Traditional m9 uses smoothing in motion_correct_recon, so none here.  
+      # All others (including m9p) do 2mm smoothing here.
+      # $kernel_width = ($this->{$_USER_SW}) ? $KERNEL_WIDTH_0 : $KERNEL_WIDTH_2;
+      $kernel_width = ($this->{$_USER_M_SW} and not $this->{$O_POST_SMOOTHING}) ? $KERNEL_WIDTH_0 : $KERNEL_WIDTH_2;
     }
     my $cmd = "cd $recon_dir;";
 
