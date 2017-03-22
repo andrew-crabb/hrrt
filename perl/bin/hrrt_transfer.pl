@@ -115,8 +115,10 @@ print "data_dir $data_dir\n";
 # If test system ,populate data directory.
 if ( $opts->{$OPT_DATA} ) {
   my %opts = (
-    $HRRT_Data::PARAM_DATA_DIR    => $data_dir,
-    $HRRT_Data::PARAM_DATE_FORMAT => $HRRT_Utilities::FNAME_TYPE_WHIST,
+    # $HRRT_Data::PARAM_DATA_DIR    => $data_dir,
+    # $HRRT_Data::PARAM_DATE_FORMAT => $HRRT_Utilities::FNAME_TYPE_WHIST,
+    "HRRT_Data::PARAM_DATA_DIR"    => $data_dir,
+    "HRRT_Data::PARAM_DATE_FORMAT" => $HRRT_Utilities::FNAME_TYPE_WHIST,
   );
   make_test_data_files( \%opts );
 }
@@ -309,8 +311,13 @@ sub transfer_file {
 
   # printHash(\%rsopts, "copy_file_to_disk") if ($opts->{$Opts::OPT_VERBOSE});
   my $rsync = File::Rsync->new();
-  $rsync->defopts( 'verbose' => 1 );
-  my $ret   = $rsync->exec( \%rsopts );
+#  $rsync->defopts( 'verbose' => 1 );
+  unless ($rsync->exec( \%rsopts )) {
+    print "ERROR: rsync($filename, $destfile)\n";
+    my $err = $rsync->err();
+    print "err: @$err \n";
+    print "lastcmd: " . $rsync->lastcmd() . "\n";
+  }
   chmod(0644, $destfile);
 }
 
@@ -393,8 +400,9 @@ sub make_destdir_name {
 sub find_destdirs {
   my ($destdir_base) = @_;
 
-  opendir (DIR, $RSYNC_DIR) or die "Unable to open $RSYNC_DIR: $!\n";
-  my @dirs = grep{/^$destdir_base/}readdir DIR;
+  my $DIR;
+  opendir ($DIR, $RSYNC_DIR) or die "Unable to open $RSYNC_DIR: $!\n";
+  my @dirs = grep{/^$destdir_base/}readdir $DIR;
   my %found_dirs = ();
   my @tx_dirs = grep(/_TX_/, @dirs);
   if (scalar(@tx_dirs)) {
