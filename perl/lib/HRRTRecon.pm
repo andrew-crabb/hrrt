@@ -976,6 +976,7 @@ sub analyze_recon_dir {
   }
 
   my $lm_file    = $this->fileName($K_LISTMODE, {$K_USEDIR => $DIR_CYGWIN});
+  $this->{$_LOG}->info("lm_file $lm_file");
   my $lm_hdrfile = $this->fileName($K_LIST_HDR, {$K_USEDIR => $DIR_CYGWIN});
   my $dirstr = "HRRTRecon::analyze_recon_dir($indir)";
   unless ((-f $lm_file) && (-s $lm_file > $MILL)) {
@@ -1385,6 +1386,7 @@ sub fileName {
   $size = $size->{$this->{$O_SPAN}} if (ref($size));
   $size = 0 unless (hasLen($size));
   my $filename = $this->{$_FNAMES}->{$stemkey};
+  $this->{$_LOG}->info("(stemkey $stemkey, isframe $isframe, suff $suff, size $size, filename $filename)");
 
   # Special case.  Frames = 1 => lmhistogram (at least) does not use frame no.
   my $nframes = $this->{$_HDRDET}->{$NFRAMES};
@@ -1433,16 +1435,19 @@ sub fileName {
     }
     $filename = "${dir}/${filename}";
   }
+  $this->{$_LOG}->info("(stemkey $stemkey, isframe $isframe, suff $suff, size $size, filename now $filename)");
   # Convert path, if required.
   my $retfilename = undef;
   if ($use_dir) {
     my $hptr = convertDirName($filename);
+    printHash($hptr, 'hptr');
     $retfilename = $hptr->{$use_dir};
     # $this->{$_LOG}->info("fileName($keyname, $use_dir) = $retfilename");
   } else {
     $retfilename = $filename;
     # $this->{$_LOG}->info("fileName($keyname) = $retfilename");
   }
+  $this->{$_LOG}->info("(stemkey $stemkey, isframe $isframe, suff $suff, size $size, retfilename $retfilename)");
   return $retfilename;
 }
 
