@@ -837,6 +837,7 @@ sub new {
 
   my $platform  = $config->{$CNF_SEC_PLAT}{$CNF_VAL_HOST};
   my $on_unix   = ( $platform =~ /$Utility::PLAT_LNX|$Utility::PLAT_MAC/ ) ? 1 : 0;
+  print "platform $platform, on_unix $on_unix\n";
   my $processes = create_processes( $arg_ref, $process_list, \%procsumm, $arg_ref->{$O_VERBOSE} );
   unless ( ref($processes) eq 'HASH' ) {
     $logger->error("create_processes");
@@ -880,10 +881,10 @@ sub new {
     $_LOG_DIR     => '',                           # recon/subject/recon_yymmdd_hhmmss
     $_LOG_FILE    => '',                           # recon/subject/recon_yymmdd_hhmmss/recon_yymmdd_hhmmss.log
     $_LOG         => $logger,
-      $_PATH_STYLE => ($on_unix) ? $DIR_CYGWIN
+    $_PLATFORM    => $platform,
+    $_PATH_STYLE  => ($on_unix) ? $DIR_CYGWIN
     : ( $platform =~ /$Utility::PLAT_POWERSHELL/ ) ? $DIR_POWERSHELL
-    : $DIR_DOS,
-    $_PLATFORM => $platform,
+    : $DIR_CYGWIN,
 
     # $_PATH_STYLE    => ($on_unix) ? $DIR_CYGWIN : $DIR_DOS,
   );
@@ -1017,6 +1018,7 @@ sub analyze_recon_dir {
   my ( $this, $indir ) = @_;
 
   ( my $fulldir = File::Spec->rel2abs($indir) ) =~ s/\/$//;
+  print "-------------- analyze_recon_dir(indir $indir fulldir $fulldir) --------------\n";
   unless ( -d $fulldir ) {
     $this->{$_LOG}->error("Dir '$fulldir' does not exist");
     return 1;
@@ -1209,7 +1211,8 @@ sub fill_in_names {
 
   # Log-related files.
   # Windows programs require log file to be in Windows path format.
-  my $local_dir = convertDirName($indir)->{ ( $this->{$O_ONUNIX} ) ? $DIR_CYGWIN : $DIR_POWERSHELL };
+#  my $local_dir = convertDirName($indir)->{ ( $this->{$O_ONUNIX} ) ? $DIR_CYGWIN : $DIR_POWERSHELL };
+  my $local_dir = convertDirName($indir)->{ on_powershell() ? $DIR_POWERSHELL : $DIR_CYGWIN };
 
   $this->{$_LOG_DIR} = File::Spec->catfile($local_dir, "recon_" . $this->{$_RECON_START});
   $this->{$_LOG_FILE}
@@ -1268,6 +1271,12 @@ sub fill_in_names {
 
   # Calibration-related files.
   my $calibfile = $this->{$_LOG_DIR} . "/$CALIBFACTOR";
+    print "------------- converting calibfile platform is $this->{$_PLATFORM} ---------------\n";
+  if ($this->{$_PLATFORM} =~ $Utility::PLAT_WIN) {
+    print "------------- converting calibfile to dos was $calibfile ---------------\n";
+    $calibfile = convertDirName($calibfile)->{$DIR_DOS};
+    print "------------- converting calibfile to dos now $calibfile ---------------\n";
+  }
 
   # ------------------------------------------------------------
   # Directory names.
@@ -3245,10 +3254,11 @@ sub edit_calibration_file {
   my %editargs = (
 
     # 'infile'  => $calib_factors->{$CALIB_TEMPL_F},
-    'infile'  => $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC} . "/${TEMPL_CALIB}",
-    'outfile' => $this->{$_LOG_DIR} . "/${CALIBFACTOR}",
+    'infile'  => File::Spec->catfile($this->{$_ROOT}, $this->{$_CNF}{$CNF_SEC_BIN}{$CNF_VAL_ETC}, $TEMPL_CALIB),
+    'outfile' => File::Spec->catfile($this->{$_LOG_DIR}, $CALIBFACTOR),
     'edits'   => \%edits,
-  );
+      );
+  $this->{$_LOG}->info("edit_calibration_file: calling editConfigFile");
   if ( $this->editConfigFile( \%editargs ) ) {
     log_hash( \%editargs, "ERROR: editConfigFile", $this->{$_LOG} );
     $this->{$_LOG}->error("edit_calibration_file(): returning error editConfigFile");
@@ -3663,10 +3673,10 @@ sub runit {
   # $setvars .= "; export GMINI="      . $this->{$_LOG_DIR};
   # $setvars .= "; export LOGFILEDIR=" . $this->{$_LOG_DIR};
 
-  $setvars .= $this->make_env_str('HOME'      , $ENV{'HOME'});
-  $setvars .= $this->make_env_str('PATH'      , $prog_path);
-  $setvars .= $this->make_env_str('GMINI'     , $this->{$_LOG_DIR});
-  $setvars .= $this->make_env_str('LOGFILEDIR', $this->{$_LOG_DIR});
+  $setvars .= "; " . $this->make_env_str('HOME'      , $ENV{'HOME'});
+  $setvars .= "; " . $this->make_env_str('PATH'      , $prog_path);
+  $setvars .= "; " . $this->make_env_str('GMINI'     , $this->{$_LOG_DIR});
+  $setvars .= "; " . $this->make_env_str('LOGFILEDIR', $this->{$_LOG_DIR});
 
   $cmd = "$setvars; $cmd";
 
@@ -3699,7 +3709,9 @@ sub make_env_str {
 sub on_powershell {
   my ($this) = @_;
 
-  return ( $this->{_PLATFORM} =~ /$Utility::PLAT_POWERSHELL/ ) ? 1 : 0;
+  print "--------------- come back to this for powershell --------------\n";
+  return 0;
+#  return ( $platform =~ /$Utility::PLAT_POWERSHELL/ ) ? 1 : 0;
 }
 
 sub safe_unlink {
