@@ -32,7 +32,7 @@ use HRRT_Utilities;
 my $RECON  = '/data/recon';
 my $HRRT   = '/mnt/hrrt/SCS_SCANS';
 my $PASS   = '-uhrrt -pPETimage';
-my $CHECKSUMDB = '/usr/local/bin/checksumdb';
+my $CHECKSUMDB = 'checksumdb';
 my $BINDIR = $FindBin::Bin;
 my $DFLT_PERIOD = 90;
 my $UNWANTED_DIR_PATTERN = 'Removable Device Backup Data';

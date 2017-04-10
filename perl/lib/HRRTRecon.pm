@@ -99,9 +99,6 @@ our $SW_USER_M = "sw_user_m";                    # User software 2011 with motio
 # my $SETVARS      = "export GMINI=C:/CPS/bin; export LOGFILEDIR=C:/CPS/LOG;";
 my $GMLINE = "crystalLayerBackgroundErgRatio";
 
-# my $GNUPLOT      = "/usr/local/bin/gnuplot";
-# my $LMHDR        = "/usr/local/turku/bin/lmhdr";
-# my $E7EMHDR      = "/usr/local/turku/bin/e7emhdr";
 my $STUDY_DESC   = "study_description";
 my $PATIENT_NAME = "patient_name";
 my $SCAN_START   = "scan_start_time";
