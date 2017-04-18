@@ -101,8 +101,9 @@ if ($usersw_m and not $do_motion) {
 
 my %recons;
 our $subj_dir = $ARGV[0];
-if (length($subj_dir) > 38) {
-  croak("ERROR: Input directory name too long - lmhistogram will fail");
+our $slen = length($subj_dir);
+if ($slen > 42) {
+  croak("ERROR: Input directory name too long ($slen) - lmhistogram will fail for $subj_dir");
   exit;
 }
 
