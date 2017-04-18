@@ -93,9 +93,6 @@ our $SW_USER_M   = "sw_user_m"; # User software 2011 with motion
 # String constants: Directories of executables.
 # my $SETVARS      = "export GMINI=C:/CPS/bin; export LOGFILEDIR=C:/CPS/LOG;";
 my $GMLINE       = "crystalLayerBackgroundErgRatio";
-# my $GNUPLOT      = "/usr/local/bin/gnuplot";
-# my $LMHDR        = "/usr/local/turku/bin/lmhdr";
-# my $E7EMHDR      = "/usr/local/turku/bin/e7emhdr";
 my $STUDY_DESC   = "study_description";
 my $PATIENT_NAME = "patient_name";
 my $SCAN_START   = "scan_start_time";
@@ -201,7 +198,8 @@ my $CODE_SW      = "sw";
 my $CODE_SPAN    = "sp";
 my $CODE_NOTE    = "nb";
 my $CODE_FRAME   = "fr";
-my @CODES = ($CODE_SW, $CODE_SPAN, $CODE_NOTE, $CODE_FRAME);
+my $CODE_WIDTH   = "wd";
+my @CODES = ($CODE_SW, $CODE_SPAN, $CODE_NOTE, $CODE_FRAME, $CODE_WIDTH);
 
 # ----------------------------------------
 # Directory paths.
@@ -2405,6 +2403,7 @@ sub do_conversion {
     $CODE_SW    => $CODE_SW_GROUP{$this->{$O_SW_GROUP}},
     $CODE_SPAN  => $this->{$O_SPAN},
     $CODE_FRAME => $this->{$_HDRDET}->{$NFRAMES},
+
       );
   my $ret = 0;
   if ($this->{$_USER_M_SW}) {
@@ -2917,6 +2916,8 @@ sub run_conversion {
   my $ecat_file = $this->fileName($v_file_key);
   $this->{$_LOG}->info("run_conversion(): ecat_file $ecat_file");
 
+    $this->edit_ecat($ecat_file, $ecat_opts);
+  
   my $fstat = $this->check_file($v_file_key);
   if ($fstat and $fstat->{$F_OK} and not $this->{$O_FORCE}) {
     $this->{$_LOG}->info("do_convert($imgfile, $ecat_file) - Skipping - already done (-f to force)");
@@ -2941,8 +2942,9 @@ sub run_conversion {
     $cmd .= " -o $ecat_file";
     $cmd .= " $imgfile";
     $ret = $this->runit($cmd, "run_conversion");
+  $ecat_opts->{$CODE_WIDTH} = $kernel_width;
   }
-
+  
   # If necessary, edit the Ecat file name to include reconstruction string suffix.
   $this->edit_ecat($ecat_file, $ecat_opts);
 }
@@ -2987,6 +2989,10 @@ sub edit_ecat {
   # ------------------------------------------------------------
   # Edit ECAT file 'study_description' to indicate reconstruction method.
   # ------------------------------------------------------------
+  my $recon_dir = $this->fileName($K_DIR_RECON);
+  $filename = "${recon_dir}/${filename}";
+  $filename = convertDirName($filename)->{($this->{$O_ONUNIX}) ? $DIR_CYGWIN : $DIR_DOS};
+  $this->{$_LOG}->info("edit_ecat(): $filename");
   my $study_desc = $this->get_study_description($filename);
   my $new_desc = $study_desc;
   my $sep = (length($study_desc)) ? '_' : '';
@@ -3020,14 +3026,15 @@ sub get_prog_from_conf {
   my ($this, $prog_key) = @_;
 
   my $fq_prog = undef;
-  my $full_prog = $this->{$_ROOT} . $this->{$_CNF}{$CNF_SEC_PROGS}{$prog_key};
+  my $full_prog = $this->{$_CNF}{$CNF_SEC_PROGS}{$prog_key};
+  $full_prog = $this->{$_ROOT} . $full_prog unless substr($full_prog, 0, 1) eq '/';
   my ($name, $path, $suffix) = fileparse($full_prog);
-  print "xxx ('$name', '$path', '$suffix')\n";
   if (-d $path) {
     $fq_prog = abs_path($full_prog);
   } else {
     $this->{$_LOG}->warn("Cannot get path for '$prog_key': Tried $full_prog");
   }
+  print "get_prog_from_conf($prog_key): $fq_prog\n";
   return $fq_prog;
 }
 
@@ -3473,6 +3480,7 @@ sub read_conf {
 
   # conf_file_name defaults to ../etc/$0.conf ie here hrrt_recon.conf 
   my $conf_file = ($infile or conf_file_name());
+  print "*** read_conf($infile): $conf_file ***\n";
   my %config = ();
   # Config::Std
   read_config($conf_file, %config);
